@@ -128,19 +128,21 @@ export default function OrdersManagement() {
   const refreshStripeOrder = async (order: Order) => {
     if (!order.stripe_session_id) return;
     try {
-      const { error } = await supabase.functions.invoke('update-stripe-order', {
+      const { data, error } = await supabase.functions.invoke('reconcile-checkouts', {
         body: {
-          sessionId: order.stripe_session_id,
-          orderNumber: order.order_number,
+          orderId: order.id,
         },
       });
 
       if (!error) {
         await fetchOrders();
         setSelectedOrder(null);
+        if (data?.reviews) window.alert('Плащането изисква ръчен преглед. Статусът не е променен автоматично.');
+      } else {
+        window.alert('Проверете плащането ръчно. Автоматичната проверка не успя.');
       }
     } catch {
-      // Silently handle
+      window.alert('Автоматичната проверка на плащането не успя.');
     }
   };
 

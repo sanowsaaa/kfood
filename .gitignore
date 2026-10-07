@@ -1,0 +1,7 @@
+node_modules/
+dist/
+supabase/.temp/
+supabase/.branches/
+*.tsbuildinfo
+.env*.local
+.env.payment*

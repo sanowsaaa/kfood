@@ -1,8 +1,10 @@
 import { defineConfig } from 'vite'
-import react from '@vitejs/plugin-react'
+import react from '@vitejs/plugin-react-swc'
+import { fileURLToPath } from 'node:url'
 
 export default defineConfig({
   plugins: [react()],
+  resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
   base: '/',
   define: {
     __BASE_PATH__: JSON.stringify('/'),
@@ -25,6 +27,7 @@ export default defineConfig({
     cssCodeSplit: true,
     rollupOptions: {
       output: {
+        onlyExplicitManualChunks: true,
         manualChunks(id) {
           // React core
           if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/') || id.includes('node_modules/scheduler/')) {
@@ -74,9 +77,5 @@ export default defineConfig({
     port: 3000,
     strictPort: false,
     host: true,
-    // Compression в dev mode
-    headers: {
-      'Cache-Control': 'public, max-age=31536000',
-    }
   }
 })
