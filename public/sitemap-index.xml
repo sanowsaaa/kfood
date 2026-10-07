@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>https://k-foodvelikotarnovo.com/sitemap.xml</loc>
+    <lastmod>2026-07-20</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>https://k-foodvelikotarnovo.com/sitemap-products.xml</loc>
+    <lastmod>2026-07-20</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>https://quqlovoiwgqfmgjumpgd.supabase.co/functions/v1/sitemap-products</loc>
+    <lastmod>2026-07-20</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>https://quqlovoiwgqfmgjumpgd.supabase.co/functions/v1/sitemap-blog</loc>
+    <lastmod>2026-07-20</lastmod>
+  </sitemap>
+</sitemapindex>

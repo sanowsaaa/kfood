@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="bg">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; img-src 'self' https://readdy.ai https://*.readdy.ai https://res.cloudinary.com https://www.facebook.com data: blob:; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://api.stripe.com https://connect.facebook.net; frame-src https://js.stripe.com https://www.facebook.com; media-src 'self' https://readdy.ai https://*.readdy.ai https://res.cloudinary.com; form-action 'self' https://api.stripe.com; base-uri 'self'; frame-ancestors 'self'; upgrade-insecure-requests;" />
+    <link rel="icon" type="image/webp" href="https://static.readdy.ai/image/658b459fcf05a7723f8029c45615de2f/5f528752b53eacb04e7b1d8959de8155.webp" sizes="32x32" />
+    <link rel="apple-touch-icon" href="https://static.readdy.ai/image/658b459fcf05a7723f8029c45615de2f/5f528752b53eacb04e7b1d8959de8155.webp" />
+    <meta name="theme-color" content="#dc2626" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
+    <meta name="format-detection" content="telephone=yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="K-FOOD — Корейска Храна" />
+    <meta name="geo.position" content="43.0757;25.6172" />
+    <meta name="geo.region" content="BG-04" />
+    <meta name="geo.placename" content="Велико Търново" />
+    <meta name="last-modified" content="2026-07-03" />
+    
+    <!-- Performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://storage.readdy-site.link" />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
+    <link rel="dns-prefetch" href="//fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="//storage.readdy-site.link" />
+    <link rel="dns-prefetch" href="//readdy.ai" />
+    
+    <!-- Preload hero image for instant LCP -->
+    <link rel="preload" as="image" href="https://static.readdy.ai/image/658b459fcf05a7723f8029c45615de2f/30692b16b68972f04e83df9e8ccc6577.webp" type="image/webp" fetchpriority="high" />
+    
+    <!-- Google Fonts with display swap -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet" />
+    
+    <!-- Critical CSS -->
+    <style>
+      *,::before,::after{box-sizing:border-box;margin:0;padding:0;border:0 solid #e5e5e5}
+      html{line-height:1.5;-webkit-text-size-adjust:100%;font-family:'Inter',ui-sans-serif,system-ui,sans-serif}
+      body{margin:0;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility}
+      #root{min-height:100dvh}
+      .skeleton{background:linear-gradient(90deg,#f5f5f5 25%,#ebebeb 50%,#f5f5f5 75%);background-size:200% 100%;animation:shimmer 1.2s ease-in-out infinite}
+      @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+      @media (max-width:768px){html{font-size:15px}}
+    </style>
+    
+    <title>Корейска Храна Онлайн | K-FOOD Велико Търново — Корейски Магазин с Доставка до Цяла България</title>
+    <meta name="keywords" content="корейска храна, корейски магазин, корейска храна онлайн, корейски продукти, корейска храна България, корейска храна Велико Търново, рамен Samyang, кимчи, токбоки, Buldak, корейски рамен, корейски сосове, корейски напитки, корейски снакове, купи корейска храна, корейска храна доставка, автентична корейска храна, K-FOOD, онлайн корейски магазин" />
+
+    <!-- AI Search Engine Optimization -->
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1" />
+    <meta name="author" content="K-FOOD Велико Търново" />
+    <meta name="copyright" content="K-FOOD Велико Търново" />
+    <meta name="application-name" content="K-FOOD — Корейска Храна Онлайн" />
+    <meta name="msapplication-TileColor" content="#dc2626" />
+    <meta name="msapplication-TileImage" content="https://static.readdy.ai/image/658b459fcf05a7723f8029c45615de2f/5f528752b53eacb04e7b1d8959de8155.webp" />
+    <link rel="canonical" href="https://k-foodvelikotarnovo.com/" />
+    
+    <!-- Open Graph -->
+    <meta property="og:title" content="Корейска Храна Онлайн | K-FOOD Велико Търново — Корейски Магазин" />
+    <meta property="og:description" content="Автентична корейска храна с доставка до цяла България. Рамен Samyang, Buldak, кимчи, токбоки, сосове и снакове. Поръчай онлайн!" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://k-foodvelikotarnovo.com/" />
+    <meta property="og:image" content="https://static.readdy.ai/image/658b459fcf05a7723f8029c45615de2f/5f528752b53eacb04e7b1d8959de8155.webp" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name" content="K-FOOD — Корейска Храна Велико Търново" />
+    <meta property="og:locale" content="bg_BG" />
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Корейска Храна Онлайн | K-FOOD Велико Търново" />
+    <meta name="twitter:description" content="Автентична корейска храна с доставка до цяла България. Рамен, кимчи, токбоки и още!" />
+    <meta name="twitter:image" content="https://static.readdy.ai/image/658b459fcf05a7723f8029c45615de2f/5f528752b53eacb04e7b1d8959de8155.webp" />
+    
+    <!-- Icons с отложено зареждане -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.0.0/fonts/remixicon.css" />
+    <meta name="google-site-verification" content="_uHykmyPP11xCMsvC4eT5JgmKNHOHLB6a_GYF40EXBw" />
+    <meta name="google-site-verification" content="aqRBuNpEufLBBYGoDvFFA8YgRgRPPgOTNzrMpOrdVjw" />
+    
+    <!-- AI + Google Structured Data for AI search engines (ChatGPT, Perplexity, Gemini, Copilot) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebSite",
+          "@id": "https://k-foodvelikotarnovo.com/#website",
+          "name": "K-FOOD \u2014 \u041a\u043e\u0440\u0435\u0439\u0441\u043a\u0430 \u0425\u0440\u0430\u043d\u0430 \u041e\u043d\u043b\u0430\u0439\u043d",
+          "url": "https://k-foodvelikotarnovo.com",
+          "inLanguage": "bg",
+          "description": "K-FOOD \u0435 \u0441\u043f\u0435\u0446\u0438\u0430\u043b\u0438\u0437\u0438\u0440\u0430\u043d \u043e\u043d\u043b\u0430\u0439\u043d \u043c\u0430\u0433\u0430\u0437\u0438\u043d \u0437\u0430 \u0430\u0432\u0442\u0435\u043d\u0442\u0438\u0447\u043d\u0430 \u043a\u043e\u0440\u0435\u0439\u0441\u043a\u0430 \u0445\u0440\u0430\u043d\u0430 \u0432 \u0411\u044a\u043b\u0433\u0430\u0440\u0438\u044f. \u0420\u0430\u043c\u0435\u043d Samyang, Buldak, \u043a\u0438\u043c\u0447\u0438, \u0442\u043e\u043a\u0431\u043e\u043e\u043a\u0438, \u043a\u043e\u0440\u0435\u0439\u0441\u043a\u0438 \u0441\u043e\u0441\u043e\u0432\u0435 \u0438 \u0441\u043d\u0430\u043a\u043e\u0432\u0435.",
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://k-foodvelikotarnovo.com/products?search={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": ["Store", "OnlineStore", "LocalBusiness"],
+          "@id": "https://k-foodvelikotarnovo.com/#business",
+          "name": "K-FOOD \u2014 \u041a\u043e\u0440\u0435\u0439\u0441\u043a\u0430 \u0425\u0440\u0430\u043d\u0430 \u041e\u043d\u043b\u0430\u0439\u043d",
+          "url": "https://k-foodvelikotarnovo.com",
+          "telephone": "+359899897566",
+          "email": "kfoodtarnovo@gmail.com",
+          "address": {
+            "@type": "PostalAddress",
+            "streetAddress": "\u0443\u043b. \u0412\u0435\u043b\u0447\u043e \u0414\u0436\u0430\u043c\u0434\u0436\u0438\u044f\u0442\u0430 6",
+            "addressLocality": "\u0412\u0435\u043b\u0438\u043a\u043e \u0422\u044a\u0440\u043d\u043e\u0432\u043e",
+            "postalCode": "5000",
+            "addressCountry": "BG"
+          },
+          "geo": { "@type": "GeoCoordinates", "latitude": 43.0757, "longitude": 25.6172 },
+          "openingHours": "Mo-Sa 09:00-19:00",
+          "priceRange": "\u20ac\u20ac",
+          "servesCuisine": "Korean",
+          "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.9", "ratingCount": "2847", "bestRating": "5" },
+          "sameAs": [
+            "https://www.facebook.com/profile.php?id=61556516122723",
+            "https://www.instagram.com/kfood_veliko_tarnovo/",
+            "https://www.tiktok.com/@kfoodveliko"
+          ]
+        }
+      ]
+    }
+    </script>
+
+    <!-- Meta Pixel Code -->
+    <script>
+      !function(f,b,e,v,n,t,s)
+      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+      n.queue=[];t=b.createElement(e);t.async=!0;
+      t.src=v;s=b.getElementsByTagName(e)[0];
+      s.parentNode.insertBefore(t,s)}(window, document,'script',
+      'https://connect.facebook.net/en_US/fbevents.js');
+      fbq('init', '4367746813495227');
+      fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id=4367746813495227&ev=PageView&noscript=1"
+    /></noscript>
+    <!-- End Meta Pixel Code -->
+</head>
+  <body>
+    <!-- МИГНОВЕН LOADING SCREEN -->
+    <!-- Skip to main content - accessibility -->
+    <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:bg-emerald-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:font-semibold">
+      Прескочи към основното съдържание
+    </a>
+
+    <div id="loading-screen" style="position:fixed;top:0;left:0;width:100%;height:100%;background:#fff;z-index:9999;display:flex;align-items:center;justify-content:center;" role="status" aria-label="Зареждане">
+      <div class="skeleton" style="width:60px;height:60px;border-radius:50%;"></div>
+    </div>
+    
+    <div id="root"></div>
+    
+    <!-- КРИТИЧЕН JS INLINE -->
+    <script>
+      // Премахване на loading screen при зареждане на DOM
+      document.addEventListener('DOMContentLoaded', () => {
+        const loadingScreen = document.getElementById('loading-screen');
+        if (loadingScreen) {
+          loadingScreen.style.opacity = '0';
+          loadingScreen.style.transition = 'opacity 0.3s';
+          setTimeout(() => loadingScreen.remove(), 300);
+        }
+      });
+      
+      // Instant scroll to top
+      window.scrollToTop = () => {
+        window.scrollTo({ top: 0, behavior: 'auto' });
+      };
+    </script>
+    
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Service Worker с агресивно кеширане -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+          .then(reg => console.log('SW registered'))
+          .catch(err => console.log('SW failed'));
+      }
+    </script>
+  </body>
+</html>

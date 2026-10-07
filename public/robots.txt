@@ -1,0 +1,28 @@
+User-agent: *
+
+Disallow: /admin
+Disallow: /admin/
+Disallow: /login
+Disallow: /checkout
+Disallow: /cod-checkout
+Disallow: /cart
+Disallow: /order-success
+
+Allow: /
+Allow: /products
+Allow: /product/
+Allow: /categories
+Allow: /category/
+Allow: /blog
+Allow: /blog/
+Allow: /about
+Allow: /faq
+Allow: /b2b
+Allow: /shipping
+Allow: /payment
+Allow: /returns
+Allow: /privacy
+Allow: /terms
+Allow: /leave-review
+
+Sitemap: https://k-foodvelikotarnovo.com/sitemap-index.xml
