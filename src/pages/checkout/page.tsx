@@ -5,9 +5,10 @@ import { useCart, MIN_ORDER_EUR } from '../../contexts/CartContext';
 import { supabase } from '../../utils/supabase';
 import { useSEO } from '../../utils/seo';
 import { trackInitiateCheckout } from '../../utils/metaPixel';
+import { cartSignature, getCheckoutAttempt } from '../../utils/checkoutAttempt';
 
 export default function Checkout() {
-  const { items, totalPriceEur, discountTier, discountAmountEur, promoCode, promoDiscountAmountEur, finalPriceEur, finalPrice, syncCartPrices } = useCart();
+  const { items, totalPriceEur, discountTier, discountAmountEur, promoCode, promoDiscountAmountEur, finalPriceEur, syncCartPrices, removePromoCode } = useCart();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
@@ -52,44 +53,38 @@ export default function Checkout() {
   };
 
   const callCreateCheckout = async (customerEmail: string, customerPhone: string) => {
+    const subtotalMinor = items.reduce((sum, item) => sum + Math.round(item.price * 100) * item.quantity, 0);
+    const percent = subtotalMinor >= 10000 ? 10 : subtotalMinor >= 5000 ? 5 : 0;
     const body = {
-      items: items.map(item => ({
-        id: item.id, name: item.name, price: item.price, quantity: item.quantity, image: item.image,
-      })),
-      discountPercent: discountTier?.percent || 0,
+      items: items.map(item => ({ id: item.id, quantity: item.quantity })).sort((a, b) => a.id - b.id),
       promoCode: promoCode?.code || null,
-      promoDiscountPercent: promoCode?.discountPercent || 0,
-      customerEmail: customerEmail.trim(),
+      customerEmail: customerEmail.trim().toLowerCase(),
       customerPhone: customerPhone.replace(/\s/g, ''),
+      expectedTotalMinor: Math.round(subtotalMinor * (100 - percent) / 100),
     };
-
-    try {
-      const { data, error: fnError } = await supabase.functions.invoke('create-checkout', { body });
-      if (!fnError && data?.url) return data;
-    } catch { /* fallback */ }
-
-    const supabaseUrl = import.meta.env.VITE_PUBLIC_SUPABASE_URL;
-    const supabaseKey = import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY;
-    if (!supabaseUrl || !supabaseKey) throw new Error('Supabase конфигурацията липсва');
-
-    const response = await fetch(`${supabaseUrl}/functions/v1/create-checkout`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${supabaseKey}` },
-      body: JSON.stringify(body),
+    const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(body)));
+    const fingerprint = Array.from(new Uint8Array(digest), n => n.toString(16).padStart(2, '0')).join('');
+    const attempt = getCheckoutAttempt(fingerprint, sessionStorage);
+    const { data, error: fnError } = await supabase.functions.invoke('create-checkout', {
+      body: { ...body, attemptId: attempt.id, statusToken: attempt.token },
     });
-
-    const responseText = await response.text();
-    let responseData;
-    try { responseData = JSON.parse(responseText); } catch {
-      throw new Error(`Сървърът върна грешка ${response.status}`);
+    if (fnError) {
+      let message = 'Временен проблем с плащането. Опитайте отново със същата поръчка.';
+      if (fnError.context instanceof Response) {
+        try { message = (await fnError.context.json()).error || message; } catch { /* use fallback text */ }
+      }
+      throw new Error(message);
     }
-    if (!response.ok) throw new Error(responseData.error || `Сървър грешка: ${response.status}`);
-    if (!responseData.url) throw new Error('Не получихме линк за плащане от сървъра');
-    return responseData;
+    if (!data?.url || !data?.orderNumber) throw new Error('Не получихме линк за плащане от сървъра');
+    const redirect = new URL(data.url);
+    if (redirect.protocol !== 'https:' || redirect.hostname !== 'checkout.stripe.com') throw new Error('Невалиден линк за плащане');
+    sessionStorage.setItem(`order-proof:${data.orderNumber}`, attempt.token);
+    sessionStorage.setItem(`order-cart:${data.orderNumber}`, cartSignature(items));
+    return data;
   };
 
   const handlePayNow = async () => {
-    if (isBelowMinimum) return;
+    if (isBelowMinimum || isProcessing || promoCode) return;
     setEmailError(''); setPhoneError(''); setError('');
 
     const emailValid = validateEmail(email);
@@ -100,8 +95,6 @@ export default function Checkout() {
     if (!emailValid || !phoneValid) return;
 
     setIsProcessing(true);
-    // Save order total for Meta Pixel Purchase event
-    sessionStorage.setItem('order_total', String(finalPriceEur));
     try {
       const data = await callCreateCheckout(email, phone);
       if (data?.url) { window.location.href = data.url; return; }
@@ -129,6 +122,13 @@ export default function Checkout() {
           <div className="mb-3 sm:mb-4 bg-red-50 border border-red-200 rounded-xl p-2.5 sm:p-3 flex items-start gap-2">
             <i className="ri-error-warning-line text-red-600 flex-shrink-0 mt-0.5"></i>
             <p className="text-xs sm:text-sm text-red-800">{error}</p>
+          </div>
+        )}
+
+        {promoCode && (
+          <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            <p>Промо кодовете временно не се приемат за плащане с карта.</p>
+            <button onClick={removePromoCode} className="mt-2 font-semibold underline">Премахни кода и продължи</button>
           </div>
         )}
 
@@ -227,7 +227,7 @@ export default function Checkout() {
         )}
 
         {/* Desktop Pay Button */}
-        <button onClick={handlePayNow} disabled={isProcessing || isBelowMinimum} className="hidden lg:block w-full p-4 sm:p-5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-95 touch-target">
+        <button onClick={handlePayNow} disabled={isProcessing || isBelowMinimum || !!promoCode} className="hidden lg:block w-full p-4 sm:p-5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-95 touch-target">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 sm:w-11 sm:h-11 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
@@ -254,7 +254,7 @@ export default function Checkout() {
         </button>
 
         {/* Mobile Sticky Pay Button */}
-        <button onClick={handlePayNow} disabled={isProcessing || isBelowMinimum} className="lg:hidden fixed left-3 right-3 sm:left-4 sm:right-4 p-3 sm:p-4 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-95 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] touch-target" style={{ bottom: 'calc(60px + env(safe-area-inset-bottom))', zIndex: 60 }}>
+        <button onClick={handlePayNow} disabled={isProcessing || isBelowMinimum || !!promoCode} className="lg:hidden fixed left-3 right-3 sm:left-4 sm:right-4 p-3 sm:p-4 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-95 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] touch-target" style={{ bottom: 'calc(60px + env(safe-area-inset-bottom))', zIndex: 60 }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <i className="ri-bank-card-line text-lg sm:text-xl"></i>

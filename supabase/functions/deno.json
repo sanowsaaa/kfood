@@ -1,0 +1,10 @@
+{
+  "imports": {
+    "stripe": "npm:stripe@23.0.0",
+    "@supabase/supabase-js": "npm:@supabase/supabase-js@2.117.2"
+  },
+  "nodeModulesDir": "auto",
+  "lock": "./deno.lock",
+  "compilerOptions": { "strict": true },
+  "fmt": { "lineWidth": 100 }
+}

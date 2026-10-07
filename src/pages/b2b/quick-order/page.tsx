@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { useB2B, B2BProduct } from '@/contexts/B2BContext';
+import { useB2B, type B2BProduct } from '@/contexts/B2BContext';
 import { supabase } from '@/utils/supabase';
 import B2BHeader from '@/pages/b2b/components/B2BHeader';
 import B2BFooter from '@/pages/b2b/components/B2BFooter';
