@@ -1,31 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useB2B, type B2BProduct } from '@/contexts/B2BContext';
 import { supabase } from '@/utils/supabase';
 import B2BHeader from '@/pages/b2b/components/B2BHeader';
+import { useCustomerRead } from '@/hooks/useCustomerRead';
+import CustomerReadError from '@/components/CustomerReadError';
 import B2BFooter from '@/pages/b2b/components/B2BFooter';
 
+async function load(signal: AbortSignal): Promise<B2BProduct[]> {
+  const { data, error } = await supabase.from('products')
+    .select('id, name, description, price, wholesale_price, carton_price, image, category, badge, rating, reviews, in_stock, stock, weight, volume, sku, slug, moq, moq_unit, pieces_per_carton')
+    .order('category').order('name').abortSignal(signal);
+  if (error) throw error;
+  return (data || []) as B2BProduct[];
+}
+
 export default function B2BProductsPage() {
-  const { companyId, company, loading, sessionLoading } = useB2B();
-  const [products, setProducts] = useState<B2BProduct[]>([]);
-  const [productsLoading, setProductsLoading] = useState(true);
+  const { loading, sessionLoading } = useB2B();
+  const { data: products, loading: productsLoading, error: readError, retry } = useCustomerRead<B2BProduct[]>(load, []);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [sortBy, setSortBy] = useState<'name'>('name');
-
-  useEffect(() => {
-    setProductsLoading(true);
-    supabase
-      .from('products')
-      .select('id, name, description, price, wholesale_price, carton_price, image, category, badge, rating, reviews, in_stock, stock, weight, volume, sku, slug, moq, moq_unit, pieces_per_carton')
-      .order('category')
-      .order('name')
-      .then(({ data }) => {
-        if (data) setProducts(data);
-        setProductsLoading(false);
-      })
-      .catch(() => setProductsLoading(false));
-  }, []);
 
   const categories = [...new Set(products.map(p => p.category))];
   const filtered = products.filter(p => {
@@ -60,6 +55,7 @@ export default function B2BProductsPage() {
       </section>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {readError && <CustomerReadError message={readError} onRetry={retry} />}
         {/* Filters */}
         <div className="flex flex-col sm:flex-row gap-3 mb-6">
           <div className="relative flex-1">

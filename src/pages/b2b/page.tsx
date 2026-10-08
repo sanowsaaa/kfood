@@ -24,9 +24,7 @@ export default function B2BPage() {
   }, []);
 
   useEffect(() => {
-    let lastScrollY = window.scrollY;
     const handleScroll = () => {
-      lastScrollY = window.scrollY;
       setShowStickyCta(window.scrollY > 600);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });

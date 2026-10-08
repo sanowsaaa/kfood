@@ -1,10 +1,11 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useState, useLayoutEffect } from 'react';
 import Header from '../home/components/Header';
 import Footer from '../home/components/Footer';
 import AboutSection from '../home/components/AboutSection';
 import { useSEO, getBreadcrumbSchema } from '../../utils/seo';
-import { categories as allCategories } from '../../mocks/categories';
+import { loadProducts } from '../../utils/catalog';
+import { useCustomerRead } from '../../hooks/useCustomerRead';
 import AgeVerification from '../../components/AgeVerification';
 
 const categoryData = [
@@ -83,6 +84,8 @@ const categoryData = [
 ];
 
 export default function Categories() {
+  const navigate = useNavigate();
+  const { data: products, loading, error } = useCustomerRead(loadProducts, []);
   const [showAgeVerification, setShowAgeVerification] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
@@ -110,7 +113,7 @@ export default function Categories() {
           '@type': 'ItemList',
           name: 'Категории Корейска Храна - K-FOOD',
           description: 'Пълен списък с категории автентична корейска храна',
-          numberOfItems: 9,
+          numberOfItems: categoryData.length,
           itemListElement: categoryData.map((cat, i) => ({
             '@type': 'ListItem',
             position: i + 1,
@@ -124,7 +127,8 @@ export default function Categories() {
 
   const handleCategoryClick = (category: typeof categoryData[0], e: React.MouseEvent) => {
     if (category.requiresAge) {
-      const ageVerified = sessionStorage.getItem('ageVerified');
+      let ageVerified = false;
+      try { ageVerified = sessionStorage.getItem('ageVerified') === 'true'; } catch { /* Require confirmation. */ }
       if (!ageVerified) {
         e.preventDefault();
         setSelectedCategory(category.id);
@@ -133,11 +137,9 @@ export default function Categories() {
     }
   };
 
-  const handleAgeVerified = (verified: boolean) => {
+  const handleAgeVerified = () => {
     setShowAgeVerification(false);
-    if (verified && selectedCategory) {
-      window.location.href = `/category/${selectedCategory}`;
-    }
+    if (selectedCategory) navigate(`/category/${selectedCategory}`);
     setSelectedCategory(null);
   };
 
@@ -148,7 +150,7 @@ export default function Categories() {
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-red-600 to-red-700 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Категории Корейска Храна</h1>
+          <h1 id="main-content" tabIndex={-1} className="text-4xl md:text-5xl font-bold mb-4">Категории Корейска Храна</h1>
           <p className="text-xl text-red-100 max-w-2xl mx-auto mb-3">
             Онлайн магазин за корейски продукти — рамен, кимчи, токбоки, сосове и още
           </p>
@@ -179,21 +181,21 @@ export default function Categories() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                 {category.requiresAge && (
                   <div className="absolute top-4 right-4 bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1">
-                    <i className="ri-error-warning-line"></i>
+                    <i aria-hidden="true" className="ri-error-warning-line"></i>
                     18+
                   </div>
                 )}
                 {category.isNew && (
                   <div className="absolute top-4 right-4 bg-pink-500 text-white px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1 animate-pulse-slow">
-                    <i className="ri-sparkling-line"></i>
+                    <i aria-hidden="true" className="ri-sparkling-line"></i>
                     NEW
                   </div>
                 )}
                 <div className="absolute bottom-4 left-4 right-4">
                   <h3 className="text-2xl font-bold text-white mb-1">{category.name}</h3>
                   <p className="text-sm text-white/90 flex items-center gap-2">
-                    <i className="ri-shopping-bag-line"></i>
-                    {category.productCount} {category.productCount === 1 ? 'продукт' : 'продукта'}
+                    <i aria-hidden="true" className="ri-shopping-bag-line"></i>
+                    {loading || error ? 'Разгледай продуктите' : `${products.filter(p => p.category === category.name).length} продукта`}
                   </p>
                 </div>
               </div>
@@ -203,7 +205,7 @@ export default function Categories() {
                 <div className="flex items-center justify-between">
                   <span className="text-red-600 font-semibold group-hover:text-red-700 flex items-center gap-2 whitespace-nowrap">
                     Разгледай продуктите
-                    <i className="ri-arrow-right-line group-hover:translate-x-1 transition-transform"></i>
+                    <i aria-hidden="true" className="ri-arrow-right-line group-hover:translate-x-1 transition-transform"></i>
                   </span>
                 </div>
               </div>
@@ -214,7 +216,7 @@ export default function Categories() {
         {/* Info Section */}
         <div className="mt-16 bg-red-50 rounded-2xl p-8 text-center">
           <div className="max-w-3xl mx-auto">
-            <i className="ri-information-line text-4xl text-red-600 mb-4"></i>
+            <i aria-hidden="true" className="ri-information-line text-4xl text-red-600 mb-4"></i>
             <h2 className="text-2xl font-bold text-gray-900 mb-3">Не намирате това, което търсите?</h2>
             <p className="text-gray-600 mb-6">
               Разгледайте всички наши продукти или се свържете с нас за специални поръчки
@@ -224,14 +226,14 @@ export default function Categories() {
                 to="/products"
                 className="bg-red-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-red-700 transition-colors flex items-center gap-2 whitespace-nowrap cursor-pointer"
               >
-                <i className="ri-grid-line"></i>
+                <i aria-hidden="true" className="ri-grid-line"></i>
                 Всички продукти
               </Link>
               <a
                 href="tel:+359123456789"
                 className="bg-white text-red-600 px-8 py-3 rounded-full font-semibold hover:bg-gray-50 transition-colors border-2 border-red-600 flex items-center gap-2 whitespace-nowrap cursor-pointer"
               >
-                <i className="ri-phone-line"></i>
+                <i aria-hidden="true" className="ri-phone-line"></i>
                 Свържете се с нас
               </a>
             </div>
@@ -244,7 +246,7 @@ export default function Categories() {
       <Footer />
 
       {showAgeVerification && (
-        <AgeVerification onVerify={handleAgeVerified} />
+        <AgeVerification onVerified={handleAgeVerified} onDenied={() => { setShowAgeVerification(false); setSelectedCategory(null); }} />
       )}
     </div>
   );

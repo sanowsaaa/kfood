@@ -1,130 +1,47 @@
-const CACHE_NAME = 'k-food-cache-v1';
-const STATIC_CACHE = 'k-food-static-v1';
-const IMAGE_CACHE = 'k-food-images-v1';
-const API_CACHE = 'k-food-api-v1';
-
-// Ресурси за кеширане
-const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json'
-];
-
-// Install event - кеширане на статични ресурси
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(STATIC_CACHE).then((cache) => {
-      return cache.addAll(STATIC_ASSETS);
-    })
-  );
-  self.skipWaiting();
+const STATIC_CACHE = 'k-food-static-v2';
+const IMAGE_CACHE = 'k-food-images-v2';
+const ownCaches = new Set([STATIC_CACHE, IMAGE_CACHE]);
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', event => {
+  event.waitUntil((async () => {
+    for (const name of await caches.keys()) {
+      // Retire this application's old API/HTML caches, not another app's caches.
+      if (name.startsWith('k-food-') && !ownCaches.has(name)) await caches.delete(name);
+    }
+    await self.clients.claim();
+  })());
 });
-
-// Activate event - изчистване на стари кешове
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames
-          .filter((name) => {
-            return name !== CACHE_NAME && 
-                   name !== STATIC_CACHE && 
-                   name !== IMAGE_CACHE && 
-                   name !== API_CACHE;
-          })
-          .map((name) => caches.delete(name))
-      );
-    })
-  );
-  self.clients.claim();
-});
-
-// Fetch event - стратегия за кеширане
-self.addEventListener('fetch', (event) => {
-  const { request } = event;
-  const url = new URL(request.url);
-
-  // НЕ кешираме POST, PUT, DELETE, PATCH заявки
-  if (request.method !== 'GET') {
-    return;
+async function cachedAsset(request, name, limit) {
+  const cache = await caches.open(name);
+  const stored = await cache.match(request);
+  if (stored) return stored;
+  const response = await fetch(request);
+  if (response.ok && ['basic', 'cors', 'default'].includes(response.type)) {
+    const type = response.headers.get('content-type') || '';
+    // A hosting fallback can return HTML for a missing JavaScript chunk.
+    if (name === IMAGE_CACHE ? type.startsWith('image/') : /javascript|text\/css/.test(type)) {
+      try {
+        await cache.put(request, response.clone());
+        const keys = await cache.keys();
+        for (const key of keys.slice(0, Math.max(0, keys.length - limit))) await cache.delete(key);
+      } catch { /* Caching is optional; always deliver the network response. */ }
+    }
   }
-
-  // Изображения - Cache First (1 година)
-  if (request.destination === 'image' || url.pathname.includes('/api/search-image')) {
-    event.respondWith(
-      caches.open(IMAGE_CACHE).then((cache) => {
-        return cache.match(request).then((response) => {
-          if (response) {
-            return response;
-          }
-          return fetch(request).then((networkResponse) => {
-            if (networkResponse.ok) {
-              cache.put(request, networkResponse.clone());
-            }
-            return networkResponse;
-          }).catch(() => response || fetch(request));
-        });
-      })
-    );
-    return;
+  return response;
+}
+self.addEventListener('fetch', event => {
+  const request = event.request, url = new URL(request.url);
+  if (request.method !== 'GET' || request.headers.has('authorization')) return;
+  // API/auth/order responses must always come from the network and never fall
+  // back to another session's data, even when the browser is offline.
+  if (url.hostname.endsWith('.supabase.co') || url.pathname.startsWith('/api/') ||
+      request.mode === 'navigate' || request.destination === 'document') return;
+  if (url.origin === self.location.origin && /^\/assets\/.+-[a-zA-Z0-9_-]+\.(js|css)$/.test(url.pathname)) {
+    event.respondWith(cachedAsset(request, STATIC_CACHE, 100)); return;
   }
-
-  // API заявки - Network First с fallback към кеш (само GET)
-  if (url.pathname.includes('/api/') || url.hostname.includes('supabase')) {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          if (response.ok) {
-            const responseClone = response.clone();
-            caches.open(API_CACHE).then((cache) => {
-              cache.put(request, responseClone);
-            });
-          }
-          return response;
-        })
-        .catch(() => {
-          return caches.match(request).then(cached => cached || fetch(request));
-        })
-    );
-    return;
+  const publicImage = url.origin === self.location.origin ||
+    url.hostname === 'readdy.ai' || url.hostname.endsWith('.readdy.ai') || url.hostname === 'res.cloudinary.com';
+  if (request.destination === 'image' && publicImage && !url.searchParams.has('token')) {
+    event.respondWith(cachedAsset(request, IMAGE_CACHE, 200));
   }
-
-  // Статични ресурси - Cache First
-  if (request.destination === 'script' || 
-      request.destination === 'style' || 
-      request.destination === 'font') {
-    event.respondWith(
-      caches.open(STATIC_CACHE).then((cache) => {
-        return cache.match(request).then((response) => {
-          if (response) {
-            return response;
-          }
-          return fetch(request).then((networkResponse) => {
-            if (networkResponse.ok) {
-              cache.put(request, networkResponse.clone());
-            }
-            return networkResponse;
-          }).catch(() => response || fetch(request));
-        });
-      })
-    );
-    return;
-  }
-
-  // HTML страници - Network First
-  event.respondWith(
-    fetch(request)
-      .then((response) => {
-        if (response.ok) {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(request, responseClone);
-          });
-        }
-        return response;
-      })
-      .catch(() => {
-        return caches.match(request).then(cached => cached || fetch(request));
-      })
-  );
 });

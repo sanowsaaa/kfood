@@ -1,15 +1,13 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, Navigate } from 'react-router-dom';
 import Header from '../home/components/Header';
 import Footer from '../home/components/Footer';
 import { useCart } from '../../contexts/CartContext';
 import { useSEO, getBreadcrumbSchema } from '../../utils/seo';
-import { createClient } from '@supabase/supabase-js';
-
-const supabase = createClient(
-  import.meta.env.VITE_PUBLIC_SUPABASE_URL,
-  import.meta.env.VITE_PUBLIC_SUPABASE_ANON_KEY
-);
+import { loadProducts } from '../../utils/catalog';
+import { useCustomerRead } from '../../hooks/useCustomerRead';
+import AgeVerification from '../../components/AgeVerification';
+import CustomerReadError from '../../components/CustomerReadError';
 
 interface Product {
   id: number;
@@ -27,6 +25,7 @@ interface Product {
 }
 
 const categoryData = [
+  { slug: 'non-food', name: 'Нехранителни стоки', description: 'Кухненски принадлежности и аксесоари за корейска кухня', dbCategory: 'Нехранителни стоки' },
   {
     slug: 'cosmetics', name: 'Корейска козметика',
     description: 'K-beauty продукти — грижа за кожата, маски, серуми и корейски козметични иновации с доставка в България',
@@ -107,31 +106,16 @@ export default function Category() {
   const { addToCart } = useCart();
   const [sortBy, setSortBy] = useState('featured');
   const [addedProducts, setAddedProducts] = useState<Set<number>>(new Set());
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: products, loading, error: readError, retry } = useCustomerRead<Product[]>(loadProducts, []);
+
+  const [ageVerified, setAgeVerified] = useState(() => { try { return sessionStorage.getItem('ageVerified') === 'true'; } catch { return false; } });
+  const [ageDenied, setAgeDenied] = useState(false);
 
   const currentCategory = categoryData.find(cat => cat.slug === id);
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [id]);
-
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase.from('products').select('*').order('id', { ascending: true });
-      if (error) throw error;
-      setProducts(data || []);
-    } catch (error) {
-      console.error('Грешка при зареждане на продуктите:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useSEO({
     title: currentCategory?.seoTitle ?? (currentCategory ? `${currentCategory.name} - K-FOOD Велико Търново | Корейски Продукти` : 'Категория - K-FOOD'),
@@ -176,12 +160,17 @@ export default function Category() {
 
   const handleAddToCart = (product: Product) => {
     if (!product.in_stock) return;
-    addToCart({ id: product.id, name: product.name, price: product.price, image: product.image });
+    addToCart({ ...product });
     setAddedProducts(prev => new Set(prev).add(product.id));
     setTimeout(() => {
       setAddedProducts(prev => { const n = new Set(prev); n.delete(product.id); return n; });
     }, 2000);
   };
+
+  if (readError) return <div className="customer-page min-h-screen bg-gray-50"><Header /><main id="main-content" className="px-4 py-8"><CustomerReadError message={readError} onRetry={retry} /></main><Footer /></div>;
+
+  if (ageDenied) return <Navigate to="/categories" replace />;
+  if (currentCategory?.dbCategory === 'Алкохол' && !ageVerified) return <><Header /><AgeVerification onVerified={() => setAgeVerified(true)} onDenied={() => setAgeDenied(true)} /><Footer /></>;
 
   if (loading) {
     return (
@@ -204,7 +193,7 @@ export default function Category() {
         <Header />
         <div className="min-h-screen flex items-center justify-center px-4">
           <div className="text-center">
-            <h1 className="text-2xl sm:text-4xl font-bold text-gray-900 mb-4">Категорията не е намерена</h1>
+            <h1 id="main-content" tabIndex={-1} className="text-2xl sm:text-4xl font-bold text-gray-900 mb-4">Категорията не е намерена</h1>
             <Link to="/products" className="text-red-600 hover:text-red-700 font-semibold whitespace-nowrap text-sm">
               Виж всички продукти
             </Link>
@@ -223,13 +212,13 @@ export default function Category() {
       <section className="bg-gradient-to-r from-red-600 to-red-700 text-white py-10 sm:py-14 md:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-2 sm:mb-4">{currentCategory.name}</h1>
+            <h1 id="main-content" tabIndex={-1} className="text-2xl sm:text-3xl md:text-5xl font-bold mb-2 sm:mb-4">{currentCategory.name}</h1>
             <p className="text-sm sm:text-base md:text-xl text-red-100 max-w-2xl mx-auto">
               {currentCategory.description}
             </p>
             <div className="mt-4 sm:mt-6 flex items-center justify-center gap-2 text-red-100 text-xs sm:text-sm">
               <Link to="/" className="hover:text-white transition-colors cursor-pointer">Начало</Link>
-              <i className="ri-arrow-right-s-line"></i>
+              <i aria-hidden="true" className="ri-arrow-right-s-line"></i>
               <span>{currentCategory.name}</span>
             </div>
           </div>
@@ -251,6 +240,7 @@ export default function Category() {
               <div className="flex items-center gap-3">
                 <label className="text-sm text-gray-700 font-medium whitespace-nowrap">Сортирай:</label>
                 <select
+                  aria-label="Сортиране на продуктите"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
                   className="px-3 sm:px-4 py-2 pr-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent cursor-pointer text-sm"
@@ -306,7 +296,7 @@ export default function Category() {
                     <div className="flex items-center gap-2 mb-2 sm:mb-4">
                       <div className="flex items-center">
                         {[...Array(5)].map((_, i) => (
-                          <i
+                          <i aria-hidden="true"
                             key={i}
                             className={`${i < Math.floor(product.rating) ? 'ri-star-fill text-yellow-400' : 'ri-star-line text-gray-300'} text-xs sm:text-sm`}
                           ></i>
@@ -330,16 +320,16 @@ export default function Category() {
                         className={`${product.in_stock ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'} w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl whitespace-nowrap touch-target-sm`}
                       >
                         {addedProducts.has(product.id) ? (
-                          <i className="ri-check-line text-base sm:text-xl"></i>
+                          <i aria-hidden="true" className="ri-check-line text-base sm:text-xl"></i>
                         ) : (
-                          <i className="ri-shopping-cart-line text-base sm:text-xl"></i>
+                          <i aria-hidden="true" className="ri-shopping-cart-line text-base sm:text-xl"></i>
                         )}
                       </button>
                     </div>
 
                     {product.in_stock && product.stock < 20 && (
                       <div className="mt-2 sm:mt-3 text-xs sm:text-sm text-orange-600 font-medium">
-                        <i className="ri-error-warning-line mr-1"></i>
+                        <i aria-hidden="true" className="ri-error-warning-line mr-1"></i>
                         Остават само {product.stock} бр.
                       </div>
                     )}
@@ -349,7 +339,7 @@ export default function Category() {
             </div>
           ) : (
             <div className="text-center py-12 sm:py-16">
-              <i className="ri-inbox-line text-4xl sm:text-6xl text-gray-300 mb-4"></i>
+              <i aria-hidden="true" className="ri-inbox-line text-4xl sm:text-6xl text-gray-300 mb-4"></i>
               <h3 className="text-lg sm:text-2xl font-bold text-gray-900 mb-2">Няма продукти в тази категория</h3>
               <p className="text-gray-600 text-sm mb-6">Опитайте да разгледате други категории</p>
               <Link

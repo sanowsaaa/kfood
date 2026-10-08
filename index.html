@@ -2,7 +2,7 @@
 <html lang="bg">
   <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; img-src 'self' https://readdy.ai https://*.readdy.ai https://res.cloudinary.com https://www.facebook.com data: blob:; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://api.stripe.com https://connect.facebook.net; frame-src https://js.stripe.com https://www.facebook.com; media-src 'self' https://readdy.ai https://*.readdy.ai https://res.cloudinary.com; form-action 'self' https://api.stripe.com; base-uri 'self'; frame-ancestors 'self'; upgrade-insecure-requests;" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; img-src 'self' https://*.supabase.co https://api.qrserver.com https://readdy.ai https://*.readdy.ai https://res.cloudinary.com https://www.facebook.com data: blob:; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; connect-src 'self' https://readdy.ai https://*.supabase.co https://api.stripe.com https://connect.facebook.net; frame-src https://js.stripe.com https://www.facebook.com; media-src 'self' https://readdy.ai https://*.readdy.ai https://res.cloudinary.com; form-action 'self' https://api.stripe.com; base-uri 'self'; frame-ancestors 'self'; upgrade-insecure-requests;" />
     <link rel="icon" type="image/webp" href="https://static.readdy.ai/image/658b459fcf05a7723f8029c45615de2f/5f528752b53eacb04e7b1d8959de8155.webp" sizes="32x32" />
     <link rel="apple-touch-icon" href="https://static.readdy.ai/image/658b459fcf05a7723f8029c45615de2f/5f528752b53eacb04e7b1d8959de8155.webp" />
     <meta name="theme-color" content="#dc2626" />
@@ -41,7 +41,7 @@
       #root{min-height:100dvh}
       .skeleton{background:linear-gradient(90deg,#f5f5f5 25%,#ebebeb 50%,#f5f5f5 75%);background-size:200% 100%;animation:shimmer 1.2s ease-in-out infinite}
       @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-      @media (max-width:768px){html{font-size:15px}}
+      @media (max-width:768px){html{font-size:16px}}
     </style>
     
     <title>Корейска Храна Онлайн | K-FOOD Велико Търново — Корейски Магазин с Доставка до Цяла България</title>
@@ -127,25 +127,28 @@
     }
     </script>
 
-    <!-- Meta Pixel Code -->
+    <!-- Existing marketing pixel starts only after the existing consent choice. -->
     <script>
-      !function(f,b,e,v,n,t,s)
-      {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-      n.callMethod.apply(n,arguments):n.queue.push(arguments)};
-      if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
-      n.queue=[];t=b.createElement(e);t.async=!0;
-      t.src=v;s=b.getElementsByTagName(e)[0];
-      s.parentNode.insertBefore(t,s)}(window, document,'script',
-      'https://connect.facebook.net/en_US/fbevents.js');
-      fbq('init', '4367746813495227');
-      fbq('track', 'PageView');
+      (() => {
+        let loaded = false;
+        const allowed = () => { try { return localStorage.getItem('cookieConsent') === 'accepted'; } catch { return false; } };
+        const start = () => {
+          const params = new URLSearchParams(window.location.search);
+          if (loaded || !allowed() || params.has('email') || params.has('session_id') || params.has('code')) return;
+          loaded = true;
+          !function(f,b,e,v,n,t,s) {
+            if(f.fbq)return;n=f.fbq=function(){n.callMethod?n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];
+            t=b.createElement(e);t.async=!0;t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s);
+          }(window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+          fbq('init', '4367746813495227');
+          fbq('track', 'PageView');
+        };
+        start(); window.addEventListener('kfood:consent-changed', start);
+      })();
     </script>
-    <!-- End Meta Pixel Code -->
 </head>
   <body>
-    <noscript><img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=4367746813495227&ev=PageView&noscript=1"
-    /></noscript>
     <!-- МИГНОВЕН LOADING SCREEN -->
     <!-- Skip to main content - accessibility -->
     <a href="#main-content" class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:bg-emerald-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-lg focus:font-semibold">

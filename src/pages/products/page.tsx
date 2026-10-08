@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import Header from '../home/components/Header';
 import Footer from '../home/components/Footer';
 import { categories, requiresAgeVerification } from '../../mocks/categories';
@@ -7,7 +7,10 @@ import { useCart } from '../../contexts/CartContext';
 import { useSEO, getBreadcrumbSchema } from '../../utils/seo';
 import AgeVerification from '../../components/AgeVerification';
 import QuickViewModal from '../../components/QuickViewModal';
-import { supabase } from '../../utils/supabase';
+import { loadProducts } from '../../utils/catalog';
+import { useCustomerRead } from '../../hooks/useCustomerRead';
+import CustomerReadError from '../../components/CustomerReadError';
+import { useAdminDialog as useDialog } from '../../hooks/useAdminDialog';
 
 interface Product {
   id: number;
@@ -25,42 +28,22 @@ interface Product {
 }
 
 export default function Products() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: products, loading, error: readError, retry } = useCustomerRead<Product[]>(loadProducts, []);
   const [selectedCategory, setSelectedCategory] = useState('Всички');
   const [sortBy, setSortBy] = useState('featured');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchQuery = searchParams.get('search') || '';
+  const setSearchQuery = (value: string) => setSearchParams(previous => { const next = new URLSearchParams(previous); if (value) next.set('search', value); else next.delete('search'); return next; }, { replace: true });
   const [showAgeVerification, setShowAgeVerification] = useState(false);
   const [isAgeVerified, setIsAgeVerified] = useState(false);
   const [showFilterDrawer, setShowFilterDrawer] = useState(false);
   const [addedId, setAddedId] = useState<number | null>(null);
   const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
   const { addToCart } = useCart();
+  const drawerRef = useDialog(showFilterDrawer, false, () => setShowFilterDrawer(false));
 
   useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('id', { ascending: true });
-
-      if (error) throw error;
-      setProducts(data || []);
-    } catch (error) {
-      console.error('Грешка при зареждане на продуктите:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const verified = sessionStorage.getItem('ageVerified');
-    if (verified === 'true') setIsAgeVerified(true);
+    try { if (sessionStorage.getItem('ageVerified') === 'true') setIsAgeVerified(true); } catch { /* Keep age confirmation required. */ }
   }, []);
 
   useEffect(() => {
@@ -117,7 +100,7 @@ export default function Products() {
     e.stopPropagation();
     if (!product.in_stock) return;
 
-    addToCart({ id: product.id, name: product.name, price: product.price, image: product.image });
+    addToCart({ ...product });
     setAddedId(product.id);
     setTimeout(() => setAddedId(null), 2000);
   };
@@ -139,6 +122,8 @@ export default function Products() {
   };
 
   const activeFiltersCount = (selectedCategory !== 'Всички' ? 1 : 0) + (sortBy !== 'featured' ? 1 : 0);
+
+  if (readError) return <div className="customer-page min-h-screen bg-gray-50"><Header /><main id="main-content" className="px-4 py-8"><CustomerReadError message={readError} onRetry={retry} /></main><Footer /></div>;
 
   if (loading) {
     return (
@@ -173,13 +158,13 @@ export default function Products() {
       )}
 
       {/* Mobile Filter Drawer */}
-      <div className={`fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl md:hidden transition-transform duration-300 max-h-[85vh] overflow-y-auto ${showFilterDrawer ? 'translate-y-0' : 'translate-y-full'}`}>
+      {showFilterDrawer && <div ref={drawerRef} role="dialog" aria-modal="true" aria-labelledby="product-filter-title" tabIndex={-1} className="fixed bottom-0 left-0 right-0 z-[70] bg-white rounded-t-2xl md:hidden max-h-[85dvh] overflow-y-auto">
         <div className="p-4">
           <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-bold text-gray-900">Филтри</h3>
-            <button onClick={() => setShowFilterDrawer(false)} className="p-2 cursor-pointer touch-target-sm">
-              <i className="ri-close-line text-xl text-gray-500"></i>
+            <h3 id="product-filter-title" className="text-lg font-bold text-gray-900">Филтри</h3>
+            <button aria-label="Затвори филтрите" onClick={() => setShowFilterDrawer(false)} className="p-2 cursor-pointer touch-target-sm">
+              <i aria-hidden="true" className="ri-close-line text-xl text-gray-500"></i>
             </button>
           </div>
 
@@ -237,17 +222,17 @@ export default function Products() {
           </button>
         </div>
         <div className="h-4"></div>
-      </div>
+      </div>}
 
       {/* Page Header - mobile optimized */}
       <div className="bg-gradient-to-r from-red-600 via-red-700 to-rose-800 py-6 sm:py-10 md:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-xl sm:text-2xl md:text-5xl font-bold text-white mb-1 sm:mb-2 md:mb-4">Корейска Храна Онлайн</h1>
+          <h1 id="main-content" tabIndex={-1} className="text-xl sm:text-2xl md:text-5xl font-bold text-white mb-1 sm:mb-2 md:mb-4">Корейска Храна Онлайн</h1>
           <p className="text-sm sm:text-base md:text-xl text-red-50 mb-2 sm:mb-3 md:mb-6">Доставка в цяла България · 1-2 дни</p>
           <div className="hidden md:flex flex-wrap gap-3">
             {['Доставката се заплаща при получаване', 'Бърза доставка 1-2 дни', '100% Оригинални продукти'].map(text => (
               <div key={text} className="bg-white/20 backdrop-blur-sm px-5 py-2.5 rounded-full text-white font-semibold flex items-center gap-2 whitespace-nowrap text-sm">
-                <i className="ri-check-line"></i>
+                <i aria-hidden="true" className="ri-check-line"></i>
                 <span>{text}</span>
               </div>
             ))}
@@ -262,18 +247,20 @@ export default function Products() {
             <div className="relative flex-1">
               <input
                 type="text"
+                aria-label="Търси продукт"
                 placeholder="Търси продукт..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-9 pr-9 py-2.5 sm:py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm bg-gray-50"
               />
-              <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-base"></i>
+              <i aria-hidden="true" className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-base"></i>
               {searchQuery && (
                 <button
+                  aria-label="Изчисти търсенето"
                   onClick={() => setSearchQuery('')}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer p-1"
                 >
-                  <i className="ri-close-line"></i>
+                  <i aria-hidden="true" className="ri-close-line"></i>
                 </button>
               )}
             </div>
@@ -283,7 +270,7 @@ export default function Products() {
               className="md:hidden flex items-center justify-center w-10 h-10 bg-gray-50 border border-gray-200 rounded-xl text-gray-700 cursor-pointer relative flex-shrink-0 touch-target-sm"
               aria-label="Филтри"
             >
-              <i className="ri-equalizer-line text-lg"></i>
+              <i aria-hidden="true" className="ri-equalizer-line text-lg"></i>
               {activeFiltersCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
                   {activeFiltersCount}
@@ -292,6 +279,7 @@ export default function Products() {
             </button>
 
             <select
+              aria-label="Сортиране на продуктите"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
               className="hidden md:block px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm bg-gray-50 cursor-pointer"
@@ -333,7 +321,7 @@ export default function Products() {
       <div className="bg-red-50 border-b border-red-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
           <p className="text-xs sm:text-sm text-red-700 font-medium text-center">
-            <i className="ri-percent-line mr-1"></i>
+            <i aria-hidden="true" className="ri-percent-line mr-1"></i>
             Намаление 5% за поръчки над 50€ · 10% над 100€
           </p>
         </div>
@@ -356,7 +344,7 @@ export default function Products() {
         {/* Alcohol Warning */}
         {selectedCategory === 'Алкохол' && isAgeVerified && (
           <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-2">
-            <i className="ri-information-line text-amber-600 flex-shrink-0 mt-0.5"></i>
+            <i aria-hidden="true" className="ri-information-line text-amber-600 flex-shrink-0 mt-0.5"></i>
             <p className="text-amber-800 text-sm">При доставка куриерът ще изиска лична карта за проверка на възрастта.</p>
           </div>
         )}
@@ -364,7 +352,7 @@ export default function Products() {
         {/* Products Grid - optimized for mobile */}
         {filteredProducts.length === 0 ? (
           <div className="text-center py-12 sm:py-16">
-            <i className="ri-search-line text-4xl sm:text-5xl text-gray-300 mb-4 block"></i>
+            <i aria-hidden="true" className="ri-search-line text-4xl sm:text-5xl text-gray-300 mb-4 block"></i>
             <p className="text-gray-500 font-medium text-sm sm:text-base">Няма намерени продукти</p>
             <button onClick={() => { setSearchQuery(''); setSelectedCategory('Всички'); }} className="mt-3 text-red-600 text-sm font-medium cursor-pointer">
               Виж всички продукти
@@ -377,7 +365,7 @@ export default function Products() {
                 key={product.id}
                 className="bg-white rounded-xl md:rounded-2xl overflow-hidden border border-gray-100 group"
               >
-                <div className="relative overflow-hidden bg-white flex items-center justify-center cursor-pointer" style={{ aspectRatio: '3 / 4' }} onClick={(e) => handleQuickView(e, product)}>
+                <button type="button" aria-label={`Бърз преглед на ${product.name}`} className="w-full relative overflow-hidden bg-white flex items-center justify-center cursor-pointer" style={{ aspectRatio: '3 / 4' }} onClick={(e) => handleQuickView(e, product)}>
                     <img
                       src={product.image}
                       alt={product.name}
@@ -398,19 +386,19 @@ export default function Products() {
                     )}
                     {product.in_stock && product.stock > 0 && product.stock < 10 && (
                       <div className="absolute top-2 right-2 bg-orange-500 text-white px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap flex items-center gap-1">
-                        <i className="ri-fire-fill text-[8px]"></i> Само {product.stock}
+                        <i aria-hidden="true" className="ri-fire-fill text-[8px]"></i> Само {product.stock}
                       </div>
                     )}
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-end justify-center pb-3 opacity-0 group-hover:opacity-100 hidden sm:flex">
                       <span className="bg-white text-gray-900 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1">
-                        <i className="ri-eye-line"></i> Бърз преглед
+                        <i aria-hidden="true" className="ri-eye-line"></i> Бърз преглед
                       </span>
                     </div>
-                  </div>
+                  </button>
 
                 <div className="p-2.5 sm:p-3 md:p-5">
                   <div className="flex items-center gap-1 mb-1">
-                    <i className="ri-star-fill text-amber-400 text-[10px] sm:text-xs"></i>
+                    <i aria-hidden="true" className="ri-star-fill text-amber-400 text-[10px] sm:text-xs"></i>
                     <span className="text-[10px] sm:text-xs text-gray-500">{product.rating} ({product.reviews})</span>
                   </div>
 
@@ -438,9 +426,9 @@ export default function Products() {
                       aria-label="Добави в количката"
                     >
                       {addedId === product.id ? (
-                        <i className="ri-check-line text-sm sm:text-base"></i>
+                        <i aria-hidden="true" className="ri-check-line text-sm sm:text-base"></i>
                       ) : (
-                        <i className="ri-shopping-cart-line text-sm sm:text-base"></i>
+                        <i aria-hidden="true" className="ri-shopping-cart-line text-sm sm:text-base"></i>
                       )}
                     </button>
                   </div>

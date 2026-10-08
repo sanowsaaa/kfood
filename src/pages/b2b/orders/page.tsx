@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { useB2B } from '@/contexts/B2BContext';
 import { supabase } from '@/utils/supabase';
 import B2BHeader from '@/pages/b2b/components/B2BHeader';
+import { useCustomerRead } from '@/hooks/useCustomerRead';
 import B2BFooter from '@/pages/b2b/components/B2BFooter';
 
 interface OrderItem {
@@ -51,39 +52,18 @@ const statusColors: Record<string, string> = {
 
 export default function B2BOrdersPage() {
   const { companyId, company, sessionLoading } = useB2B();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const fetchOrders = () => {
-    if (!companyId) return;
-    setLoading(true);
-    setError('');
-    supabase
-      .from('orders')
+  const load = useCallback(async (signal: AbortSignal): Promise<Order[]> => {
+    if (!companyId) return [];
+    const { data, error } = await supabase.from('orders')
       .select('id, order_number, total_amount, status, items, created_at, admin_discount_percent, discount_notes')
-      .eq('b2b_company_id', companyId)
-      .order('created_at', { ascending: false })
-      .then(({ data, error: fetchError }) => {
-        if (fetchError) {
-          setError('Не можахме да заредим поръчките. Опитайте отново.');
-          setLoading(false);
-          return;
-        }
-        setOrders((data || []) as Order[]);
-        setLoading(false);
-      })
-      .catch(() => {
-        setError('Грешка при свързване. Опитайте отново.');
-        setLoading(false);
-      });
-  };
-
-  useEffect(() => {
-    fetchOrders();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+      .eq('b2b_company_id', companyId).order('created_at', { ascending: false }).abortSignal(signal);
+    if (error) throw error;
+    return (data || []) as Order[];
   }, [companyId]);
+  const { data: orders, loading, error, retry: fetchOrders } = useCustomerRead(load, []);
 
   if (sessionLoading) {
     return (

@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../../contexts/CartContext';
-import { supabase } from '../../../utils/supabase';
+import { loadProducts } from '../../../utils/catalog';
+import { useCustomerRead } from '../../../hooks/useCustomerRead';
+import CustomerReadError from '../../../components/CustomerReadError';
 
 interface Product {
   id: number;
@@ -19,43 +21,28 @@ interface Product {
 }
 
 export default function FeaturedProducts() {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: products, loading, error: readError, retry } = useCustomerRead<Product[]>(loadProducts, []);
   const [addedProducts, setAddedProducts] = useState<Set<number>>(new Set());
   const { addToCart } = useCart();
+  const navigate = useNavigate();
 
-  useEffect(() => {
-    fetchFeaturedProducts();
-  }, []);
-
-  const fetchFeaturedProducts = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .order('rating', { ascending: false })
-        .limit(8);
-
-      if (error) throw error;
-      setProducts(data || []);
-    } catch (error) {
-      console.error('Грешка при зареждане на продуктите:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const featured = [...products].sort((a, b) => b.rating - a.rating).slice(0, 8);
 
   const handleAddToCart = (e: React.MouseEvent, product: Product) => {
     e.preventDefault();
     e.stopPropagation();
     if (!product.in_stock) return;
+    if (product.category === 'Алкохол') {
+      let verified = false;
+      try { verified = sessionStorage.getItem('ageVerified') === 'true'; } catch { /* Keep the existing age gate. */ }
+      if (!verified) { navigate(`/product/${product.slug || product.id}`); return; }
+    }
 
     addToCart({
       id: product.id,
       name: product.name,
       price: product.price,
-      image: product.image,
+      image: product.image, category: product.category, slug: product.slug, stock: product.stock, in_stock: product.in_stock,
     });
 
     setAddedProducts(prev => new Set(prev).add(product.id));
@@ -67,6 +54,8 @@ export default function FeaturedProducts() {
       });
     }, 2000);
   };
+
+  if (readError) return <section className="px-4 py-8"><CustomerReadError message={readError} onRetry={retry} /></section>;
 
   if (loading) {
     return (
@@ -106,13 +95,13 @@ export default function FeaturedProducts() {
             className="text-xs sm:text-[13px] font-medium text-gray-500 hover:text-red-600 transition-colors whitespace-nowrap flex items-center gap-1.5 tracking-wide uppercase"
           >
             Виж всички
-            <i className="ri-arrow-right-line"></i>
+            <i aria-hidden="true" className="ri-arrow-right-line"></i>
           </Link>
         </div>
 
         {/* Grid - better mobile: 2 cols with larger cards, bigger gap on desktop */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-5" data-product-shop>
-          {products.map((product, idx) => (
+          {featured.map((product, idx) => (
             <div
               key={product.id}
               className="bg-white group cursor-pointer contain-layout rounded-xl border border-gray-100 hover:border-red-200 transition-all duration-300 overflow-hidden"
@@ -148,7 +137,7 @@ export default function FeaturedProducts() {
                 </Link>
 
                 <div className="flex items-center gap-1 mb-2 sm:mb-3">
-                  <i className="ri-star-fill text-amber-500 text-[10px] sm:text-[11px]"></i>
+                  <i aria-hidden="true" className="ri-star-fill text-amber-500 text-[10px] sm:text-[11px]"></i>
                   <span className="text-[10px] sm:text-xs text-gray-500 font-medium">{product.rating}</span>
                   <span className="text-[10px] text-gray-400">({product.reviews})</span>
                 </div>
@@ -172,9 +161,9 @@ export default function FeaturedProducts() {
                     aria-label="Добави в количката"
                   >
                     {addedProducts.has(product.id) ? (
-                      <i className="ri-check-line text-xs sm:text-sm"></i>
+                      <i aria-hidden="true" className="ri-check-line text-xs sm:text-sm"></i>
                     ) : (
-                      <i className="ri-add-line text-base sm:text-lg"></i>
+                      <i aria-hidden="true" className="ri-add-line text-base sm:text-lg"></i>
                     )}
                   </button>
                 </div>
@@ -189,7 +178,7 @@ export default function FeaturedProducts() {
             className="inline-flex items-center gap-2 px-8 sm:px-10 py-3.5 sm:py-4 border-2 border-red-600 text-red-600 text-sm font-bold tracking-wide uppercase hover:bg-red-600 hover:text-white transition-all whitespace-nowrap cursor-pointer rounded-xl touch-target"
           >
             Виж всички продукти
-            <i className="ri-arrow-right-line text-lg"></i>
+            <i aria-hidden="true" className="ri-arrow-right-line text-lg"></i>
           </Link>
         </div>
       </div>

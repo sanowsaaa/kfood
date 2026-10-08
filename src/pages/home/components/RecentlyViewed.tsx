@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '@/contexts/CartContext';
 import { useRecentlyViewed } from '@/hooks/useRecentlyViewed';
 import { useState } from 'react';
@@ -6,6 +6,7 @@ import { useState } from 'react';
 export default function RecentlyViewed() {
   const { recentProducts } = useRecentlyViewed();
   const { addToCart } = useCart();
+  const navigate = useNavigate();
   const [addedIds, setAddedIds] = useState<Set<number>>(new Set());
 
   if (recentProducts.length === 0) return null;
@@ -14,7 +15,12 @@ export default function RecentlyViewed() {
     e.preventDefault();
     e.stopPropagation();
     if (!product.in_stock) return;
-    addToCart({ id: product.id, name: product.name, price: product.price, image: product.image });
+    if (product.category === 'Алкохол') {
+      let verified = false;
+      try { verified = sessionStorage.getItem('ageVerified') === 'true'; } catch { /* Keep the existing age gate. */ }
+      if (!verified) { navigate(`/product/${product.slug || product.id}`); return; }
+    }
+    addToCart({ id: product.id, name: product.name, price: product.price, image: product.image, category: product.category, slug: product.slug, in_stock: product.in_stock });
     setAddedIds(prev => new Set(prev).add(product.id));
     setTimeout(() => {
       setAddedIds(prev => {
@@ -32,12 +38,12 @@ export default function RecentlyViewed() {
           <div>
             <p className="text-[10px] md:text-xs font-medium tracking-[0.2em] uppercase text-red-400 mb-2">История</p>
             <h2 className="font-heading text-lg md:text-2xl font-light text-gray-900 tracking-tight flex items-center gap-2">
-              <i className="ri-history-line text-red-600 text-xl"></i>
+              <i aria-hidden="true" className="ri-history-line text-red-600 text-xl"></i>
               Последно разгледани
             </h2>
           </div>
           <Link to="/products" className="text-[11px] font-semibold text-gray-500 hover:text-red-600 transition-colors whitespace-nowrap uppercase tracking-wider">
-            Всички <i className="ri-arrow-right-line"></i>
+            Всички <i aria-hidden="true" className="ri-arrow-right-line"></i>
           </Link>
         </div>
 
@@ -72,7 +78,7 @@ export default function RecentlyViewed() {
                   }`}
                   aria-label="Добави в количката"
                 >
-                  {addedIds.has(product.id) ? <i className="ri-check-line text-[11px]"></i> : <i className="ri-add-line text-[11px]"></i>}
+                  {addedIds.has(product.id) ? <i aria-hidden="true" className="ri-check-line text-[11px]"></i> : <i aria-hidden="true" className="ri-add-line text-[11px]"></i>}
                 </button>
               </div>
             </div>

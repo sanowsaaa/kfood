@@ -266,16 +266,16 @@ export function lineItems(lines: QuoteLine[]): Stripe.Checkout.SessionCreatePara
       }));
   });
 }
-export async function limited(req: Request, deps: Dependencies, scope: string, count: number) {
+export async function limited(req: Request, deps: Dependencies, scope: string, count: number, windowSeconds = 60) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   const bucket = await sha256(`${deps.config.workerSecret}:${scope}:${ip}`);
   const { data, error } = await deps.db.rpc("checkout_rate_limit", {
     p_bucket: bucket,
     p_limit: count,
-    p_window_seconds: 60,
+    p_window_seconds: windowSeconds,
   });
   if (error) throw new Error("Rate limit storage unavailable");
-  if (!data) throw new HttpError(429, "Твърде много заявки. Опитайте след минута.");
+  if (!data) throw new HttpError(429, windowSeconds > 60 ? "Твърде много проверки. Опитайте след десет минути или се свържете с магазина." : "Твърде много заявки. Опитайте след минута.");
 }
 export function failure(error: unknown, req?: Request, config?: Config) {
   if (error instanceof HttpError) return json({ error: error.message }, error.status, req, config);

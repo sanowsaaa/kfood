@@ -45,13 +45,14 @@
     "check:b2b": "deno check --frozen --node-modules-dir=manual --config supabase/functions/deno.json supabase/functions/b2b-auth/index.ts supabase/functions/create-b2b-checkout/index.ts supabase/functions/generate-b2b-invoice/index.ts",
     "test:b2b": "node --test tests/b2b-database.test.mjs && deno test --frozen --node-modules-dir=manual --config supabase/functions/deno.json --allow-read --allow-env tests/b2b-handlers.test.ts",
     "check:payments": "deno check --frozen --node-modules-dir=manual --config supabase/functions/deno.json supabase/functions/create-checkout/index.ts supabase/functions/stripe-webhook/index.ts supabase/functions/checkout-status/index.ts supabase/functions/reconcile-checkouts/index.ts supabase/functions/update-stripe-order/index.ts",
-    "test:payments": "node --test tests/payment-database.test.mjs && deno test --frozen --node-modules-dir=manual --config supabase/functions/deno.json --allow-read --allow-env --allow-net=127.0.0.1 tests/payment-handlers.test.ts",
+    "test:payments": "node --test tests/payment-database.test.mjs && deno test --frozen --node-modules-dir=manual --config supabase/functions/deno.json --allow-read --allow-env --allow-net=127.0.0.1 tests/payment-handlers.test.ts tests/customer-tracking.test.ts",
     "typecheck": "tsc -b",
     "build": "vite build",
     "dev": "vite",
     "preview": "vite preview",
     "test:admin": "node --test tests/admin-operations.test.mjs",
-    "check:admin": "tsc --project tsconfig.admin.json"
+    "check:admin": "tsc --project tsconfig.admin.json",
+    "test:client": "node --test tests/customer-operations.test.mjs tests/customer-service-worker.test.mjs"
   },
   "type": "module",
   "version": "0.0.0"

@@ -17,6 +17,12 @@ export default function Header() {
   useEffect(() => {
     setIsMenuOpen(false);
   }, [location.pathname]);
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const close = (event: KeyboardEvent) => { if (event.key === 'Escape') { setIsMenuOpen(false); document.getElementById('customer-menu-toggle')?.focus(); } };
+    document.addEventListener('keydown', close);
+    return () => document.removeEventListener('keydown', close);
+  }, [isMenuOpen]);
 
   const navLinks = [
     { to: '/', label: 'Начало', icon: 'ri-home-4-line', activeIcon: 'ri-home-4-fill' },
@@ -44,7 +50,7 @@ export default function Header() {
       {/* Announcement Bar - compact on mobile */}
       <div className="bg-red-600 text-white text-center py-1.5 sm:py-2 md:py-2.5 text-[11px] md:text-[13px] font-medium tracking-wide overflow-hidden">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 flex items-center justify-center gap-2 animate-pulse-slow">
-          <i className="ri-percent-line text-sm md:text-base"></i>
+          <i aria-hidden="true" className="ri-percent-line text-sm md:text-base"></i>
           <span>Намаление 5% за поръчки над 50€</span>
           <span className="hidden sm:inline text-white/70">|</span>
           <span className="hidden sm:inline">Намаление 10% за поръчки над 100€</span>
@@ -55,7 +61,7 @@ export default function Header() {
       <header
         className={`sticky top-0 z-50 transition-all duration-300 ${
           scrolled
-            ? 'bg-white/98 backdrop-blur-md shadow-[0_1px_3px_rgba(0,0,0,0.06)]'
+            ? 'bg-white/[0.98] backdrop-blur-md shadow-[0_1px_3px_rgba(0,0,0,0.06)]'
             : 'bg-white'
         }`}
       >
@@ -71,11 +77,12 @@ export default function Header() {
             </Link>
 
             {/* Desktop Navigation */}
-            <nav className="hidden lg:flex items-center gap-0.5">
+            <nav aria-label="Основна навигация" className="hidden lg:flex items-center gap-0.5">
               {navLinks.map(link => (
                 <Link
                   key={link.to}
                   to={link.to}
+                  aria-current={isActive(link.to) ? 'page' : undefined}
                   className={`relative px-3.5 py-2 text-[13px] font-medium tracking-wide transition-colors whitespace-nowrap rounded-lg ${
                     isActive(link.to)
                       ? 'text-red-600 bg-red-50'
@@ -89,20 +96,20 @@ export default function Header() {
 
             {/* Right Actions */}
             <div className="flex items-center gap-1">
-              <Link
-                to="/faq"
+              <a
+                href="tel:+359899897566"
                 className="hidden md:flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium text-gray-500 hover:text-red-600 transition-colors whitespace-nowrap rounded-lg hover:bg-gray-50"
               >
-                <i className="ri-phone-line text-base"></i>
+                <i aria-hidden="true" className="ri-phone-line text-base"></i>
                 <span className="hidden xl:inline">0899 897 566</span>
-              </Link>
+              </a>
 
               <Link
                 to="/cart"
                 className="relative p-2 sm:p-2.5 text-gray-700 hover:text-red-600 transition-colors rounded-lg hover:bg-red-50 touch-target-sm"
                 aria-label="Количка"
               >
-                <i className="ri-shopping-cart-2-line text-xl"></i>
+                <i aria-hidden="true" className="ri-shopping-cart-2-line text-xl"></i>
                 {totalItems > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 bg-red-600 text-white text-[10px] font-bold rounded-full min-w-[18px] h-[18px] sm:min-w-[20px] sm:h-[20px] flex items-center justify-center leading-none px-1 shadow-sm">
                     {totalItems > 99 ? '99+' : totalItems}
@@ -111,11 +118,15 @@ export default function Header() {
               </Link>
 
               <button
+                id="customer-menu-toggle"
+                type="button"
+                aria-expanded={isMenuOpen}
+                aria-controls="customer-menu"
                 onClick={() => setIsMenuOpen(!isMenuOpen)}
                 className="lg:hidden p-2.5 text-gray-700 hover:text-red-600 transition-colors rounded-lg touch-target-sm"
                 aria-label="Меню"
               >
-                <i className={`text-xl ${isMenuOpen ? 'ri-close-line' : 'ri-menu-line'}`}></i>
+                <i aria-hidden="true" className={`text-xl ${isMenuOpen ? 'ri-close-line' : 'ri-menu-line'}`}></i>
               </button>
             </div>
           </div>
@@ -127,7 +138,7 @@ export default function Header() {
         {/* Mobile Dropdown */}
         {isMenuOpen && (
           <div className="lg:hidden border-t border-gray-100 bg-white animate-fade-up">
-            <nav className="px-4 py-3 sm:py-4 grid grid-cols-2 gap-1.5">
+            <nav id="customer-menu" aria-label="Мобилно меню" className="px-4 py-3 sm:py-4 grid grid-cols-2 gap-1.5">
               {navLinks.map(link => (
                 <Link
                   key={link.to}
@@ -139,7 +150,7 @@ export default function Header() {
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                 >
-                  <i className={`${isActive(link.to) ? link.activeIcon : link.icon} text-lg`}></i>
+                  <i aria-hidden="true" className={`${isActive(link.to) ? link.activeIcon : link.icon} text-lg`}></i>
                   {link.label}
                 </Link>
               ))}
@@ -149,7 +160,7 @@ export default function Header() {
                 href="tel:+359899897566"
                 className="flex items-center gap-2.5 px-3 sm:px-4 py-3 rounded-xl text-sm font-medium text-gray-600 bg-gray-50 hover:bg-red-50 hover:text-red-600 transition-all w-full touch-target"
               >
-                <i className="ri-phone-line text-lg"></i>
+                <i aria-hidden="true" className="ri-phone-line text-lg"></i>
                 0899 897 566
               </a>
             </div>
@@ -158,7 +169,7 @@ export default function Header() {
       </header>
 
       {/* Mobile Bottom Navigation - better safe area handling */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/98 backdrop-blur-md border-t border-gray-100 safe-area-bottom">
+      <nav aria-label="Бърза навигация" className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/[0.98] backdrop-blur-md border-t border-gray-100 safe-area-bottom">
         <div className="grid grid-cols-4 h-[60px]">
           {bottomNavLinks.map(link => {
             const active = isActive(link.to);
@@ -166,6 +177,7 @@ export default function Header() {
               <Link
                 key={link.to}
                 to={link.to}
+                aria-current={active ? 'page' : undefined}
                 className={`flex flex-col items-center justify-center gap-0.5 transition-colors relative touch-target ${
                   active ? 'text-red-600' : 'text-gray-400'
                 }`}
@@ -176,7 +188,7 @@ export default function Header() {
                   </span>
                 )}
                 <div className="w-5 h-5 flex items-center justify-center">
-                  <i className={`${active ? link.activeIcon : link.icon} text-base sm:text-lg`}></i>
+                  <i aria-hidden="true" className={`${active ? link.activeIcon : link.icon} text-base sm:text-lg`}></i>
                 </div>
                 <span className="text-[10px] sm:text-[11px] font-medium">{link.label}</span>
               </Link>
@@ -185,7 +197,6 @@ export default function Header() {
         </div>
       </nav>
 
-      <div className="lg:hidden h-[60px]" aria-hidden="true"></div>
     </>
   );
 }

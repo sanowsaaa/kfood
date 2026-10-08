@@ -1,15 +1,11 @@
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import type { ReactNode } from 'react';
 import { supabase } from '../utils/supabase';
 import { trackAddToCart } from '../utils/metaPixel';
+import { discountedMinor, normalizeCart, readCart, subtotalMinor, type StoredCartItem } from '../utils/customer';
+import { cartSignature } from '../utils/checkoutAttempt';
 
-export interface CartItem {
-  id: number;
-  name: string;
-  price: number;
-  image: string;
-  quantity: number;
-  category?: string;
-}
+export type CartItem = StoredCartItem;
 
 interface ToastProduct {
   name: string;
@@ -91,25 +87,17 @@ interface CartContextType {
   getCartCount: () => number;
   toastProduct: ToastProduct | null;
   clearToast: () => void;
-  syncCartPrices: () => Promise<void>;
+  syncCartPrices: () => Promise<CartItem[]>;
+  storageError: string;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<CartItem[]>(() => {
-    try {
-      const saved = localStorage.getItem('cart');
-      return saved ? JSON.parse(saved) : [];
-    } catch { return []; }
-  });
+  const [items, setItems] = useState<CartItem[]>(() => readCart('cart'));
 
-  const [savedItems, setSavedItems] = useState<CartItem[]>(() => {
-    try {
-      const saved = localStorage.getItem('cart_saved_for_later');
-      return saved ? JSON.parse(saved) : [];
-    } catch { return []; }
-  });
+  const [savedItems, setSavedItems] = useState<CartItem[]>(() => readCart('cart_saved_for_later'));
+  const [storageError, setStorageError] = useState('');
 
   const [promoCode, setPromoCode] = useState<PromoCodeInfo | null>(() => {
     try {
@@ -117,7 +105,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (!saved) return null;
       const parsed = JSON.parse(saved);
       // Check if expired
-      if (new Date(parsed.expiresAt) < new Date()) {
+      if (!parsed || typeof parsed.code !== 'string' || !Number.isFinite(parsed.discountPercent) ||
+          parsed.discountPercent <= 0 || parsed.discountPercent > 100 || !Number.isFinite(Date.parse(parsed.expiresAt)) ||
+          Date.parse(parsed.expiresAt) <= Date.now()) {
         sessionStorage.removeItem('promo_code');
         return null;
       }
@@ -128,40 +118,44 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [toastProduct, setToastProduct] = useState<ToastProduct | null>(null);
 
   const itemsRef = useRef(items);
+  itemsRef.current = items;
+  const priceRevision = useRef(0);
 
   useEffect(() => {
-    localStorage.setItem('cart', JSON.stringify(items));
+    try { localStorage.setItem('cart', JSON.stringify(items)); }
+    catch { setStorageError('Браузърът не може да запази количката. При затваряне на страницата тя може да се изгуби.'); }
   }, [items]);
 
   useEffect(() => {
-    localStorage.setItem('cart_saved_for_later', JSON.stringify(savedItems));
+    try { localStorage.setItem('cart_saved_for_later', JSON.stringify(savedItems)); } catch { /* Keep the draft in memory. */ }
   }, [savedItems]);
 
   useEffect(() => {
-    if (promoCode) {
-      sessionStorage.setItem('promo_code', JSON.stringify(promoCode));
-    } else {
-      sessionStorage.removeItem('promo_code');
-    }
+    try {
+      if (promoCode) sessionStorage.setItem('promo_code', JSON.stringify(promoCode));
+      else sessionStorage.removeItem('promo_code');
+    } catch { /* Checkout proof writes are checked separately before redirect. */ }
+    if (!promoCode) return;
+    const timer = setTimeout(() => setPromoCode(null), Math.max(0, Date.parse(promoCode.expiresAt) - Date.now()));
+    return () => clearTimeout(timer);
   }, [promoCode]);
-
-  useEffect(() => {
-    itemsRef.current = items;
-  }, [items]);
 
   const clearToast = useCallback(() => setToastProduct(null), []);
 
   // Добавя продукт в количката с опционално количество
-  const addToCart = (product: Omit<CartItem, 'quantity'>, quantity: number = 1) => {
-    const qty = Math.max(1, Math.floor(quantity));
+  const addToCart = useCallback((product: Omit<CartItem, 'quantity'>, quantity: number = 1) => {
+    if (!Number.isFinite(quantity) || quantity < 1 || product.in_stock === false || product.stock === 0) return;
+    const qty = Math.min(100, Math.floor(quantity));
+    const checked = normalizeCart([{ ...product, quantity: qty }])[0];
+    if (!checked) return;
     setItems(prev => {
       const existing = prev.find(item => item.id === product.id);
       if (existing) {
         return prev.map(item =>
-          item.id === product.id ? { ...item, quantity: item.quantity + qty } : item
+          item.id === product.id ? { ...item, ...product, quantity: Math.min(100, product.stock ?? 100, item.quantity + qty) } : item
         );
       }
-      return [...prev, { ...product, quantity: qty }];
+      return prev.length < 50 ? [...prev, checked] : prev;
     });
     setToastProduct({ name: product.name, image: product.image, price: product.price });
     // Meta Pixel: AddToCart
@@ -172,26 +166,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
       currency: 'EUR',
       num_items: qty,
     });
-  };
+  }, []);
 
   const removeFromCart = (productId: number) => {
     setItems(prev => prev.filter(item => item.id !== productId));
   };
 
   const updateQuantity = (productId: number, quantity: number) => {
+    if (!Number.isFinite(quantity)) return;
     if (quantity <= 0) {
       removeFromCart(productId);
       return;
     }
     setItems(prev =>
-      prev.map(item => item.id === productId ? { ...item, quantity } : item)
+      prev.map(item => item.id === productId ? { ...item, quantity: Math.min(100, Math.floor(quantity)) } : item)
     );
   };
 
-  const clearCart = () => {
+  const clearCart = useCallback(() => {
     setItems([]);
     setPromoCode(null);
-  };
+  }, []);
 
   // Запази за по-късно
   const saveForLater = (productId: number) => {
@@ -207,9 +202,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const moveToCart = (productId: number) => {
     const item = savedItems.find(i => i.id === productId);
-    if (!item) return;
+    if (!item || item.in_stock === false || item.stock === 0) return;
     setSavedItems(prev => prev.filter(i => i.id !== productId));
-    addToCart({ id: item.id, name: item.name, price: item.price, image: item.image, category: item.category }, 1);
+    addToCart(item, 1);
   };
 
   const removeSaved = (productId: number) => {
@@ -219,26 +214,25 @@ export function CartProvider({ children }: { children: ReactNode }) {
   // === ИЗЧИСЛЕНИЯ ===
   // Всички суми се смятат във вътрешна валута, после се конвертират в EUR
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
-  const totalPrice = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const minor = subtotalMinor(items);
+  const totalPrice = minor / 100;
   const totalPriceEur = totalPrice;
 
   // Отстъпка се прилага върху общата сума в евро
   const discountTier = getDiscount(totalPriceEur);
-  const discountAmountEur = discountTier ? totalPriceEur * (discountTier.percent / 100) : 0;
-  const discountAmount = discountAmountEur;
 
   // Ако има активен промо код — volume discount НЕ се прилага (взаимно изключващи се)
   const effectiveDiscountTier = promoCode ? null : discountTier;
-  const effectiveDiscountAmountEur = effectiveDiscountTier ? totalPriceEur * (effectiveDiscountTier.percent / 100) : 0;
+  const effectiveDiscountAmountEur = effectiveDiscountTier ? (minor - discountedMinor(minor, effectiveDiscountTier.percent)) / 100 : 0;
   const effectiveDiscountAmount = effectiveDiscountAmountEur;
 
   // Промо код отстъпка (върху оригиналната сума, без volume discount)
-  const promoDiscountAmountEur = promoCode ? totalPriceEur * (promoCode.discountPercent / 100) : 0;
+  const promoDiscountAmountEur = promoCode ? (minor - discountedMinor(minor, promoCode.discountPercent)) / 100 : 0;
   const promoDiscountAmount = promoDiscountAmountEur;
 
   // Крайна сума = обща сума - (volume discount ИЛИ промо отстъпка, не двете)
-  const finalPriceEur = totalPriceEur - effectiveDiscountAmountEur - promoDiscountAmountEur;
-  const finalPrice = totalPrice - effectiveDiscountAmount - promoDiscountAmount;
+  const finalPriceEur = discountedMinor(minor, promoCode?.discountPercent || effectiveDiscountTier?.percent || 0) / 100;
+  const finalPrice = finalPriceEur;
 
   const applyPromoCode = async (code: string): Promise<{ success: boolean; error?: string; discount?: number }> => {
     try {
@@ -255,7 +249,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         throw new Error(fnError.message);
       }
 
-      if (data?.error || !data?.valid) {
+      if (data?.error || data?.valid !== true || typeof data.promo_code !== 'string' ||
+          !Number.isFinite(data.discount_percent) || data.discount_percent <= 0 || data.discount_percent > 100) {
         return { success: false, error: data?.error || 'Невалиден промо код' };
       }
 
@@ -274,7 +269,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const removePromoCode = () => {
     setPromoCode(null);
-    sessionStorage.removeItem('promo_code');
+    try { sessionStorage.removeItem('promo_code'); } catch { /* Memory state is already cleared. */ }
   };
 
   const getCartTotal = () => totalPrice;
@@ -282,21 +277,31 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const syncCartPrices = useCallback(async () => {
     const currentItems = itemsRef.current;
-    if (currentItems.length === 0) return;
+    if (currentItems.length === 0) return [];
+    const revision = ++priceRevision.current;
+    const signature = cartSignature(currentItems);
     const ids = currentItems.map(i => i.id);
     try {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from('products')
-        .select('id, price, name, in_stock')
-        .in('id', ids);
-      if (!data) return;
-      setItems(prev => prev.map(item => {
+        .select('id, price, name, in_stock, stock, slug')
+        .in('id', ids).abortSignal(AbortSignal.timeout(20000));
+      if (error || !data) throw new Error('Не успяхме да проверим цените и наличностите. Опитайте отново.');
+      if (revision !== priceRevision.current || signature !== cartSignature(itemsRef.current))
+        throw new Error('Количката се промени по време на проверката. Проверете я отново.');
+      const updated = currentItems.map(item => {
         const db = data.find((p: any) => p.id === item.id);
-        if (!db) return item;
-        return { ...item, price: db.price, name: db.name };
-      }));
-    } catch {
-      // Silently fail — backend validates anyway
+        if (!db) return { ...item, in_stock: false, stock: 0 };
+        if (!Number.isFinite(db.price) || db.price < 0 || typeof db.name !== 'string')
+          throw new Error('Цените не са потвърдени. Опитайте отново.');
+        return { ...item, price: db.price, name: db.name, slug: db.slug || undefined,
+          in_stock: db.in_stock === true, stock: Number.isSafeInteger(db.stock) ? db.stock : 0 };
+      });
+      itemsRef.current = updated;
+      setItems(updated);
+      return updated;
+    } catch (error) {
+      throw error instanceof Error ? error : new Error('Не успяхме да проверим количката. Опитайте отново.');
     }
   }, []);
 
@@ -331,6 +336,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         toastProduct,
         clearToast,
         syncCartPrices,
+        storageError,
       }}
     >
       {children}

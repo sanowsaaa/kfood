@@ -1,13 +1,16 @@
-import { useState, FormEvent } from 'react';
+import { useState, useRef } from 'react';
+import type { FormEvent } from 'react';
+import { createActionLock } from '../../../utils/admin';
 
 export default function Newsletter() {
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const submission = useRef(createActionLock());
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!email) return;
+    if (!email || !submission.current.acquire()) return;
     setIsSubmitting(true);
     setSubmitStatus('idle');
 
@@ -18,6 +21,7 @@ export default function Newsletter() {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: formData.toString(),
+        signal: AbortSignal.timeout(20000),
       });
       if (response.ok) {
         setSubmitStatus('success');
@@ -29,6 +33,7 @@ export default function Newsletter() {
       setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);
+      submission.current.release();
     }
   };
 
@@ -36,13 +41,13 @@ export default function Newsletter() {
     <section className="py-16 md:py-24 bg-gradient-to-br from-red-600 via-red-700 to-rose-800 section-below-fold">
       <div className="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-16">
         <div className="max-w-2xl mx-auto text-center">
-          <p className="text-xs md:text-sm font-medium tracking-[0.2em] uppercase text-white/60 mb-3">
+          <p className="text-xs md:text-sm font-medium tracking-[0.2em] uppercase text-white/90 mb-3">
             Бюлетин
           </p>
           <h2 className="font-heading text-2xl md:text-4xl font-light text-white tracking-tight mb-4">
             Абонирайте се
           </h2>
-          <p className="text-sm md:text-base text-white/70 mb-9 font-light leading-relaxed max-w-lg mx-auto">
+          <p className="text-sm md:text-base text-white/90 mb-9 font-light leading-relaxed max-w-lg mx-auto">
             Получавайте ексклузивни оферти, нови продукти и корейски рецепти директно във вашата поща
           </p>
 
@@ -50,12 +55,15 @@ export default function Newsletter() {
             <div className="flex flex-col sm:flex-row gap-3">
               <input
                 type="email"
+                aria-label="Имейл за бюлетина"
+                autoComplete="email"
+                disabled={isSubmitting}
                 name="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Вашият имейл адрес"
                 required
-                className="flex-1 px-5 py-3.5 bg-white/10 border-2 border-white/20 text-white placeholder-white/40 text-sm rounded-lg focus:outline-none focus:border-white/50 transition-all font-light"
+                className="flex-1 px-5 py-3.5 bg-white/10 border-2 border-white/20 text-white placeholder-white/80 text-sm rounded-lg focus:outline-none focus:border-white/50 transition-all font-light"
               />
               <input
                 type="text"
@@ -76,14 +84,14 @@ export default function Newsletter() {
             </div>
 
             {submitStatus === 'success' && (
-              <p className="mt-4 text-sm text-white/80 font-medium">Успешно се абонирахте! Благодарим ви.</p>
+              <p role="status" className="mt-4 text-sm text-white font-medium">Успешно се абонирахте! Благодарим ви.</p>
             )}
             {submitStatus === 'error' && (
-              <p className="mt-4 text-sm text-white/50 font-light">Възникна грешка. Моля, опитайте отново.</p>
+              <p role="alert" className="mt-4 text-sm text-white font-medium">Възникна грешка. Моля, опитайте отново.</p>
             )}
           </form>
 
-          <p className="text-white/30 text-xs mt-6 font-light">
+          <p className="text-white/90 text-xs mt-6 font-light">
             Можете да се отпишете по всяко време.
           </p>
         </div>

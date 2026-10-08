@@ -39,7 +39,7 @@ export default function FAQSection() {
                 >
                   <span className="text-sm md:text-[15px] font-semibold text-gray-900 pr-6 group-hover:text-red-600 transition-colors">{faq.question}</span>
                   <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all ${openIndex === i ? 'bg-red-600 text-white rotate-45' : 'bg-gray-100 text-gray-400 group-hover:bg-red-100 group-hover:text-red-600'}`}>
-                    <i className="ri-add-line text-sm"></i>
+                    <i aria-hidden="true" className="ri-add-line text-sm"></i>
                   </div>
                 </button>
                 {openIndex === i && (
@@ -54,7 +54,7 @@ export default function FAQSection() {
           <div className="text-center mt-10">
             <Link to="/faq" className="inline-flex items-center gap-2 text-[13px] font-semibold text-red-600 hover:text-red-700 transition-colors cursor-pointer tracking-wide uppercase">
               Виж всички въпроси
-              <i className="ri-arrow-right-line"></i>
+              <i aria-hidden="true" className="ri-arrow-right-line"></i>
             </Link>
           </div>
         </div>

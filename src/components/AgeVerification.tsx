@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useAdminDialog as useDialog } from '../hooks/useAdminDialog';
 
 interface AgeVerificationProps {
   onVerified: () => void;
@@ -9,7 +10,7 @@ export default function AgeVerification({ onVerified, onDenied }: AgeVerificatio
   const [isClosing, setIsClosing] = useState(false);
 
   const handleVerify = () => {
-    sessionStorage.setItem('ageVerified', 'true');
+    try { sessionStorage.setItem('ageVerified', 'true'); } catch { /* Keep confirmation for the current screen. */ }
     setIsClosing(true);
     setTimeout(() => {
       onVerified();
@@ -23,15 +24,16 @@ export default function AgeVerification({ onVerified, onDenied }: AgeVerificatio
     }, 300);
   };
 
+  const dialog = useDialog(true, isClosing, handleDeny);
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${isClosing ? 'opacity-0' : 'opacity-100'}`}>
-      <div className={`bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4 overflow-hidden transform transition-all duration-300 ${isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}>
+      <div ref={dialog} role="dialog" aria-modal="true" aria-labelledby="age-title" tabIndex={-1} className={`customer-shell bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4 max-h-[calc(100dvh-32px)] overflow-y-auto transform transition-all duration-300 ${isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}>
         {/* Header */}
         <div className="bg-gradient-to-r from-amber-500 to-orange-600 px-8 py-6 text-center">
           <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4">
             <i className="ri-shield-check-line text-5xl text-white"></i>
           </div>
-          <h2 className="text-3xl font-bold text-white mb-2">Проверка на възраст</h2>
+          <h2 id="age-title" className="text-2xl font-bold text-white mb-2">Проверка на възраст</h2>
           <p className="text-amber-50 text-lg">Необходимо е потвърждение</p>
         </div>
 
@@ -54,7 +56,8 @@ export default function AgeVerification({ onVerified, onDenied }: AgeVerificatio
           <div className="space-y-3">
             <button
               onClick={handleVerify}
-              className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:shadow-xl transition-all hover:scale-105 flex items-center justify-center space-x-2 cursor-pointer whitespace-nowrap"
+              disabled={isClosing}
+              className="w-full bg-emerald-700 text-white px-4 py-4 rounded-xl font-semibold text-base transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <i className="ri-checkbox-circle-line text-2xl"></i>
               <span>Да, имам навършени 18 години</span>
@@ -62,7 +65,8 @@ export default function AgeVerification({ onVerified, onDenied }: AgeVerificatio
 
             <button
               onClick={handleDeny}
-              className="w-full bg-gray-100 text-gray-700 px-8 py-4 rounded-xl font-bold text-lg hover:bg-gray-200 transition-all flex items-center justify-center space-x-2 cursor-pointer whitespace-nowrap"
+              disabled={isClosing}
+              className="w-full bg-gray-100 text-gray-700 px-4 py-4 rounded-xl font-semibold text-base hover:bg-gray-200 transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <i className="ri-close-circle-line text-2xl"></i>
               <span>Не, нямам 18 години</span>

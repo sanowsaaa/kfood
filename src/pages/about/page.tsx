@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+
 import { Link } from 'react-router-dom';
 import { useSEO, getLocalBusinessSchema, getBreadcrumbSchema } from '../../utils/seo';
 import Header from '../home/components/Header';
