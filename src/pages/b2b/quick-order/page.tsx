@@ -17,7 +17,7 @@ export default function B2BQuickOrderPage() {
   useEffect(() => {
     supabase
       .from('products')
-      .select('id, name, price, wholesale_price, carton_price, cost_price, image, category, sku, stock, in_stock, moq, moq_unit, pieces_per_carton, slug')
+      .select('id, name, price, wholesale_price, carton_price, image, category, sku, stock, in_stock, moq, moq_unit, pieces_per_carton, slug')
       .order('category').order('name')
       .then(({ data }) => {
         if (data) setProducts(data);

@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useB2B } from '@/contexts/B2BContext';
 import { supabase } from '@/utils/supabase';
 import B2BHeader from '@/pages/b2b/components/B2BHeader';
 import B2BFooter from '@/pages/b2b/components/B2BFooter';
+import { b2bRequestAttempt, finishB2BAttempt } from '@/utils/b2bAttempt';
 
 export default function B2BCheckoutPage() {
   const navigate = useNavigate();
@@ -23,6 +24,17 @@ export default function B2BCheckoutPage() {
   const [phoneError, setPhoneError] = useState('');
   const [nameError, setNameError] = useState('');
   const [addressError, setAddressError] = useState('');
+  const processing = useRef(false);
+  const [emailWarning, setEmailWarning] = useState(false);
+
+  useEffect(() => {
+    if (!company) return;
+    setEmail(value => value || company.email || '');
+    setPhone(value => value || company.phone || '');
+    setCity(value => value || company.city || '');
+    setAddress(value => value || company.address || '');
+    setPostalCode(value => value || company.postal_code || '');
+  }, [company]);
 
   useEffect(() => {
     const savedNotes = sessionStorage.getItem('b2b_order_notes');
@@ -33,6 +45,7 @@ export default function B2BCheckoutPage() {
   const validatePhone = (v: string) => /^(\+359\d{8,9}|0\d{9})$/.test(v.replace(/\s/g, ''));
 
   const handleSubmit = async () => {
+    if (processing.current) return;
     setError(''); setEmailError(''); setPhoneError(''); setNameError(''); setAddressError('');
 
     let valid = true;
@@ -41,18 +54,14 @@ export default function B2BCheckoutPage() {
     if (!fullName.trim()) { setNameError('Име'); valid = false; }
     if (!address.trim() || !city.trim()) { setAddressError('Адрес и град'); valid = false; }
     if (!valid) return;
-
-    // Refresh session before sending — ensure token is not expired
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      setError('Сесията е изтекла. Моля, влезте отново в B2B портала.');
-      setIsProcessing(false);
-      return;
-    }
+    if (!companyId || !cart.length) { setError('Влезте в B2B акаунта и добавете продукти.'); return; }
+    processing.current = true;
 
     setIsProcessing(true);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Сесията е изтекла. Моля, влезте отново в B2B портала.');
       const orderItems = cart.map(item => ({
         id: item.product.id,
         name: item.product.name,
@@ -78,9 +87,19 @@ export default function B2BCheckoutPage() {
         notes: deliveryNotes.trim(),
       };
 
-      const { data, error: fnError } = await supabase.functions.invoke('create-b2b-checkout', { body });
+      const fingerprint = JSON.stringify({ companyId,
+        items: orderItems.map(({ id, quantity }) => ({ id, quantity })).sort((a, b) => a.id - b.id),
+        email: body.customer_email.toLowerCase(), phone: body.customer_phone, shipping: body.shipping_address,
+      });
+      const attemptId = b2bRequestAttempt(fingerprint);
+      const { data, error: fnError } = await supabase.functions.invoke('create-b2b-checkout', { body: { ...body, attemptId } });
 
       if (fnError) {
+        const response = (fnError as { context?: Response }).context;
+        if (response instanceof Response) {
+          const result = await response.json().catch(() => null);
+          if (result?.error) throw new Error(result.error);
+        }
         throw new Error(fnError.message || 'Грешка при изпращане на запитване');
       }
 
@@ -89,12 +108,16 @@ export default function B2BCheckoutPage() {
       }
 
       setOrderNumber(data.order_number);
+      setEmailWarning(data.email_sent === false);
+      finishB2BAttempt(attemptId);
       clearB2BCart();
       sessionStorage.removeItem('b2b_order_notes');
       setSuccess(true);
     } catch (err: any) {
       setError(err.message || 'Грешка при запитването. Опитайте отново.');
+    } finally {
       setIsProcessing(false);
+      processing.current = false;
     }
   };
 
@@ -121,6 +144,7 @@ export default function B2BCheckoutPage() {
           <p className="text-gray-400 text-xs mb-8">
             Нашият екип ще я прегледа и ще ви изпрати оферта на посочения имейл.
           </p>
+          {emailWarning && <p className="mb-6 text-sm text-amber-700">Запитването е записано. Имейл известието е забавено; при спешна поръчка се свържете с екипа и посочете номера.</p>}
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <button
               onClick={() => navigate('/b2b/dashboard')}

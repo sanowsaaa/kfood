@@ -5,7 +5,6 @@ import { useAdminAuth } from '@/hooks/useAdminAuth';
 import AdminHeader from '../components/AdminHeader';
 
 const REVIEW_ORDER_URL = 'https://quqlovoiwgqfmgjumpgd.supabase.co/functions/v1/review-b2b-order';
-const GENERATE_INVOICE_URL = 'https://quqlovoiwgqfmgjumpgd.supabase.co/functions/v1/generate-b2b-invoice';
 
 interface ShippingAddress {
   full_name?: string;
@@ -87,11 +86,8 @@ export default function OrdersManagement() {
   const [companyInfo, setCompanyInfo] = useState<B2BCompanyInfo | null>(null);
   const [loadingCompany, setLoadingCompany] = useState(false);
   const [reviewSuccess, setReviewSuccess] = useState('');
-
-  // Invoice generation state
-  const [generatingInvoice, setGeneratingInvoice] = useState(false);
-  const [invoiceError, setInvoiceError] = useState('');
-  const [invoiceNumber, setInvoiceNumber] = useState<string | null>(null);
+  const [notificationLoading, setNotificationLoading] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState('');
 
   // Custom line item prices for B2B approval
   const [lineItems, setLineItems] = useState<Array<{id: number; name: string; quantity: number; pieces_per_carton: number; unit_price: string; carton_price: string; sku: string | null}>>([]);
@@ -202,8 +198,7 @@ export default function OrdersManagement() {
     setReviewError('');
     setReviewSuccess('');
     setDiscountNotes(order.discount_notes || '');
-    setInvoiceError('');
-    setInvoiceNumber(null);
+    setNotificationMessage('');
 
     // For B2B orders, reset discount to 0 or load existing
     if (order.is_b2b_order) {
@@ -238,6 +233,22 @@ export default function OrdersManagement() {
   const getStatusInfo = (status: string) => statusOptions.find(o => o.value === status) || { label: status, color: 'bg-gray-100 text-gray-800', dot: 'bg-gray-400' };
   const isStripe = (order: Order) => !!order.stripe_session_id;
   const isB2B = (order: Order) => !!(order.b2b_company_id || order.is_b2b_order || order.payment_method === 'b2b_invoice');
+
+  const retryB2BNotification = async (order: Order) => {
+    setNotificationLoading(true);
+    setNotificationMessage('');
+    try {
+      const { data, error } = await supabase.functions.invoke('create-b2b-checkout', {
+        body: { mode: 'resend_notification', order_id: order.id },
+      });
+      if (error || !data?.success) throw new Error(data?.error || 'Известието не беше изпратено. Опитайте по-късно.');
+      setNotificationMessage(data.email_sent ? 'Известието до магазина е доставено или вече е било изпратено.' : data.email_status);
+    } catch (error) {
+      setNotificationMessage(error instanceof Error ? error.message : 'Временен проблем с известието.');
+    } finally {
+      setNotificationLoading(false);
+    }
+  };
 
   const handleReviewOrder = async (action: 'approve' | 'reject') => {
     if (!selectedOrder) return;
@@ -317,77 +328,10 @@ export default function OrdersManagement() {
         setLocalNotes(updatedOrders.data.tracking_notes || '');
       }
 
-      // Auto-generate invoice after approval
-      if (action === 'approve') {
-        setTimeout(async () => {
-          try {
-            const invResponse = await fetch(GENERATE_INVOICE_URL, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ order_id: selectedOrder.id }),
-            });
-            const invResult = await invResponse.json();
-            if (invResult.success) {
-              setInvoiceNumber(invResult.invoice_number);
-            }
-          } catch {
-            // Silent - invoice can be generated manually later
-          }
-        }, 500);
-      }
     } catch {
       setReviewError('Грешка при свързване със сървъра. Опитайте отново.');
     } finally {
       setReviewLoading(false);
-    }
-  };
-
-  const handleGenerateInvoice = async () => {
-    if (!selectedOrder) return;
-    setInvoiceError('');
-    setGeneratingInvoice(true);
-
-    try {
-      const session = await supabase.auth.getSession();
-      const token = session.data.session?.access_token;
-
-      if (!token) {
-        setInvoiceError('Сесията е изтекла.');
-        setGeneratingInvoice(false);
-        return;
-      }
-
-      const response = await fetch(GENERATE_INVOICE_URL, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ order_id: selectedOrder.id }),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        setInvoiceError(result.error || 'Грешка при генериране на фактура');
-        setGeneratingInvoice(false);
-        return;
-      }
-
-      if (result.already_exists) {
-        setInvoiceNumber(result.invoice_number);
-        setGeneratingInvoice(false);
-        return;
-      }
-
-      setInvoiceNumber(result.invoice_number);
-      setGeneratingInvoice(false);
-    } catch {
-      setInvoiceError('Грешка при свързване със сървъра.');
-      setGeneratingInvoice(false);
     }
   };
 
@@ -399,9 +343,7 @@ export default function OrdersManagement() {
       ? Number(selectedOrder.original_total_amount)
       : Number(selectedOrder.total_amount);
     const discounted = Math.round(original * (1 - disc / 100) * 100) / 100;
-    const vat = Math.round(discounted * 0.20 * 100) / 100;
-    const total = Math.round((discounted + vat) * 100) / 100;
-    return { original, discounted, vat, total, discount: disc };
+    return { original, discounted, discount: disc };
   };
 
   const filteredOrders = orders.filter(order => {
@@ -685,6 +627,16 @@ export default function OrdersManagement() {
                     {selectedOrder.status === 'pending_review' ? 'B2B Преглед и одобрение' : 'B2B Детайли за одобрение'}
                   </h3>
 
+                  {selectedOrder.payment_method === 'b2b_request' && (
+                    <div className="mb-4 text-sm">
+                      <button onClick={() => retryB2BNotification(selectedOrder)} disabled={notificationLoading}
+                        className="text-teal-700 font-semibold hover:underline disabled:opacity-50">
+                        {notificationLoading ? 'Проверка на известието...' : 'Повтори известието до магазина'}
+                      </button>
+                      {notificationMessage && <p role="status" className="mt-2 text-gray-700">{notificationMessage}</p>}
+                    </div>
+                  )}
+
                   {/* Company info */}
                   {loadingCompany ? (
                     <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
@@ -757,37 +709,7 @@ export default function OrdersManagement() {
                         )}
                       </div>
 
-                      {/* Invoice button */}
-                      <div className="mt-3 pt-3 border-t border-emerald-200">
-                        {invoiceNumber ? (
-                          <a
-                            href={`/invoice/${invoiceNumber}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm transition-all whitespace-nowrap"
-                          >
-                            <i className="ri-file-text-line text-lg"></i>
-                            Отвори фактура {invoiceNumber}
-                          </a>
-                        ) : (
-                          <div className="flex flex-wrap items-center gap-3">
-                            <button
-                              onClick={handleGenerateInvoice}
-                              disabled={generatingInvoice}
-                              className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white rounded-xl font-bold text-sm transition-all cursor-pointer whitespace-nowrap"
-                            >
-                              {generatingInvoice ? (
-                                <><i className="ri-loader-4-line animate-spin"></i> Генериране...</>
-                              ) : (
-                                <><i className="ri-file-text-line text-lg"></i> Генерирай фактура</>
-                              )}
-                            </button>
-                            {invoiceError && (
-                              <span className="text-sm text-red-600">{invoiceError}</span>
-                            )}
-                          </div>
-                        )}
-                      </div>
+
                     </div>
                   )}
 
@@ -952,7 +874,7 @@ export default function OrdersManagement() {
                           <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Преизчисление</h4>
                           <div className="space-y-2 text-sm">
                             <div className="flex justify-between">
-                              <span className="text-gray-600">Оригинална сума (без ДДС)</span>
+                              <span className="text-gray-600">Оригинална сума</span>
                               <span className="font-semibold text-gray-900">€{preview.original.toFixed(2)}</span>
                             </div>
                             <div className="flex justify-between">
@@ -963,13 +885,9 @@ export default function OrdersManagement() {
                               <span className="text-gray-600">Данъчна основа</span>
                               <span className="font-semibold text-gray-900">€{preview.discounted.toFixed(2)}</span>
                             </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-600">ДДС (20%)</span>
-                              <span className="font-semibold text-gray-700">€{preview.vat.toFixed(2)}</span>
-                            </div>
                             <div className="flex justify-between border-t border-gray-200 pt-2">
-                              <span className="font-bold text-gray-900">ОБЩО с ДДС</span>
-                              <span className="font-bold text-teal-700 text-lg">€{preview.total.toFixed(2)}</span>
+                              <span className="font-bold text-gray-900">Сума за записване</span>
+                              <span className="font-bold text-teal-700 text-lg">€{preview.discounted.toFixed(2)}</span>
                             </div>
                           </div>
                         </div>

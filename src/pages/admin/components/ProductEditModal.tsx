@@ -111,7 +111,7 @@ export default function ProductEditModal({ product, onClose, onSuccess }: Produc
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Каталожен номер (SKU)</label>
                 <input type="text" value={formData.sku || ''} onChange={(e) => setFormData({ ...formData, sku: e.target.value })} placeholder="напр. 801329" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm font-mono" />
-                <p className="text-[10px] text-gray-400 mt-0.5">Задължителен за издаване на фактура</p>
+                <p className="text-[10px] text-gray-400 mt-0.5">Код за идентифициране на продукта в поръчките</p>
               </div>
             </div>
 

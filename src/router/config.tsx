@@ -26,7 +26,6 @@ const FAQ = lazy(() => import('../pages/faq/page'));
 const AboutPage = lazy(() => import('../pages/about/page'));
 const LeaveReview = lazy(() => import('../pages/leave-review/page'));
 const AdminReviews = lazy(() => import('../pages/admin/reviews/page'));
-const InvoicePage = lazy(() => import('../pages/invoice/page'));
 const B2BPage = lazy(() => import('../pages/b2b/page'));
 const B2BApplyPage = lazy(() => import('../pages/b2b/apply/page'));
 const B2BDashboard = lazy(() => import('../pages/b2b/dashboard/page'));
@@ -200,10 +199,6 @@ const routes: RouteObject[] = [
   {
     path: '/admin/b2b/documents',
     element: <AdminB2BDocuments />,
-  },
-  {
-    path: '/invoice/:number',
-    element: <InvoicePage />,
   },
   {
     path: '/leave-review',

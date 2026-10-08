@@ -17,7 +17,7 @@ export default function B2BProductsPage() {
     setProductsLoading(true);
     supabase
       .from('products')
-      .select('id, name, description, price, wholesale_price, carton_price, cost_price, image, category, badge, rating, reviews, in_stock, stock, weight, volume, sku, slug, moq, moq_unit, pieces_per_carton')
+      .select('id, name, description, price, wholesale_price, carton_price, image, category, badge, rating, reviews, in_stock, stock, weight, volume, sku, slug, moq, moq_unit, pieces_per_carton')
       .order('category')
       .order('name')
       .then(({ data }) => {

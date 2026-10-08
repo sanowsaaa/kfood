@@ -1,285 +1,228 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  b2bAdmin,
+  b2bBody,
+  type B2BDependencies,
+  b2bDependencies,
+  b2bEmail,
+  B2BError,
+  b2bEscape,
+  b2bFailure,
+  b2bHash,
+  b2bJson,
+  b2bLimit,
+  b2bMail,
+  type B2BMailResult,
+  b2bRequest,
+  b2bText,
+  b2bUser,
+  UUID_PATTERN,
+} from "../_shared/b2b.ts";
 
-const SECURITY_HEADERS = {
-  "X-Content-Type-Options": "nosniff",
-  "X-Frame-Options": "DENY",
-  "Referrer-Policy": "strict-origin-when-cross-origin",
+type SavedRequest = {
+  order: {
+    id: string;
+    order_number: string;
+    customer_email: string;
+    customer_phone: string;
+    total_amount: number;
+    shipping_address: Record<string, string>;
+    items: {
+      name: string;
+      quantity: number;
+      price: number;
+      line_total_minor: number;
+      sku?: string;
+      pieces_per_carton?: number;
+    }[];
+  };
+  company_name: string;
+  notification_snapshot: { order: SavedRequest["order"]; company_name: string };
+  notification_sent_at: string | null;
+  request_created_at: string;
 };
 
-const CORS_METHODS = "POST, OPTIONS";
-
-function isAllowedOrigin(origin: string | null): boolean {
-  if (!origin || origin === "null") return true;
-  const allowed = [
-    "https://k-foodvelikotarnovo.com",
-    "https://www.k-foodvelikotarnovo.com",
-    "https://readdy.ai",
-    "http://localhost:3000",
-    "http://localhost:5173",
-    "http://127.0.0.1:3000",
-    "http://127.0.0.1:5173",
-  ];
-  if (allowed.includes(origin)) return true;
-  if (origin.endsWith(".readdy.ai")) return true;
-  return false;
-}
-
-function getCorsHeaders(origin: string | null) {
-  const safeOrigin = isAllowedOrigin(origin) ? (origin || "*") : "https://k-foodvelikotarnovo.com";
-  return {
-    "Access-Control-Allow-Origin": safeOrigin,
-    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-    "Access-Control-Allow-Methods": CORS_METHODS,
-  };
-}
-
-const requestCounts = new Map<string, { count: number; resetAt: number }>();
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = requestCounts.get(ip);
-  if (!entry || now > entry.resetAt) {
-    requestCounts.set(ip, { count: 1, resetAt: now + 60_000 });
-    return true;
+export async function sendB2BNotification(
+  deps: B2BDependencies,
+  request: SavedRequest,
+): Promise<B2BMailResult> {
+  if (request.notification_sent_at) return { sent: true };
+  if (Date.now() - new Date(request.request_created_at).getTime() > 20 * 60 * 60_000) {
+    return {
+      sent: false,
+      reason: "Проверете ръчно дали известието е доставено преди повторно изпращане.",
+    };
   }
-  if (entry.count >= 20) return false;
-  entry.count++;
-  return true;
-}
-
-const RESEND_API = Deno.env.get("RESEND_API");
-const RESEND_FROM_DOMAIN = Deno.env.get("RESEND_FROM_DOMAIN");
-const BOSS_EMAIL = "nasko1332@gmail.com";
-
-function generateOrderNumber() {
-  const now = new Date();
-  const y = String(now.getFullYear()).slice(-2);
-  const m = String(now.getMonth() + 1).padStart(2, '0');
-  const d = String(now.getDate()).padStart(2, '0');
-  const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
-  return `B2B${y}${m}${d}-${rand}`;
-}
-
-function sanitize(str: string): string {
-  return str?.replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;') || '';
-}
-
-function calculateTotal(items: any[]): number {
-  return items.reduce((sum: number, i: any) => sum + (i.price || 0) * (i.quantity || 0), 0);
-}
-
-async function sendBossB2BOrderEmail(items: any[], customerEmail: string, customerPhone: string, orderNumber: string, totalAmount: number, companyName: string, shippingAddress: any) {
-  if (!RESEND_API) return { sent: false, reason: "RESEND_API missing" };
-
-  const safeTotal = typeof totalAmount === 'number' && !isNaN(totalAmount) ? totalAmount : calculateTotal(items);
-
-  const fromAddress = RESEND_FROM_DOMAIN
-    ? `K-FOOD B2B <noreply@${RESEND_FROM_DOMAIN}>`
-    : "K-FOOD B2B <onboarding@resend.dev>";
-
-  const productsList = items.map((i: any) => {
-    const hasCarton = i.pieces_per_carton > 0;
-    const skuInfo = i.sku
-      ? `<br><span style="color:#94a3b8;font-size:11px;font-family:monospace">Кат. № ${sanitize(String(i.sku))}</span>`
-      : '';
-    const cartonInfo = hasCarton
-      ? `<br><span style="color:#94a3b8;font-size:11px">📦 Кашон x${i.pieces_per_carton} бр. · ${i.carton_price > 0 ? i.carton_price.toFixed(2) + ' €' : 'цена според оферта'}/кашон</span>`
-      : '';
-    const qtyInfo = hasCarton
-      ? `${i.quantity} бр. (${Math.floor(i.quantity / i.pieces_per_carton)} кашона)`
-      : `${i.quantity}`;
-    return `<tr><td style="padding:10px;border-bottom:1px solid #334155">${sanitize(i.name)}${skuInfo}${cartonInfo}</td><td style="padding:10px;border-bottom:1px solid #334155;text-align:center">${qtyInfo}</td><td style="padding:10px;border-bottom:1px solid #334155;text-align:right">${(i.price * i.quantity).toFixed(2)} €</td></tr>`;
+  const { order, company_name: name } = request.notification_snapshot;
+  const rows = order.items.map((item) => {
+    const carton = item.pieces_per_carton && item.pieces_per_carton > 0
+      ? ` (${item.quantity / item.pieces_per_carton} кашона)`
+      : "";
+    return `<tr><td style="padding:10px;border-bottom:1px solid #e5e7eb">${b2bEscape(item.name)}${
+      item.sku ? `<br><small style="color:#6b7280">SKU: ${b2bEscape(item.sku)}</small>` : ""
+    }</td>` +
+      `<td style="padding:10px;border-bottom:1px solid #e5e7eb">${item.quantity} бр.${carton}</td>` +
+      `<td style="padding:10px;border-bottom:1px solid #e5e7eb;text-align:right">${
+        (item.line_total_minor / 100).toFixed(2)
+      } €</td></tr>`;
   }).join("");
-
-  const html = `<!DOCTYPE html><html><head><meta charset="utf-8"></head><body style="font-family:sans-serif;background:#0f172a;margin:0;padding:0"><div style="max-width:600px;margin:0 auto;padding:20px"><div style="background:linear-gradient(135deg,#059669,#047857);padding:25px;border-radius:12px 12px 0 0;text-align:center"><h1 style="color:white;margin:0;font-size:22px">🔔 Нова B2B Поръчка!</h1><p style="color:rgba(255,255,255,0.85);margin:6px 0 0;font-size:14px">${orderNumber}</p></div><div style="background:#1e293b;padding:25px;border-radius:0 0 12px 12px;color:#e2e8f0"><table style="width:100%;margin-bottom:20px"><tr><td style="padding:8px 12px;background:#334155;border-radius:6px"><strong style="color:#cbd5e1">Статус:</strong> <span style="color:#fbbf24;font-weight:700">За преглед</span></td><td style="padding:8px 12px;background:#334155;border-radius:6px"><strong style="color:#cbd5e1">Тип:</strong> <span style="color:#e2e8f0">B2B Поръчка</span></td></tr></table><h2 style="color:#f1f5f9;font-size:16px;border-bottom:2px solid #059669;padding-bottom:8px;margin-top:0">B2B Компания</h2><p style="color:#e2e8f0;font-size:15px;font-weight:600;margin:10px 0">${sanitize(companyName)}</p><table style="width:100%;margin-bottom:20px"><tr><td style="padding:6px 0;color:#94a3b8;width:35%">Имейл:</td><td style="padding:6px 0;color:#e2e8f0">${sanitize(customerEmail)}</td></tr><tr><td style="padding:6px 0;color:#94a3b8">Телефон:</td><td style="padding:6px 0;color:#e2e8f0;font-weight:600">${sanitize(customerPhone)}</td></tr>${shippingAddress?.city ? `<tr><td style="padding:6px 0;color:#94a3b8">Град:</td><td style="padding:6px 0;color:#e2e8f0">${sanitize(shippingAddress.city)}</td></tr>` : ""}${shippingAddress?.address ? `<tr><td style="padding:6px 0;color:#94a3b8">Адрес:</td><td style="padding:6px 0;color:#e2e8f0">${sanitize(shippingAddress.address)}</td></tr>` : ""}</table><h2 style="color:#f1f5f9;font-size:16px;border-bottom:2px solid #059669;padding-bottom:8px">Заявени продукти</h2><table style="width:100%;border-collapse:collapse;margin-bottom:20px"><thead><tr style="background:#334155"><th style="padding:10px;text-align:left;color:#cbd5e1;font-weight:600;font-size:13px">Продукт</th><th style="padding:10px;text-align:center;color:#cbd5e1;font-weight:600;font-size:13px">Кол.</th><th style="padding:10px;text-align:right;color:#cbd5e1;font-weight:600;font-size:13px">Цена</th></tr></thead><tbody>${productsList}</tbody></table><div style="background:#334155;padding:15px;border-radius:8px;text-align:right"><span style="font-size:18px;font-weight:800;color:#34d399">ОБЩО: ${safeTotal.toFixed(2)} €</span></div><div style="margin-top:15px;padding:12px;background:#1a2e1a;border-radius:8px;border-left:3px solid #34d399"><p style="color:#34d399;font-size:13px;margin:0"><strong>💡 Действие:</strong> Прегледайте поръчката и изпратете персонализирана оферта на клиента.</p></div></div></div></body></html>`;
-
-  try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${RESEND_API}` },
-      body: JSON.stringify({
-        from: fromAddress,
-        to: [BOSS_EMAIL],
-        subject: `🔔 Нова B2B поръчка! ${orderNumber} - ${sanitize(companyName)}`,
-        html,
-      }),
-    });
-
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error("[BOSS EMAIL] Resend API error:", res.status, errText);
-      return { sent: false, reason: `Resend API ${res.status}` };
-    }
-
-    const json = await res.json();
-    return { sent: true, id: json?.id };
-  } catch (e) {
-    console.error("[BOSS EMAIL] Exception:", e);
-    return { sent: false, reason: "Resend request failed" };
+  const html = `<!DOCTYPE html><html lang="bg"><head><meta charset="utf-8"></head>
+<body style="margin:0;background:#f3f4f6;font-family:Arial,sans-serif;color:#111827">
+<div style="max-width:600px;margin:24px auto;background:white;border-radius:12px;overflow:hidden">
+<div style="background:#059669;padding:24px;color:white"><h1 style="margin:0;font-size:22px">K-FOOD · Нова B2B поръчка</h1>
+<p>${b2bEscape(order.order_number)} · За преглед</p></div><div style="padding:24px">
+<h2 style="font-size:18px">${b2bEscape(name)}</h2>
+<p>Контакт: ${b2bEscape(order.shipping_address.full_name)}<br>Имейл: ${
+    b2bEscape(order.customer_email)
+  }<br>
+Телефон: ${b2bEscape(order.customer_phone)}</p>
+<p>Адрес: ${b2bEscape(order.shipping_address.city)}, ${b2bEscape(order.shipping_address.address)} ${
+    b2bEscape(order.shipping_address.postal_code)
+  }</p>
+<p>Бележки: ${b2bEscape(order.shipping_address.notes)}</p>
+<table style="width:100%;border-collapse:collapse"><thead><tr><th style="text-align:left">Продукт</th>
+<th style="text-align:left">Количество</th><th style="text-align:right">Сума</th></tr></thead><tbody>${rows}</tbody></table>
+<p style="text-align:right;font-weight:bold;font-size:18px;color:#047857">Общо: ${
+    Number(order.total_amount).toFixed(2)
+  } €</p>
+<p>Прегледайте запитването и изпратете персонализирана оферта на клиента.</p></div></div></body></html>`;
+  const result = await b2bMail(
+    deps,
+    "kfood-b2b-order-" + order.id,
+    deps.bossEmail,
+    "🔔 Нова B2B поръчка! " + order.order_number + " - " + name,
+    html,
+  );
+  if (result.sent) {
+    const { error } = await deps.db.from("b2b_request_attempts")
+      .update({ notification_sent_at: new Date().toISOString() }).eq("order_id", order.id);
+    if (error) console.error("B2B notification accepted; receipt persistence failed");
   }
+  return result;
 }
 
-serve(async (req: Request) => {
-  const origin = req.headers.get("origin");
-  const corsHeaders = getCorsHeaders(origin);
-
-  if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: { ...corsHeaders, ...SECURITY_HEADERS } });
-  }
-
-  const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  if (!checkRateLimit(clientIp)) {
-    return new Response(
-      JSON.stringify({ success: false, error: "Твърде много заявки. Моля, изчакайте малко." }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json", ...SECURITY_HEADERS }, status: 200 }
-    );
-  }
-
+export async function handleB2BCheckout(req: Request, deps: B2BDependencies): Promise<Response> {
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
-    const body = await req.json();
-    const {
-      items,
-      b2b_company_id,
-      customer_email,
-      customer_phone,
-      shipping_address,
-      notes,
-      total_amount,
-    } = body;
-
-    if (!items || !items.length) {
-      return new Response(JSON.stringify({ success: false, error: "Няма продукти" }), {
-        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json", ...SECURITY_HEADERS },
+    const early = b2bRequest(req);
+    if (early) return early;
+    const user = await b2bUser(req, deps);
+    const body = await b2bBody(req);
+    if (body.mode === "resend_notification") {
+      if (!await b2bAdmin(user, deps)) {
+        throw new B2BError(403, "Необходим е администраторски достъп.");
+      }
+      await b2bLimit(deps, "notification", user.id, 10);
+      if (typeof body.order_id !== "string" || !UUID_PATTERN.test(body.order_id)) {
+        throw new B2BError(400, "Невалидна поръчка.");
+      }
+      const { data, error } = await deps.db.from("b2b_request_attempts")
+        .select("notification_snapshot,notification_sent_at,created_at").eq(
+          "order_id",
+          body.order_id,
+        ).maybeSingle();
+      if (error) throw new Error("Notification lookup failed");
+      if (!data) throw new B2BError(404, "За тази поръчка няма ново B2B известие.");
+      const result = await sendB2BNotification(deps, {
+        order: data.notification_snapshot.order,
+        company_name: data.notification_snapshot.company_name,
+        notification_snapshot: data.notification_snapshot,
+        notification_sent_at: data.notification_sent_at,
+        request_created_at: data.created_at,
+      });
+      return b2bJson(req, {
+        success: true,
+        email_sent: result.sent,
+        email_status: result.reason || "ok",
       });
     }
-
-    if (!b2b_company_id || !customer_email || !customer_phone) {
-      return new Response(JSON.stringify({ success: false, error: "Липсва информация" }), {
-        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json", ...SECURITY_HEADERS },
-      });
+    await b2bLimit(deps, "order", user.id, 10);
+    const { data: company, error: companyError } = await deps.db.from("b2b_companies")
+      .select("id").eq("user_id", user.id).eq("status", "active").maybeSingle();
+    if (companyError) throw new Error("Company lookup failed");
+    if (!company || (body.b2b_company_id && body.b2b_company_id !== company.id)) {
+      throw new B2BError(403, "Нямате достъп до тази фирма.");
     }
-
-    const authHeader = req.headers.get("authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ success: false, error: "Unauthorized - no token" }), {
-        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json", ...SECURITY_HEADERS },
-      });
+    if (!Array.isArray(body.items) || body.items.length === 0 || body.items.length > 50) {
+      throw new B2BError(400, "Добавете от 1 до 50 продукта.");
     }
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-    if (userError || !user) {
-      return new Response(JSON.stringify({ success: false, error: "Unauthorized - invalid token" }), {
-        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json", ...SECURITY_HEADERS },
-      });
+    const seen = new Set<number>();
+    const items = body.items.map((raw: unknown) => {
+      if (!raw || typeof raw !== "object") throw new B2BError(400, "Невалиден продукт.");
+      const item = raw as Record<string, unknown>;
+      if (
+        !Number.isSafeInteger(item.id) || Number(item.id) <= 0 || seen.has(Number(item.id)) ||
+        !Number.isSafeInteger(item.quantity) || Number(item.quantity) < 1 ||
+        Number(item.quantity) > 10000
+      ) {
+        throw new B2BError(400, "Невалидни продукти или количества.");
+      }
+      seen.add(Number(item.id));
+      return { id: Number(item.id), quantity: Number(item.quantity) };
+    }).sort((a, b) => a.id - b.id);
+    const email = b2bEmail(body.customer_email);
+    const phone = b2bText(body.customer_phone, "телефон", 30);
+    if (!/^[+0-9 ()-]{6,30}$/.test(phone)) throw new B2BError(400, "Невалиден телефон.");
+    const rawShipping = body.shipping_address;
+    if (!rawShipping || typeof rawShipping !== "object" || Array.isArray(rawShipping)) {
+      throw new B2BError(400, "Добавете адрес за доставка.");
     }
-
-    const { data: companyData } = await supabase
-      .from("b2b_companies")
-      .select("company_name")
-      .eq("id", b2b_company_id)
-      .maybeSingle();
-
-    const companyName = companyData?.company_name || body.company_name || "B2B Компания";
-
-    // === PULL PRICES FROM DATABASE (server-side, not trusting frontend) ===
-    const productIds = items.map((i: any) => i.id).filter((id: any) => typeof id === 'number');
-    let priceMap = new Map<number, { price: number; carton_price: number; pieces_per_carton: number }>();
-
-    if (productIds.length > 0) {
-      const { data: productData } = await supabase
-        .from("products")
-        .select("id, wholesale_price, cost_price, carton_price, pieces_per_carton, price")
-        .in("id", productIds);
-
-      (productData || []).forEach((p: any) => {
-        const cartonPrice = Number(p.carton_price) || Number(p.wholesale_price) || Number(p.price) || 0;
-        const unitPrice = (p.pieces_per_carton && p.pieces_per_carton > 0)
-          ? cartonPrice / p.pieces_per_carton
-          : (Number(p.wholesale_price) || Number(p.price) || 0);
-        priceMap.set(p.id, {
-          price: unitPrice,
-          carton_price: cartonPrice,
-          pieces_per_carton: p.pieces_per_carton || 0,
-        });
-      });
+    const address = rawShipping as Record<string, unknown>;
+    const shipping = {
+      full_name: b2bText(address.full_name, "име", 120),
+      address: b2bText(address.address, "адрес", 250),
+      city: b2bText(address.city, "град", 100),
+      postal_code: b2bText(address.postal_code ?? "", "пощенски код", 20, false),
+      notes: b2bText(address.notes ?? body.notes ?? "", "бележки", 500, false),
+    };
+    // Compatibility with the old frontend during coordinated rollout.
+    const attemptId = body.attemptId ?? crypto.randomUUID();
+    if (typeof attemptId !== "string" || !UUID_PATTERN.test(attemptId)) {
+      throw new B2BError(400, "Невалиден опит за поръчка.");
     }
-
-    // Enrich items with server-fetched prices
-    const enrichedItems = items.map((i: any) => {
-      const pricing = priceMap.get(i.id);
-      return {
-        ...i,
-        price: pricing?.price ?? 0,
-        carton_price: pricing?.carton_price ?? 0,
-        pieces_per_carton: pricing?.pieces_per_carton ?? (i.pieces_per_carton || 0),
+    const hash = await b2bHash(JSON.stringify({ items, email, phone, shipping }));
+    const { data, error } = await deps.db.rpc("b2b_create_request", {
+      p_user_id: user.id,
+      p_company_id: company.id,
+      p_attempt_id: attemptId,
+      p_request_hash: hash,
+      p_items: items,
+      p_email: email,
+      p_phone: phone,
+      p_shipping: shipping,
+      p_notes: shipping.notes,
+    });
+    if (error) {
+      const messages: Record<string, string> = {
+        COMPANY_ACCESS_DENIED: "Фирменият достъп е прекратен. Влезте отново.",
+        REQUEST_CONFLICT: "Запитването е променено. Изпратете го като ново запитване.",
+        PRODUCT_UNAVAILABLE: "Някой от продуктите вече не е наличен. Обновете количката.",
+        WHOLE_CARTONS_REQUIRED: "Поръчвайте цели кашони за продуктите с кашонна разфасовка.",
+        INVALID_PRICE: "Цената на продукт изисква проверка от екипа.",
+        INVALID_TOTAL: "Сумата на запитването изисква проверка от екипа.",
       };
-    });
-
-    // Calculate total from server-fetched prices
-    const computedTotal = typeof total_amount === 'number' && !isNaN(total_amount)
-      ? total_amount
-      : calculateTotal(enrichedItems);
-
-    const orderNumber = generateOrderNumber();
-
-    const { data: order, error: orderError } = await supabase
-      .from("orders")
-      .insert({
-        order_number: orderNumber,
-        b2b_company_id: b2b_company_id,
-        customer_email: customer_email,
-        customer_phone: customer_phone,
-        status: "pending_review",
-        total_amount: computedTotal,
-        currency: "EUR",
-        items: enrichedItems.map((i: any) => ({
-          id: i.id,
-          name: i.name,
-          price: i.price,
-          quantity: i.quantity,
-          image: i.image,
-          sku: i.sku || null,
-          carton_price: i.carton_price || 0,
-          pieces_per_carton: i.pieces_per_carton || 0,
-        })),
-        shipping_address: shipping_address || {},
-        tracking_notes: notes || "",
-        is_b2b_order: true,
-        payment_method: "b2b_invoice",
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .select("id, order_number")
-      .single();
-
-    if (orderError) {
-      console.error("Order insert error:", orderError);
-      return new Response(JSON.stringify({ success: false, error: "Грешка при записване: " + (orderError.message || "unknown") }), {
-        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json", ...SECURITY_HEADERS },
-      });
+      if (messages[error.message]) throw new B2BError(409, messages[error.message]);
+      throw new Error("B2B order transaction failed");
     }
-
-    const emailResult = await sendBossB2BOrderEmail(enrichedItems, customer_email, customer_phone, orderNumber, computedTotal, companyName, shipping_address);
-
-    return new Response(JSON.stringify({
+    const saved = data as SavedRequest;
+    const notification = await sendB2BNotification(deps, saved);
+    return b2bJson(req, {
       success: true,
-      order_id: order.id,
-      order_number: order.order_number,
-      email_sent: emailResult.sent,
-      email_status: emailResult.reason || "ok",
-      message: "Поръчката е изпратена успешно. Ще получите оферта на посочения имейл.",
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json", ...SECURITY_HEADERS },
+      order_id: saved.order.id,
+      order_number: saved.order.order_number,
+      total_amount: saved.order.total_amount,
+      email_sent: notification.sent,
+      email_status: notification.reason || "ok",
+      message: "Запитването е записано успешно. Екипът ще го прегледа и ще подготви оферта.",
     });
-  } catch (_err) {
-    console.error("B2B Checkout error:", _err);
-    return new Response(JSON.stringify({ success: false, error: "Възникна неочаквана грешка. Моля, опитайте отново." }), {
-      status: 200, headers: { ...corsHeaders, "Content-Type": "application/json", ...SECURITY_HEADERS },
-    });
+  } catch (error) {
+    return b2bFailure(req, error);
   }
-});
+}
+export default {
+  fetch: async (req: Request) => {
+    try {
+      return await handleB2BCheckout(req, b2bDependencies());
+    } catch (error) {
+      return b2bFailure(req, error);
+    }
+  },
+};

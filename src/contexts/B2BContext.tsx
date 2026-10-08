@@ -1,11 +1,18 @@
-import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
+import type { ReactNode } from 'react';
 import { supabase } from '@/utils/supabase';
 
-const B2B_AUTH_URL = 'https://quqlovoiwgqfmgjumpgd.supabase.co/functions/v1/b2b-auth';
-const CHECK_USER_URL = 'https://quqlovoiwgqfmgjumpgd.supabase.co/functions/v1/check-user';
-
-
+async function callB2BAuth(body: Record<string, unknown>) {
+  const { data, error } = await supabase.functions.invoke('b2b-auth', { body });
+  if (error) {
+    const response = (error as { context?: Response }).context;
+    if (response instanceof Response) {
+      try { return await response.json(); } catch { /* use the connection error below */ }
+    }
+    throw new Error('Временен проблем при свързване. Опитайте отново.');
+  }
+  return data;
+}
 
 export interface B2BProduct {
   id: number;
@@ -14,7 +21,6 @@ export interface B2BProduct {
   price: number;
   wholesale_price: number;
   carton_price: number;
-  cost_price: number;
   image: string;
   category: string;
   badge?: string;
@@ -42,6 +48,9 @@ export interface B2BCompany {
   credit_limit: number;
   created_at: string;
   user_id: string;
+  address?: string;
+  postal_code?: string;
+  pricing_tier_id?: string | null;
 }
 
 export interface B2BCartItem {
@@ -57,7 +66,8 @@ interface B2BContextType {
   cart: B2BCartItem[];
   cartTotal: number;
   cartItemsCount: number;
-  registerB2B: (companyId: string, email: string, password: string) => Promise<{ success: boolean; error?: string; alreadyRegistered?: boolean }>;
+  requestB2BActivation: (companyId: string, email: string) => Promise<{ success: boolean; error?: string; alreadyRegistered?: boolean }>;
+  registerB2B: (companyId: string, email: string, password: string, code: string) => Promise<{ success: boolean; error?: string; alreadyRegistered?: boolean }>;
   loginB2B: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   disconnect: () => void;
   calculateB2BPrice: (product: B2BProduct) => number;
@@ -77,148 +87,97 @@ const B2BContext = createContext<B2BContextType | undefined>(undefined);
 
 export function B2BProvider({ children }: { children: ReactNode }) {
   const [company, setCompany] = useState<B2BCompany | null>(null);
-  const [companyId, setCompanyIdState] = useState<string>('');
+  const [companyId, setCompanyIdState] = useState('');
   const [loading, setLoading] = useState(false);
   const [sessionLoading, setSessionLoading] = useState(true);
-  const [sessionChecked, setSessionChecked] = useState(false);
-  const [cart, setCart] = useState<B2BCartItem[]>(() => {
+  const [cart, setCart] = useState<B2BCartItem[]>([]);
+  const verifiedCompany = useRef('');
+  const generation = useRef(0);
+
+  const refreshData = useCallback(async () => {
+    const request = ++generation.current;
+    setLoading(true);
     try {
-      const saved = localStorage.getItem('b2b_cart');
-      return saved ? JSON.parse(saved) : [];
-    } catch { return []; }
-  });
-
-  useEffect(() => {
-    localStorage.setItem('b2b_cart', JSON.stringify(cart));
-  }, [cart]);
-
-  // ===== Verify Supabase session on mount =====
-  useEffect(() => {
-    const verifySession = async () => {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-          localStorage.removeItem('b2b_company_id');
-          setCompanyIdState('');
-          setSessionLoading(false);
-          setSessionChecked(true);
-          return;
+      const { data: { session } } = await supabase.auth.getSession();
+      const result = session ? await callB2BAuth({ mode: 'profile' }) : null;
+      if (request !== generation.current) return;
+      if (result && !result.success) throw new Error(result.error || 'Няма фирмен достъп');
+      const profile = result?.company as B2BCompany | undefined;
+      const nextId = profile?.id || '';
+      if (verifiedCompany.current !== nextId) {
+        const owner = localStorage.getItem('b2b_cart_owner') || localStorage.getItem('b2b_company_id');
+        let restored: B2BCartItem[] = [];
+        if (nextId && owner === nextId) {
+          try {
+            const parsed = JSON.parse(localStorage.getItem('b2b_cart') || '[]');
+            if (Array.isArray(parsed)) restored = parsed.filter(item => item?.product && Number.isSafeInteger(item.product.id) &&
+              Number.isSafeInteger(item.quantity) && item.quantity > 0 && item.quantity <= 10000).slice(0, 50).map(item => ({
+                ...item, product: Object.fromEntries(Object.entries(item.product).filter(([key]) => key !== 'cost_price')),
+              })) as B2BCartItem[];
+          } catch { /* an invalid saved cart starts empty */ }
         }
-
-        const response = await fetch(CHECK_USER_URL, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (!response.ok) {
-          localStorage.removeItem('b2b_company_id');
-          setCompanyIdState('');
-          setSessionLoading(false);
-          setSessionChecked(true);
-          return;
-        }
-
-        const result = await response.json();
-
-        if (result.isAdmin) {
-          setSessionLoading(false);
-          setSessionChecked(true);
-          return;
-        }
-
-        if (!result.companyId) {
-          localStorage.removeItem('b2b_company_id');
-          setCompanyIdState('');
-          setSessionLoading(false);
-          setSessionChecked(true);
-          return;
-        }
-
-        localStorage.setItem('b2b_company_id', result.companyId);
-        setCompanyIdState(result.companyId);
-        setSessionLoading(false);
-        setSessionChecked(true);
-      } catch {
-        setSessionLoading(false);
-        setSessionChecked(true);
+        setCart(restored);
       }
-    };
-
-    verifySession();
-  }, []);
-
-  // ===== REGISTER — one time only =====
-  const registerB2B = useCallback(async (companyId: string, email: string, password: string) => {
-    try {
-      const response = await fetch(B2B_AUTH_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode: 'register', companyId, email, password }),
-      });
-
-      const result = await response.json();
-
-      if (!result.success) {
-        return {
-          success: false,
-          error: result.error || 'Грешка при регистрация',
-          alreadyRegistered: result.already_registered || false,
-        };
+      verifiedCompany.current = nextId;
+      setCompany(profile || null);
+      setCompanyIdState(nextId);
+      if (nextId) localStorage.setItem('b2b_company_id', nextId);
+      else localStorage.removeItem('b2b_company_id');
+    } catch {
+      if (request === generation.current) {
+        verifiedCompany.current = '';
+        setCompany(null); setCompanyIdState(''); setCart([]);
       }
-
-      await supabase.auth.setSession({
-        access_token: result.access_token,
-        refresh_token: result.refresh_token,
-      });
-
-      localStorage.setItem('b2b_company_id', result.company_id);
-      setCompanyIdState(result.company_id);
-      setSessionChecked(true);
-
-      return { success: true };
-    } catch (err: any) {
-      return { success: false, error: err.message || 'Грешка при свързване' };
+    } finally {
+      if (request === generation.current) { setLoading(false); setSessionLoading(false); }
     }
   }, []);
 
-  // ===== LOGIN — email + password only =====
+  useEffect(() => {
+    let alive = true;
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(() => {
+      // Defer API calls until the Auth client's session lock has been released.
+      setTimeout(() => { if (alive) void refreshData(); }, 0);
+    });
+    void refreshData();
+    return () => { alive = false; generation.current++; subscription.unsubscribe(); };
+  }, [refreshData]);
+
+  useEffect(() => {
+    if (!companyId) return;
+    localStorage.setItem('b2b_cart', JSON.stringify(cart));
+    localStorage.setItem('b2b_cart_owner', companyId);
+  }, [cart, companyId]);
+
+  const requestB2BActivation = useCallback(async (id: string, email: string) => {
+    try {
+      const result = await callB2BAuth({ mode: 'request_activation', companyId: id, email });
+      return { success: !!result?.success, error: result?.error, alreadyRegistered: !!result?.already_registered };
+    } catch (error) { return { success: false, error: error instanceof Error ? error.message : 'Грешка при свързване' }; }
+  }, []);
+
+  const registerB2B = useCallback(async (id: string, email: string, password: string, code: string) => {
+    try {
+      const result = await callB2BAuth({ mode: 'register', companyId: id, email, password, code });
+      if (!result?.success) return { success: false, error: result?.error, alreadyRegistered: !!result?.already_registered };
+      const { error } = await supabase.auth.setSession({ access_token: result.access_token, refresh_token: result.refresh_token });
+      if (error) throw error;
+      await refreshData();
+      return { success: true };
+    } catch (error) { return { success: false, error: error instanceof Error ? error.message : 'Грешка при свързване' }; }
+  }, [refreshData]);
+
   const loginB2B = useCallback(async (email: string, password: string) => {
     try {
-      const response = await fetch(B2B_AUTH_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode: 'login', email, password }),
-      });
-
-      const result = await response.json();
-
-      if (!result.success) {
-        return { success: false, error: result.error || 'Грешка при вход' };
-      }
-
-      await supabase.auth.setSession({
-        access_token: result.access_token,
-        refresh_token: result.refresh_token,
-      });
-
-      localStorage.setItem('b2b_company_id', result.company_id);
-      setCompanyIdState(result.company_id);
-      setSessionChecked(true);
-
+      const result = await callB2BAuth({ mode: 'login', email, password });
+      if (!result?.success) return { success: false, error: result?.error || 'Грешка при вход' };
+      const { error } = await supabase.auth.setSession({ access_token: result.access_token, refresh_token: result.refresh_token });
+      if (error) throw error;
+      await refreshData();
       return { success: true };
-    } catch (err: any) {
-      return { success: false, error: err.message || 'Грешка при свързване' };
-    }
-  }, []);
+    } catch (error) { return { success: false, error: error instanceof Error ? error.message : 'Грешка при свързване' }; }
+  }, [refreshData]);
 
-  // Unit (per-piece) wholesale price — used for cart totals.
-  // This formula MUST match the server (create-b2b-checkout) exactly, so the
-  // cart and the stored order always show the same amount. Carton products use
-  // carton_price (fallback wholesale, fallback retail) divided by pieces; piece
-  // products use wholesale_price (fallback retail).
   const calculateB2BPrice = useCallback((product: B2BProduct): number => {
     const cartonBase = product.carton_price || product.wholesale_price || product.price || 0;
     if (product.pieces_per_carton && product.pieces_per_carton > 0) {
@@ -246,22 +205,6 @@ export function B2BProvider({ children }: { children: ReactNode }) {
     return calculateB2BPrice(product);
   }, [calculateB2BPrice]);
 
-  const refreshData = useCallback(async () => {
-    const currentCompanyId = localStorage.getItem('b2b_company_id') || companyId;
-    if (!currentCompanyId) return;
-    setLoading(true);
-    try {
-      const { data: compData } = await supabase.from('b2b_companies').select('*').eq('id', currentCompanyId).single();
-      if (compData) {
-        setCompany(compData);
-      }
-    } catch { /* silent */ } finally { setLoading(false); }
-  }, [companyId]);
-
-  useEffect(() => {
-    if (companyId && sessionChecked) refreshData();
-  }, [companyId, sessionChecked]);
-
   const disconnect = useCallback(async () => {
     await supabase.auth.signOut();
     setCompanyIdState('');
@@ -269,7 +212,7 @@ export function B2BProvider({ children }: { children: ReactNode }) {
     setCart([]);
     localStorage.removeItem('b2b_company_id');
     localStorage.removeItem('b2b_cart');
-    setSessionChecked(false);
+    localStorage.removeItem('b2b_cart_owner');
   }, []);
 
   const addToB2BCart = (product: B2BProduct, quantity: number = 1) => {
@@ -321,7 +264,7 @@ export function B2BProvider({ children }: { children: ReactNode }) {
   return (
     <B2BContext.Provider value={{
       company, companyId, loading, sessionLoading, cart, cartTotal, cartItemsCount,
-      registerB2B, loginB2B, disconnect,
+      requestB2BActivation, registerB2B, loginB2B, disconnect,
       calculateB2BPrice, calculateCartonPrice, getFinalB2BPrice,
       getDisplayPrice, getDisplayLabel,
       addToB2BCart, addCarton, updateB2BCartQty, removeFromB2BCart, clearB2BCart,
