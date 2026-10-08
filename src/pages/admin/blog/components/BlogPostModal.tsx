@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useAdminDialog } from '@/hooks/useAdminDialog';
+import { adminErrorMessage, confirmedRecord, createActionLock } from '@/utils/admin';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/utils/supabase';
 import { sanitizeHtml } from '@/utils/security';
 
-interface BlogPost {
+export interface BlogPost {
   id?: number;
   title: string;
   slug: string;
@@ -57,8 +59,10 @@ const defaultPost: BlogPost = {
 export default function BlogPostModal({ post, onClose, onSuccess }: Props) {
   const [form, setForm] = useState<BlogPost>(post ? { ...post } : { ...defaultPost });
   const [tagInput, setTagInput] = useState('');
+  const submitLock = useRef(createActionLock());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const dialogRef = useAdminDialog(true, saving, onClose);
 
   useEffect(() => {
     if (post) {
@@ -94,6 +98,7 @@ export default function BlogPostModal({ post, onClose, onSuccess }: Props) {
     if (!form.excerpt.trim()) { setError('Резюмето е задължително'); return; }
     if (!form.content.trim()) { setError('Съдържанието е задължително'); return; }
 
+    if (!submitLock.current.acquire()) return;
     try {
       setSaving(true);
       setError('');
@@ -113,47 +118,42 @@ export default function BlogPostModal({ post, onClose, onSuccess }: Props) {
       };
 
       if (post?.id) {
-        const { error: updateError } = await supabase
-          .from('blog_posts')
-          .update(payload)
-          .eq('id', post.id);
-        if (updateError) throw updateError;
+        confirmedRecord(await supabase.from('blog_posts').update(payload).eq('id', post.id).select('id').single(), post.id);
       } else {
-        const { error: insertError } = await supabase
-          .from('blog_posts')
-          .insert([payload]);
-        if (insertError) throw insertError;
+        confirmedRecord(await supabase.from('blog_posts').insert([payload]).select('id').single());
       }
 
       onSuccess();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Грешка при запазване';
-      setError(message.includes('duplicate') ? 'Slug-ът вече съществува. Промени го.' : message);
+    } catch (cause) {
+      setError(adminErrorMessage(cause));
     } finally {
+      submitLock.current.release();
       setSaving(false);
     }
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl w-full max-w-3xl my-8">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="admin-dialog-title" tabIndex={-1} className="bg-white rounded-2xl w-full max-w-3xl my-8">
         {/* Modal Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
-          <h2 className="text-xl font-bold text-gray-900">
+          <h2 id="admin-dialog-title" className="text-xl font-bold text-gray-900">
             {post ? 'Редактирай статия' : 'Нова статия'}
           </h2>
           <button
             onClick={onClose}
+            disabled={saving}
+            aria-label="Затвори"
             className="w-9 h-9 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
           >
-            <i className="ri-close-line text-xl"></i>
+            <i aria-hidden="true" className="ri-close-line text-xl"></i>
           </button>
         </div>
 
-        <div className="p-6 space-y-5">
+        <fieldset disabled={saving} className="min-w-0 p-6 space-y-5">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
-              <i className="ri-error-warning-line"></i>
+            <div role="alert" className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
+              <i aria-hidden="true" className="ri-error-warning-line"></i>
               {error}
             </div>
           )}
@@ -290,7 +290,7 @@ export default function BlogPostModal({ post, onClose, onSuccess }: Props) {
                       onClick={() => removeTag(tag)}
                       className="text-emerald-400 hover:text-red-500 transition-colors cursor-pointer"
                     >
-                      <i className="ri-close-line text-xs"></i>
+                      <i aria-hidden="true" className="ri-close-line text-xs"></i>
                     </button>
                   </span>
                 ))}
@@ -317,12 +317,14 @@ export default function BlogPostModal({ post, onClose, onSuccess }: Props) {
               ></span>
             </button>
           </div>
-        </div>
+        </fieldset>
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-3 px-6 py-5 border-t border-gray-100">
           <button
             onClick={onClose}
+            disabled={saving}
+            aria-label="Затвори"
             className="px-5 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
           >
             Отказ
@@ -334,12 +336,12 @@ export default function BlogPostModal({ post, onClose, onSuccess }: Props) {
           >
             {saving ? (
               <>
-                <i className="ri-loader-4-line animate-spin"></i>
+                <i aria-hidden="true" className="ri-loader-4-line animate-spin"></i>
                 Запазване...
               </>
             ) : (
               <>
-                <i className="ri-save-line"></i>
+                <i aria-hidden="true" className="ri-save-line"></i>
                 {post ? 'Обнови' : 'Създай'}
               </>
             )}

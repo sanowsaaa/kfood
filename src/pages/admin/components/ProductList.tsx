@@ -1,31 +1,11 @@
 import { useState } from 'react';
 
-interface Product {
-  id: string | number;
-  name: string;
-  description: string;
-  price: number;
-  price_euro: number;
-  wholesale_price: number;
-  carton_price: number;
-  image: string;
-  category: string;
-  badge: string;
-  rating: number;
-  reviews: number;
-  in_stock: boolean;
-  stock: number;
-  weight: string | null;
-  volume: string | null;
-  sku: string | null;
-  moq: number;
-  moq_unit: string;
-  pieces_per_carton: number;
-}
+import type { Product } from './ProductEditModal';
 
 interface ProductListProps {
   products: Product[];
   loading?: boolean;
+  busy?: boolean;
   searchQuery: string;
   catalogFilter: 'all' | 'missing' | 'duplicate';
   onToggleStock: (id: string | number, currentStock: boolean) => void;
@@ -33,7 +13,7 @@ interface ProductListProps {
   onDelete: (id: string | number) => void;
 }
 
-export default function ProductList({ products, loading, searchQuery, catalogFilter, onToggleStock, onEdit, onDelete }: ProductListProps) {
+export default function ProductList({ products, loading, busy, searchQuery, catalogFilter, onToggleStock, onEdit, onDelete }: ProductListProps) {
   const [sortField, setSortField] = useState<'name' | 'price' | 'stock'>('name');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
@@ -76,14 +56,14 @@ export default function ProductList({ products, loading, searchQuery, catalogFil
   };
 
   const SortIcon = ({ field }: { field: typeof sortField }) => {
-    if (sortField !== field) return <i className="ri-arrow-up-down-line text-gray-300 ml-1"></i>;
-    return sortDir === 'asc' ? <i className="ri-arrow-up-line text-teal-600 ml-1"></i> : <i className="ri-arrow-down-line text-teal-600 ml-1"></i>;
+    if (sortField !== field) return <i aria-hidden="true" className="ri-arrow-up-down-line text-gray-300 ml-1"></i>;
+    return sortDir === 'asc' ? <i aria-hidden="true" className="ri-arrow-up-line text-teal-600 ml-1"></i> : <i aria-hidden="true" className="ri-arrow-down-line text-teal-600 ml-1"></i>;
   };
 
   if (loading) {
     return (
       <div className="text-center py-16">
-        <i className="ri-loader-4-line text-4xl text-teal-600 animate-spin"></i>
+        <i aria-hidden="true" className="ri-loader-4-line text-4xl text-teal-600 animate-spin"></i>
         <p className="mt-4 text-gray-600">Зареждане на продукти...</p>
       </div>
     );
@@ -92,7 +72,7 @@ export default function ProductList({ products, loading, searchQuery, catalogFil
   if (products.length === 0) {
     return (
       <div className="text-center py-16">
-        <i className="ri-inbox-line text-6xl text-gray-300 mb-4"></i>
+        <i aria-hidden="true" className="ri-inbox-line text-6xl text-gray-300 mb-4"></i>
         <p className="text-gray-500 text-lg">Няма намерени продукти</p>
       </div>
     );
@@ -101,7 +81,7 @@ export default function ProductList({ products, loading, searchQuery, catalogFil
   if (filtered.length === 0) {
     return (
       <div className="text-center py-16">
-        <i className="ri-search-line text-6xl text-gray-300 mb-4"></i>
+        <i aria-hidden="true" className="ri-search-line text-6xl text-gray-300 mb-4"></i>
         <p className="text-gray-500 text-lg">Няма резултати за „{searchQuery}"</p>
       </div>
     );
@@ -115,18 +95,18 @@ export default function ProductList({ products, loading, searchQuery, catalogFil
             <tr>
               <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">ID</th>
               <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Снимка</th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none" onClick={() => toggleSort('name')}>
-                Продукт <SortIcon field="name" />
+              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none" aria-sort={sortField === 'name' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                <button type="button" onClick={() => toggleSort('name')} className="flex items-center whitespace-nowrap uppercase">Продукт <SortIcon field="name" /></button>
               </th>
               <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Каталожен №</th>
               <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Категория</th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none" onClick={() => toggleSort('price')}>
-                Цена <SortIcon field="price" />
+              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none" aria-sort={sortField === 'price' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                <button type="button" onClick={() => toggleSort('price')} className="flex items-center whitespace-nowrap uppercase">Цена <SortIcon field="price" /></button>
               </th>
               <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">B2B Цена</th>
               <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">MOQ</th>
-              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none" onClick={() => toggleSort('stock')}>
-                Наличност <SortIcon field="stock" />
+              <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer select-none" aria-sort={sortField === 'stock' ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}>
+                <button type="button" onClick={() => toggleSort('stock')} className="flex items-center whitespace-nowrap uppercase">Наличност <SortIcon field="stock" /></button>
               </th>
               <th className="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap">Действия</th>
             </tr>
@@ -166,7 +146,7 @@ export default function ProductList({ products, loading, searchQuery, catalogFil
                     </div>
                   ) : (
                     <span className="px-2 py-1 bg-red-50 text-red-600 text-[11px] font-bold rounded whitespace-nowrap">
-                      <i className="ri-error-warning-line mr-0.5"></i>Няма №
+                      <i aria-hidden="true" className="ri-error-warning-line mr-0.5"></i>Няма №
                     </span>
                   )}
                 </td>
@@ -203,7 +183,7 @@ export default function ProductList({ products, loading, searchQuery, catalogFil
                 </td>
                 <td className="px-3 py-4 whitespace-nowrap">
                   <button
-                    onClick={() => onToggleStock(product.id, product.in_stock)}
+                    disabled={busy} onClick={() => onToggleStock(product.id, product.in_stock)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
                       product.in_stock
                         ? 'bg-green-100 text-green-800 hover:bg-green-200'
@@ -212,12 +192,12 @@ export default function ProductList({ products, loading, searchQuery, catalogFil
                   >
                     {product.in_stock ? (
                       <>
-                        <i className="ri-checkbox-circle-line mr-1"></i>
+                        <i aria-hidden="true" className="ri-checkbox-circle-line mr-1"></i>
                         {product.stock || 0} бр.
                       </>
                     ) : (
                       <>
-                        <i className="ri-close-circle-line mr-1"></i>
+                        <i aria-hidden="true" className="ri-close-circle-line mr-1"></i>
                         Изчерпан
                       </>
                     )}
@@ -226,18 +206,18 @@ export default function ProductList({ products, loading, searchQuery, catalogFil
                 <td className="px-3 py-4 whitespace-nowrap">
                   <div className="flex items-center gap-1">
                     <button
-                      onClick={() => onEdit(product)}
-                      className="w-8 h-8 flex items-center justify-center text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                      disabled={busy} onClick={() => onEdit(product)}
+                      className="px-2 py-2 flex items-center gap-1 text-xs font-medium justify-center text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
                       title="Редактирай"
                     >
-                      <i className="ri-edit-line text-lg"></i>
+                      <i aria-hidden="true" className="ri-edit-line text-lg"></i>Редактирай
                     </button>
                     <button
-                      onClick={() => onDelete(product.id)}
-                      className="w-8 h-8 flex items-center justify-center text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                      disabled={busy} onClick={() => onDelete(product.id)}
+                      className="px-2 py-2 flex items-center gap-1 text-xs font-medium justify-center text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
                       title="Изтрий"
                     >
-                      <i className="ri-delete-bin-line text-lg"></i>
+                      <i aria-hidden="true" className="ri-delete-bin-line text-lg"></i>Изтрий
                     </button>
                   </div>
                 </td>
@@ -251,12 +231,12 @@ export default function ProductList({ products, loading, searchQuery, catalogFil
         <span className="flex items-center gap-3 flex-wrap">
           {missingSkuCount > 0 && (
             <span className="text-red-500 font-semibold whitespace-nowrap">
-              <i className="ri-error-warning-line mr-1"></i>{missingSkuCount} без каталожен №
+              <i aria-hidden="true" className="ri-error-warning-line mr-1"></i>{missingSkuCount} без каталожен №
             </span>
           )}
           {duplicateSkuCount > 0 && (
             <span className="text-amber-600 font-semibold whitespace-nowrap">
-              <i className="ri-error-warning-line mr-1"></i>{duplicateSkuCount} дублирани №
+              <i aria-hidden="true" className="ri-error-warning-line mr-1"></i>{duplicateSkuCount} дублирани №
             </span>
           )}
         </span>

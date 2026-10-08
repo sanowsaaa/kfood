@@ -1,7 +1,13 @@
+import { useAdminAction } from '@/hooks/useAdminAction';
+import { useAdminRead } from '@/hooks/useAdminRead';
+import { checkedData, confirmedRecord } from '@/utils/admin';
+import AdminFeedback from '@/pages/admin/components/AdminFeedback';
+import AdminHeader from '../components/AdminHeader';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
-import { useNavigate, Link } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import AdminAccess from '@/pages/admin/components/AdminAccess';
 
 interface Application {
   id: string;
@@ -53,29 +59,20 @@ interface Company {
 }
 
 export default function AdminB2BPage() {
-  const navigate = useNavigate();
-  const { isAdmin, loading: authLoading } = useAdminAuth();
+  const { isAdmin, loading: authLoading, error: authError, retry: retryAuth } = useAdminAuth();
   const [activeTab, setActiveTab] = useState<'applications' | 'companies' | 'order_rules' | 'payment_rules'>('applications');
   const [applications, setApplications] = useState<Application[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [fetchError, setFetchError] = useState('');
+  const { loading, error: fetchError, load } = useAdminRead();
+  const action = useAdminAction();
   const [statusFilter, setStatusFilter] = useState<string>('pending');
   const [selectedApp, setSelectedApp] = useState<Application | null>(null);
   const [reviewNotes, setReviewNotes] = useState('');
-  const [processing, setProcessing] = useState(false);
-  const [approveSuccess, setApproveSuccess] = useState('');
-  const [approveError, setApproveError] = useState('');
+  const processing = !!action.pending;
   const [orderRules, setOrderRules] = useState<any[]>([]);
   const [paymentRules, setPaymentRules] = useState<any[]>([]);
   const [newOrderRule, setNewOrderRule] = useState({ company_id: '', min_order_value: 0, min_cart_quantity: 1, max_order_value: 0 });
   const [newPaymentRule, setNewPaymentRule] = useState({ company_id: '', payment_method: 'bank_transfer' });
-
-  useEffect(() => {
-    if (!authLoading && !isAdmin) {
-      navigate('/login');
-    }
-  }, [authLoading, isAdmin, navigate]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -83,177 +80,90 @@ export default function AdminB2BPage() {
     }
   }, [isAdmin, statusFilter]);
 
-  const fetchData = async () => {
-    setLoading(true);
-    setFetchError('');
-    try {
-      const [appsRes, companiesRes, rulesRes, payRes] = await Promise.all([
-        supabase.from('b2b_applications').select('*').eq('status', statusFilter).order('created_at', { ascending: false }),
-        supabase.from('b2b_companies').select('*').order('created_at', { ascending: false }),
-        supabase.from('b2b_order_rules').select('*'),
-        supabase.from('b2b_payment_rules').select('*'),
-      ]);
-      if (appsRes.error) throw appsRes.error;
-      if (appsRes.data) setApplications(appsRes.data);
-      if (companiesRes.data) setCompanies(companiesRes.data);
-      if (rulesRes.data) setOrderRules(rulesRes.data);
-      if (payRes.data) setPaymentRules(payRes.data);
-    } catch (err: any) {
-      setFetchError(err.message || 'Грешка при зареждане на данни.');
-    } finally {
-      setLoading(false);
-    }
+  const fetchData = () => load(async () => {
+    const results = await Promise.all([
+      supabase.from('b2b_applications').select('*').eq('status', statusFilter).order('created_at', { ascending: false }),
+      supabase.from('b2b_companies').select('*').order('created_at', { ascending: false }),
+      supabase.from('b2b_order_rules').select('*'),
+      supabase.from('b2b_payment_rules').select('*'),
+    ]);
+    return results.map(result => checkedData(result));
+  }, ([apps, firms, rules, payments]) => {
+    setApplications(apps); setCompanies(firms); setOrderRules(rules); setPaymentRules(payments);
+  });
+
+  const handleApprove = (app: Application) => action.run(`approve:${app.id}`, async () => {
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error || !session) throw new Error('Няма активна сесия. Влезте отново.');
+    const response = await fetch(`${import.meta.env.VITE_PUBLIC_SUPABASE_URL}/functions/v1/approve-b2b`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ application_id: app.id, review_notes: reviewNotes }),
+    });
+    const result = await response.json();
+    if (!response.ok || result.success !== true) throw new Error(result.error || 'Одобрението не е потвърдено. Обновете данните преди нов опит.');
+    action.setMessage(result.email_sent
+      ? { type: 'success', text: `Кандидатурата е одобрена. Имейлът е приет за изпращане на ${app.contact_email || app.email}.` }
+      : { type: 'info', text: 'Кандидатурата е одобрена, но изпращането на имейла не е потвърдено. Не одобрявайте повторно — проверете изпращането.' });
+    setSelectedApp(null); setReviewNotes('');
+    await fetchData();
+  });
+
+  const reviewApplication = async (appId: string, status: 'rejected' | 'more_info') => {
+    if (processing || (status === 'rejected' && !confirm('Сигурни ли сте, че искате да отхвърлите тази апликация?'))) return;
+    await action.run(`${status}:${appId}`, async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error || !user) throw new Error('Няма активна сесия. Влезте отново.');
+      confirmedRecord(await supabase.from('b2b_applications').update({
+        status, reviewer_id: user.id, review_notes: reviewNotes, reviewed_at: new Date().toISOString(),
+      }).eq('id', appId).select('id').single(), appId);
+      setSelectedApp(null); setReviewNotes('');
+      if (status === 'rejected') {
+        const notification = await supabase.from('b2b_notifications').insert({
+          type: 'new_application', title: 'Отхвърлена B2B апликация', message: `Апликация ${appId.slice(0, 8)} е отхвърлена.`,
+        }).select('id').single();
+        if (notification.error || !notification.data) action.setMessage({ type: 'info', text: 'Кандидатурата е отхвърлена. Вътрешното известие не е потвърдено; не отхвърляйте повторно.' });
+        else action.setMessage({ type: 'success', text: 'Кандидатурата е отхвърлена.' });
+      } else action.setMessage({ type: 'success', text: 'Статусът е променен на „Още информация“.' });
+      await fetchData();
+    });
   };
+  const handleReject = (id: string) => reviewApplication(id, 'rejected');
+  const handleRequestInfo = (id: string) => reviewApplication(id, 'more_info');
 
-  const handleApprove = async (app: Application) => {
-    setProcessing(true);
-    setApproveSuccess('');
-    setApproveError('');
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('Няма активна сесия');
-
-      const response = await fetch(
-        'https://quqlovoiwgqfmgjumpgd.supabase.co/functions/v1/approve-b2b',
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            application_id: app.id,
-            review_notes: reviewNotes,
-          }),
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok || result.error) {
-        throw new Error(result.error || 'Грешка при одобрение');
-      }
-
-      setApproveSuccess(
-        result.email_sent
-          ? `Апликацията е одобрена! Имейлът е изпратен на ${app.contact_email || app.email}.`
-          : `Апликацията е одобрена, но имейлът НЕ беше изпратен! Грешка: ${result.email_error || 'Неизвестна грешка'}. Проверете дали RESEND_API и RESEND_FROM_DOMAIN са зададени в Supabase Dashboard > Edge Functions Secrets.`
-      );
-      setSelectedApp(null);
-      setReviewNotes('');
-      fetchData();
-    } catch (err: any) {
-      setApproveError('Грешка при одобрение: ' + (err.message || ''));
-    } finally {
-      setProcessing(false);
-    }
+  const setCompanyStatus = (id: string, status: 'active' | 'suspended') => action.run(`company:${id}`, async () => {
+    confirmedRecord(await supabase.from('b2b_companies').update({ status }).eq('id', id).select('id').single(), id);
+    await fetchData();
+  }, status === 'active' ? 'Компанията е възстановена.' : 'Компанията е суспендирана.');
+  const handleSuspendCompany = (id: string) => {
+    if (!processing && confirm('Сигурни ли сте, че искате да суспендирате тази компания?')) return setCompanyStatus(id, 'suspended');
   };
+  const handleRestoreCompany = (id: string) => setCompanyStatus(id, 'active');
 
-  const handleReject = async (appId: string) => {
-    if (!confirm('Сигурни ли сте, че искате да отхвърлите тази апликация?')) return;
-    setProcessing(true);
-    try {
-      const { data: userData } = await supabase.auth.getUser();
-      await supabase
-        .from('b2b_applications')
-        .update({
-          status: 'rejected',
-          reviewer_id: userData?.user?.id,
-          review_notes: reviewNotes,
-          reviewed_at: new Date().toISOString(),
-        })
-        .eq('id', appId);
-
-      await supabase.from('b2b_notifications').insert({
-        type: 'new_application',
-        title: 'Отхвърлена B2B апликация',
-        message: `Апликация ${appId.slice(0, 8)} е отхвърлена.`,
-      });
-
-      setSelectedApp(null);
-      setReviewNotes('');
-      fetchData();
-    } catch (err: any) {
-      alert('Грешка: ' + (err.message || ''));
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  const handleRequestInfo = async (appId: string) => {
-    setProcessing(true);
-    try {
-      const { data: userData } = await supabase.auth.getUser();
-      await supabase
-        .from('b2b_applications')
-        .update({
-          status: 'more_info',
-          reviewer_id: userData?.user?.id,
-          review_notes: reviewNotes,
-          reviewed_at: new Date().toISOString(),
-        })
-        .eq('id', appId);
-
-      setSelectedApp(null);
-      setReviewNotes('');
-      fetchData();
-    } catch (err: any) {
-      alert('Грешка: ' + (err.message || ''));
-    } finally {
-      setProcessing(false);
-    }
-  };
-
-  const handleSuspendCompany = async (companyId: string) => {
-    if (!confirm('Сигурни ли сте, че искате да суспендирате тази компания?')) return;
-    try {
-      await supabase.from('b2b_companies').update({ status: 'suspended' }).eq('id', companyId);
-      fetchData();
-    } catch {
-      alert('Грешка при суспендиране.');
-    }
-  };
-
-  const handleRestoreCompany = async (companyId: string) => {
-    try {
-      await supabase.from('b2b_companies').update({ status: 'active' }).eq('id', companyId);
-      fetchData();
-    } catch {
-      alert('Грешка при възстановяване.');
-    }
-  };
-
-  const handleAddOrderRule = async () => {
-    const payload: any = {};
+  const handleAddOrderRule = () => action.run('add-order-rule', async () => {
+    const payload: Record<string, string | number> = { min_order_value: newOrderRule.min_order_value, min_cart_quantity: newOrderRule.min_cart_quantity };
     if (newOrderRule.company_id) payload.company_id = newOrderRule.company_id;
-    payload.min_order_value = newOrderRule.min_order_value;
-    payload.min_cart_quantity = newOrderRule.min_cart_quantity;
     if (newOrderRule.max_order_value) payload.max_order_value = newOrderRule.max_order_value;
-    try {
-      await supabase.from('b2b_order_rules').insert(payload);
-      setNewOrderRule({ company_id: '', min_order_value: 0, min_cart_quantity: 1, max_order_value: 0 });
-      fetchData();
-    } catch { alert('Грешка при добавяне на правило.'); }
-  };
-
-  const handleDeleteOrderRule = async (id: string) => {
-    await supabase.from('b2b_order_rules').delete().eq('id', id);
-    fetchData();
-  };
-
-  const handleAddPaymentRule = async () => {
+    confirmedRecord(await supabase.from('b2b_order_rules').insert(payload).select('id').single());
+    setNewOrderRule({ company_id: '', min_order_value: 0, min_cart_quantity: 1, max_order_value: 0 });
+    await fetchData();
+  }, 'Правилото за поръчки е добавено.');
+  const handleDeleteOrderRule = (id: string) => action.run(`delete-order-rule:${id}`, async () => {
+    confirmedRecord(await supabase.from('b2b_order_rules').delete().eq('id', id).select('id').single(), id);
+    await fetchData();
+  }, 'Правилото е изтрито.');
+  const handleAddPaymentRule = () => {
     if (!newPaymentRule.company_id) return;
-    try {
-      await supabase.from('b2b_payment_rules').insert(newPaymentRule);
+    return action.run('add-payment-rule', async () => {
+      confirmedRecord(await supabase.from('b2b_payment_rules').insert(newPaymentRule).select('id').single());
       setNewPaymentRule({ company_id: '', payment_method: 'bank_transfer' });
-      fetchData();
-    } catch { alert('Грешка при добавяне.'); }
+      await fetchData();
+    }, 'Правилото за плащане е добавено.');
   };
-
-  const handleDeletePaymentRule = async (id: string) => {
-    await supabase.from('b2b_payment_rules').delete().eq('id', id);
-    fetchData();
-  };
+  const handleDeletePaymentRule = (id: string) => action.run(`delete-payment-rule:${id}`, async () => {
+    confirmedRecord(await supabase.from('b2b_payment_rules').delete().eq('id', id).select('id').single(), id);
+    await fetchData();
+  }, 'Правилото е изтрито.');
 
   const paymentMethodLabels: Record<string, string> = {
     bank_transfer: 'Банков превод', cod: 'Наложен платеж', card: 'Онлайн карта',
@@ -287,59 +197,33 @@ export default function AdminB2BPage() {
     more_info: 'bg-blue-100 text-blue-800',
   };
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <i className="ri-loader-4-line text-4xl text-emerald-600 animate-spin"></i>
-          <p className="mt-4 text-gray-600">Проверка на достъпа...</p>
-        </div>
-      </div>
-    );
-  }
+  if (authLoading || authError) return <AdminAccess error={authError} onRetry={retryAuth} />;
 
-  if (!isAdmin) return null;
+  if (!isAdmin) return <Navigate to="/login" replace />;
 
   const getCompanyName = (id: string) => companies.find(c => c.id === id)?.company_name || id.slice(0, 8);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="admin-page min-h-screen bg-gray-50">
       {/* Admin Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <Link to="/admin" className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">
-                <i className="ri-arrow-left-line text-xl"></i>
-              </Link>
-              <h1 className="text-xl font-bold text-gray-900">B2B Управление</h1>
-            </div>
-            <div className="flex items-center gap-2">
-              <Link to="/admin" className="text-sm text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer whitespace-nowrap">
-                Продукти
-              </Link>
-              <Link to="/admin/orders" className="text-sm text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer whitespace-nowrap">
-                Поръчки
-              </Link>
-              <Link to="/admin/b2b" className="text-sm text-emerald-600 bg-emerald-50 font-semibold px-3 py-1.5 rounded-lg cursor-pointer whitespace-nowrap">
-                B2B
-              </Link>
-            </div>
-          </div>
-        </div>
-      </header>
+      <AdminHeader />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main id="admin-content" tabIndex={-1} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-6"><h1 className="text-3xl font-bold text-slate-900">B2B партньори</h1><p className="mt-1 text-sm text-slate-500">Кандидатури, компании и съществуващи правила</p></div>
+        <AdminFeedback message={fetchError ? { type: 'error', text: fetchError } : null} onRetry={fetchData} />
+        <AdminFeedback message={action.message} onDismiss={action.clearMessage} />
+        <fieldset disabled={processing || loading} hidden={!!fetchError} aria-busy={processing || loading} className="min-w-0">
+
         {/* Tabs */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-          <div className="flex bg-white rounded-xl border border-gray-200 p-1">
+          <div className="flex max-w-full overflow-x-auto bg-white rounded-xl border border-gray-200 p-1">
             <button
               onClick={() => setActiveTab('applications')}
               className={`px-5 py-2.5 rounded-lg text-sm font-semibold transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === 'applications' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              <i className="ri-file-list-3-line mr-1.5"></i>
+              <i aria-hidden="true" className="ri-file-list-3-line mr-1.5"></i>
               Апликации
             </button>
             <button
@@ -348,7 +232,7 @@ export default function AdminB2BPage() {
                 activeTab === 'companies' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              <i className="ri-building-2-line mr-1.5"></i>
+              <i aria-hidden="true" className="ri-building-2-line mr-1.5"></i>
               Компании
             </button>
             <button
@@ -357,7 +241,7 @@ export default function AdminB2BPage() {
                 activeTab === 'order_rules' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              <i className="ri-scales-line mr-1.5"></i>
+              <i aria-hidden="true" className="ri-scales-line mr-1.5"></i>
               Правила за поръчки
             </button>
             <button
@@ -366,7 +250,7 @@ export default function AdminB2BPage() {
                 activeTab === 'payment_rules' ? 'bg-emerald-600 text-white shadow-sm' : 'text-gray-600 hover:text-gray-900'
               }`}
             >
-              <i className="ri-bank-card-line mr-1.5"></i>
+              <i aria-hidden="true" className="ri-bank-card-line mr-1.5"></i>
               Правила за плащане
             </button>
           </div>
@@ -376,12 +260,12 @@ export default function AdminB2BPage() {
               {['pending', 'approved', 'rejected', 'more_info'].map(s => (
                 <button
                   key={s}
-                  onClick={() => setStatusFilter(s === statusFilter && s === 'pending' ? 'pending' : s)}
+                  onClick={() => { setSelectedApp(null); setReviewNotes(''); setStatusFilter(s); }}
                   className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
                     statusFilter === s ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:border-gray-300'
                   }`}
                 >
-                  {statusLabels[s]} ({s === 'pending' ? applications.length : '...'})
+                  {statusLabels[s]}{s === statusFilter && !loading ? ` (${applications.length})` : ''}
                 </button>
               ))}
             </div>
@@ -399,20 +283,20 @@ export default function AdminB2BPage() {
               <div className="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
                 {loading ? (
                   <div className="p-8 text-center">
-                    <i className="ri-loader-4-line text-2xl text-emerald-600 animate-spin"></i>
+                    <i aria-hidden="true" className="ri-loader-4-line text-2xl text-emerald-600 animate-spin"></i>
                     <p className="text-sm text-gray-600 mt-2">Зареждане...</p>
                   </div>
                 ) : fetchError ? (
                   <div className="p-8 text-center">
-                    <i className="ri-error-warning-line text-3xl text-red-400 mb-2"></i>
+                    <i aria-hidden="true" className="ri-error-warning-line text-3xl text-red-400 mb-2"></i>
                     <p className="text-sm text-red-600 mb-3">{fetchError}</p>
                     <button onClick={fetchData} className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg text-sm font-semibold transition-colors cursor-pointer">
-                      <i className="ri-refresh-line mr-1"></i> Опитай отново
+                      <i aria-hidden="true" className="ri-refresh-line mr-1"></i> Опитай отново
                     </button>
                   </div>
                 ) : applications.length === 0 ? (
                   <div className="p-8 text-center">
-                    <i className="ri-inbox-line text-3xl text-gray-300 mb-2"></i>
+                    <i aria-hidden="true" className="ri-inbox-line text-3xl text-gray-300 mb-2"></i>
                     <p className="text-sm text-gray-600">Няма апликации</p>
                   </div>
                 ) : (
@@ -538,20 +422,6 @@ export default function AdminB2BPage() {
                     </div>
 
                     {/* Success / Error messages */}
-                    {approveSuccess && (
-                      <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex items-start gap-3">
-                        <i className="ri-checkbox-circle-fill text-emerald-600 text-xl flex-shrink-0"></i>
-                        <p className="text-sm text-emerald-800">{approveSuccess}</p>
-                      </div>
-                    )}
-                    {approveError && (
-                      <div className="p-4 bg-red-50 border border-red-200 rounded-xl flex items-start gap-3">
-                        <i className="ri-error-warning-fill text-red-600 text-xl flex-shrink-0"></i>
-                        <p className="text-sm text-red-800">{approveError}</p>
-                      </div>
-                    )}
-
-                    {/* Actions */}
                     {selectedApp.status === 'pending' && (
                       <div className="flex flex-wrap gap-3 pt-3 border-t border-gray-100">
                         <button
@@ -559,35 +429,35 @@ export default function AdminB2BPage() {
                           disabled={processing}
                           className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 text-white rounded-xl font-semibold text-sm transition-all whitespace-nowrap inline-flex items-center gap-2 cursor-pointer"
                         >
-                          <i className="ri-check-line"></i> Одобри
+                          <i aria-hidden="true" className="ri-check-line"></i> Одобри
                         </button>
                         <button
                           onClick={() => handleRequestInfo(selectedApp.id)}
                           disabled={processing}
                           className="px-5 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:bg-gray-300 text-white rounded-xl font-semibold text-sm transition-all whitespace-nowrap inline-flex items-center gap-2 cursor-pointer"
                         >
-                          <i className="ri-question-line"></i> Поискай още информация
+                          <i aria-hidden="true" className="ri-question-line"></i> Поискай още информация
                         </button>
                         <button
                           onClick={() => handleReject(selectedApp.id)}
                           disabled={processing}
                           className="px-5 py-2.5 bg-red-500 hover:bg-red-600 disabled:bg-gray-300 text-white rounded-xl font-semibold text-sm transition-all whitespace-nowrap inline-flex items-center gap-2 cursor-pointer"
                         >
-                          <i className="ri-close-line"></i> Отхвърли
+                          <i aria-hidden="true" className="ri-close-line"></i> Отхвърли
                         </button>
                       </div>
                     )}
 
                     {processing && (
                       <div className="text-center text-sm text-gray-600">
-                        <i className="ri-loader-4-line animate-spin mr-1"></i> Обработка...
+                        <i aria-hidden="true" className="ri-loader-4-line animate-spin mr-1"></i> Обработка...
                       </div>
                     )}
                   </div>
                 </div>
               ) : (
                 <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-                  <i className="ri-file-search-line text-5xl text-gray-300 mb-4"></i>
+                  <i aria-hidden="true" className="ri-file-search-line text-5xl text-gray-300 mb-4"></i>
                   <p className="text-gray-600">Изберете апликация от списъка</p>
                 </div>
               )}
@@ -600,20 +470,20 @@ export default function AdminB2BPage() {
           <div>
             {loading ? (
               <div className="p-12 text-center">
-                <i className="ri-loader-4-line text-3xl text-emerald-600 animate-spin"></i>
+                <i aria-hidden="true" className="ri-loader-4-line text-3xl text-emerald-600 animate-spin"></i>
                 <p className="text-sm text-gray-600 mt-2">Зареждане...</p>
               </div>
             ) : fetchError ? (
               <div className="p-12 text-center">
-                <i className="ri-error-warning-line text-4xl text-red-400 mb-3"></i>
+                <i aria-hidden="true" className="ri-error-warning-line text-4xl text-red-400 mb-3"></i>
                 <p className="text-sm text-red-600 mb-3">{fetchError}</p>
                 <button onClick={fetchData} className="px-4 py-2 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg text-sm font-semibold transition-colors cursor-pointer">
-                  <i className="ri-refresh-line mr-1"></i> Опитай отново
+                  <i aria-hidden="true" className="ri-refresh-line mr-1"></i> Опитай отново
                 </button>
               </div>
             ) : companies.length === 0 ? (
               <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-                <i className="ri-building-2-line text-5xl text-gray-300 mb-4"></i>
+                <i aria-hidden="true" className="ri-building-2-line text-5xl text-gray-300 mb-4"></i>
                 <p className="text-gray-600">Все още няма одобрени компании</p>
               </div>
             ) : (
@@ -665,7 +535,7 @@ export default function AdminB2BPage() {
                                   className="text-red-500 hover:text-red-700 p-1.5 rounded-lg hover:bg-red-50 transition-colors cursor-pointer"
                                   title="Суспендирай"
                                 >
-                                  <i className="ri-pause-circle-line"></i>
+                                  <i aria-hidden="true" className="ri-pause-circle-line"></i>
                                 </button>
                               ) : (
                                 <button
@@ -673,7 +543,7 @@ export default function AdminB2BPage() {
                                   className="text-emerald-500 hover:text-emerald-700 p-1.5 rounded-lg hover:bg-emerald-50 transition-colors cursor-pointer"
                                   title="Възстанови"
                                 >
-                                  <i className="ri-play-circle-line"></i>
+                                  <i aria-hidden="true" className="ri-play-circle-line"></i>
                                 </button>
                               )}
                             </div>
@@ -721,7 +591,7 @@ export default function AdminB2BPage() {
               </div>
               <div className="flex gap-2 mt-4">
                 <button onClick={handleAddOrderRule} className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-semibold cursor-pointer">
-                  <i className="ri-add-line mr-1"></i> Добави
+                  <i aria-hidden="true" className="ri-add-line mr-1"></i> Добави
                 </button>
               </div>
             </div>
@@ -743,7 +613,7 @@ export default function AdminB2BPage() {
                       <td className="px-4 py-3 text-xs font-semibold">{r.min_order_value || 0} €</td>
                       <td className="px-4 py-3 text-xs">{r.min_cart_quantity || 1}</td>
                       <td className="px-4 py-3 text-xs">{r.max_order_value ? `${r.max_order_value} €` : 'Без лимит'}</td>
-                      <td className="px-4 py-3"><button onClick={() => handleDeleteOrderRule(r.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg cursor-pointer"><i className="ri-delete-bin-line"></i></button></td>
+                      <td className="px-4 py-3"><button onClick={() => handleDeleteOrderRule(r.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg cursor-pointer"><i aria-hidden="true" className="ri-delete-bin-line"></i></button></td>
                     </tr>
                   ))}
                 </tbody>
@@ -776,7 +646,7 @@ export default function AdminB2BPage() {
                 </div>
                 <div className="flex items-end">
                   <button onClick={handleAddPaymentRule} className="px-4 py-2 bg-emerald-600 text-white rounded-lg text-sm font-semibold cursor-pointer w-full">
-                    <i className="ri-add-line mr-1"></i> Добави
+                    <i aria-hidden="true" className="ri-add-line mr-1"></i> Добави
                   </button>
                 </div>
               </div>
@@ -795,7 +665,7 @@ export default function AdminB2BPage() {
                     <tr key={r.id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 text-xs font-semibold">{getCompanyName(r.company_id)}</td>
                       <td className="px-4 py-3 text-xs">{paymentMethodLabels[r.payment_method] || r.payment_method}</td>
-                      <td className="px-4 py-3"><button onClick={() => handleDeletePaymentRule(r.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg cursor-pointer"><i className="ri-delete-bin-line"></i></button></td>
+                      <td className="px-4 py-3"><button onClick={() => handleDeletePaymentRule(r.id)} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg cursor-pointer"><i aria-hidden="true" className="ri-delete-bin-line"></i></button></td>
                     </tr>
                   ))}
                 </tbody>
@@ -803,6 +673,7 @@ export default function AdminB2BPage() {
             </div>
           </div>
         )}
+        </fieldset>
       </main>
     </div>
   );

@@ -49,7 +49,9 @@
     "typecheck": "tsc -b",
     "build": "vite build",
     "dev": "vite",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:admin": "node --test tests/admin-operations.test.mjs",
+    "check:admin": "tsc --project tsconfig.admin.json"
   },
   "type": "module",
   "version": "0.0.0"

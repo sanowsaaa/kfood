@@ -1,7 +1,13 @@
+import { useAdminAction } from '@/hooks/useAdminAction';
+import { useAdminRead } from '@/hooks/useAdminRead';
+import { checkedData, confirmedRecord } from '@/utils/admin';
+import AdminFeedback from '@/pages/admin/components/AdminFeedback';
+import AdminHeader from '@/pages/admin/components/AdminHeader';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
-import { useNavigate, Link, useParams } from 'react-router-dom';
+import { Navigate, Link, useParams } from 'react-router-dom';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import AdminAccess from '@/pages/admin/components/AdminAccess';
 
 interface Company {
   id: string;
@@ -56,14 +62,14 @@ interface Tier {
 
 export default function CompanyProfilePage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const { isAdmin, loading: authLoading } = useAdminAuth();
+  const { isAdmin, loading: authLoading, error: authError, retry: retryAuth } = useAdminAuth();
   const [company, setCompany] = useState<Company | null>(null);
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [tiers, setTiers] = useState<Tier[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const { loading, error: loadError, load } = useAdminRead();
+  const action = useAdminAction();
+  const saving = !!action.pending;
   const [editingSection, setEditingSection] = useState<string>('');
 
   const [editData, setEditData] = useState<Partial<Company>>({});
@@ -71,70 +77,66 @@ export default function CompanyProfilePage() {
   const [newAddress, setNewAddress] = useState({ type: 'shipping', address: '', city: '', postal_code: '', country: 'България' });
 
   useEffect(() => {
-    if (!authLoading && !isAdmin) navigate('/login');
-  }, [authLoading, isAdmin, navigate]);
-
-  useEffect(() => {
     if (isAdmin && id) fetchCompany();
   }, [isAdmin, id]);
 
-  const fetchCompany = async () => {
-    setLoading(true);
-    try {
-      const [compRes, contactsRes, addressesRes, tiersRes] = await Promise.all([
-        supabase.from('b2b_companies').select('*').eq('id', id).single(),
-        supabase.from('b2b_company_contacts').select('*').eq('company_id', id).order('is_primary', { ascending: false }),
-        supabase.from('b2b_company_addresses').select('*').eq('company_id', id).order('is_default', { ascending: false }),
-        supabase.from('b2b_pricing_tiers').select('id, name').order('sort_order'),
-      ]);
-      if (compRes.data) {
-        setCompany(compRes.data);
-        setEditData(compRes.data);
-      }
-      if (contactsRes.data) setContacts(contactsRes.data);
-      if (addressesRes.data) setAddresses(addressesRes.data);
-      if (tiersRes.data) setTiers(tiersRes.data);
-    } catch { /* silently handle */ } finally { setLoading(false); }
-  };
+  const fetchCompany = () => load(async () => {
+    const [compRes, contactsRes, addressesRes, tiersRes] = await Promise.all([
+      supabase.from('b2b_companies').select('*').eq('id', id).single(),
+      supabase.from('b2b_company_contacts').select('*').eq('company_id', id).order('is_primary', { ascending: false }),
+      supabase.from('b2b_company_addresses').select('*').eq('company_id', id).order('is_default', { ascending: false }),
+      supabase.from('b2b_pricing_tiers').select('id, name').order('sort_order'),
+    ]);
+    return { company: checkedData(compRes) as Company, contacts: checkedData(contactsRes) as Contact[], addresses: checkedData(addressesRes) as Address[], tiers: checkedData(tiersRes) as Tier[] };
+  }, result => {
+    setCompany(result.company); setContacts(result.contacts); setAddresses(result.addresses); setTiers(result.tiers);
+    if (!editingSection) setEditData(result.company);
+  });
 
-  const handleSave = async () => {
+  const handleSave = () => {
     if (!company) return;
-    setSaving(true);
-    try {
-      await supabase.from('b2b_companies').update(editData).eq('id', company.id);
+    // Update only the existing fields in the section being edited, never the entire database row.
+    const fields: Record<string, (keyof Company)[]> = {
+      company: ['company_name', 'bulstat', 'vat_number', 'mol', 'phone', 'email', 'website', 'business_type', 'city', 'years_in_business', 'number_of_locations'],
+      notes: ['internal_notes'], pricing: ['pricing_tier_id', 'global_discount', 'credit_limit'],
+    };
+    const payload = Object.fromEntries((fields[editingSection] || []).map(field => [field, field === 'pricing_tier_id' ? editData[field] || null : editData[field]]));
+    return action.run('save-company', async () => {
+      confirmedRecord(await supabase.from('b2b_companies').update(payload).eq('id', company.id).select('id').single(), company.id);
+      setCompany(current => current ? { ...current, ...payload } : current);
       setEditingSection('');
-      fetchCompany();
-    } catch { alert('Грешка при запис.'); } finally { setSaving(false); }
+      await fetchCompany();
+    }, 'Промените са запазени.');
   };
-
-  const handleAddContact = async () => {
+  const handleAddContact = () => {
     if (!company || !newContact.first_name) return;
-    try {
-      await supabase.from('b2b_company_contacts').insert({ company_id: company.id, ...newContact });
+    return action.run('add-contact', async () => {
+      confirmedRecord(await supabase.from('b2b_company_contacts').insert({ company_id: company.id, ...newContact }).select('id').single());
       setNewContact({ first_name: '', last_name: '', position: '', email: '', mobile: '' });
-      fetchCompany();
-    } catch { alert('Грешка при добавяне.'); }
+      await fetchCompany();
+    }, 'Контактът е добавен.');
   };
-
-  const handleDeleteContact = async (contactId: string) => {
-    if (!confirm('Изтриване на контакт?')) return;
-    await supabase.from('b2b_company_contacts').delete().eq('id', contactId);
-    fetchCompany();
+  const handleDeleteContact = (contactId: string) => {
+    if (saving || !confirm('Изтриване на контакт?')) return;
+    return action.run(`delete-contact:${contactId}`, async () => {
+      confirmedRecord(await supabase.from('b2b_company_contacts').delete().eq('id', contactId).select('id').single(), contactId);
+      await fetchCompany();
+    }, 'Контактът е изтрит.');
   };
-
-  const handleAddAddress = async () => {
+  const handleAddAddress = () => {
     if (!company || !newAddress.address) return;
-    try {
-      await supabase.from('b2b_company_addresses').insert({ company_id: company.id, ...newAddress });
+    return action.run('add-address', async () => {
+      confirmedRecord(await supabase.from('b2b_company_addresses').insert({ company_id: company.id, ...newAddress }).select('id').single());
       setNewAddress({ type: 'shipping', address: '', city: '', postal_code: '', country: 'България' });
-      fetchCompany();
-    } catch { alert('Грешка при добавяне.'); }
+      await fetchCompany();
+    }, 'Адресът е добавен.');
   };
-
-  const handleDeleteAddress = async (addrId: string) => {
-    if (!confirm('Изтриване на адрес?')) return;
-    await supabase.from('b2b_company_addresses').delete().eq('id', addrId);
-    fetchCompany();
+  const handleDeleteAddress = (addrId: string) => {
+    if (saving || !confirm('Изтриване на адрес?')) return;
+    return action.run(`delete-address:${addrId}`, async () => {
+      confirmedRecord(await supabase.from('b2b_company_addresses').delete().eq('id', addrId).select('id').single(), addrId);
+      await fetchCompany();
+    }, 'Адресът е изтрит.');
   };
 
   const businessTypeLabels: Record<string, string> = {
@@ -143,50 +145,40 @@ export default function CompanyProfilePage() {
     hotel: 'Хотел', cafe: 'Кафене', retail_store: 'Магазин', other: 'Друг',
   };
 
-  if (authLoading || loading) {
+  if (authLoading || authError) return <AdminAccess error={authError} onRetry={retryAuth} />;
+
+  if (!isAdmin) return <Navigate to="/login" replace />;
+
+  if (loading && !company) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <i className="ri-loader-4-line text-4xl text-emerald-600 animate-spin"></i>
+          <i aria-hidden="true" className="ri-loader-4-line text-4xl text-emerald-600 animate-spin"></i>
           <p className="mt-4 text-gray-600">Зареждане...</p>
         </div>
       </div>
     );
   }
 
-  if (!isAdmin || !company) return null;
+  if (!company) return <div className="admin-page min-h-screen"><AdminHeader /><main id="admin-content" tabIndex={-1} className="max-w-7xl mx-auto p-6"><AdminFeedback message={{ type: 'error', text: loadError || 'Компанията не е намерена.' }} onRetry={fetchCompany} /><Link to="/admin/b2b" className="text-emerald-700">Обратно към B2B</Link></main></div>;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-4">
-              <Link to="/admin/b2b" className="text-gray-400 hover:text-gray-600 transition-colors cursor-pointer">
-                <i className="ri-arrow-left-line text-xl"></i>
-              </Link>
-              <h1 className="text-xl font-bold text-gray-900">{company.company_name}</h1>
-              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                company.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
-              }`}>
-                {company.status === 'active' ? 'Активен' : 'Суспендиран'}
-              </span>
-            </div>
-            <Link to="/admin/b2b" className="text-sm text-gray-500 hover:text-gray-700 px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer whitespace-nowrap">
-              Обратно към B2B
-            </Link>
-          </div>
-        </div>
-      </header>
+    <div className="admin-page min-h-screen bg-gray-50">
+      <AdminHeader />
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main id="admin-content" tabIndex={-1} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-6"><Link to="/admin/b2b" className="text-sm text-emerald-700">← B2B партньори</Link><div className="mt-3 flex flex-wrap items-center gap-3"><h1 className="text-3xl font-bold text-slate-900">{company.company_name}</h1><span className={`rounded-full px-3 py-1 text-xs font-semibold ${company.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}`}>{company.status === 'active' ? 'Активен' : 'Суспендиран'}</span></div></div>
+        <AdminFeedback message={loadError ? { type: 'error', text: loadError } : null} onRetry={fetchCompany} />
+        <AdminFeedback message={action.message} onDismiss={action.clearMessage} />
+        <fieldset disabled={saving || loading || !!loadError} aria-busy={saving || loading} className="min-w-0">
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left: Company Info */}
           <div className="lg:col-span-2 space-y-6">
             {/* Company Information */}
             <SectionCard title="Информация за компанията" icon="ri-building-2-line"
               editing={editingSection === 'company'}
-              onEdit={() => setEditingSection('company')}
+              onEdit={() => { setEditData(company); setEditingSection('company'); }}
               onCancel={() => { setEditingSection(''); setEditData(company); }}
               onSave={handleSave} saving={saving}>
               {editingSection === 'company' ? (
@@ -237,7 +229,7 @@ export default function CompanyProfilePage() {
                       <p className="text-sm text-gray-900 mt-0.5">{addr.address}, {addr.city} {addr.postal_code}, {addr.country}</p>
                     </div>
                     <button onClick={() => handleDeleteAddress(addr.id)}
-                      className="p-1 text-gray-400 hover:text-red-500 cursor-pointer"><i className="ri-close-line"></i></button>
+                      className="p-1 text-gray-400 hover:text-red-500 cursor-pointer"><i aria-hidden="true" className="ri-close-line"></i></button>
                   </div>
                 ))}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2 border-t border-gray-100">
@@ -256,7 +248,7 @@ export default function CompanyProfilePage() {
             {/* Internal Notes */}
             <SectionCard title="Вътрешни бележки" icon="ri-sticky-note-line"
               editing={editingSection === 'notes'}
-              onEdit={() => setEditingSection('notes')}
+              onEdit={() => { setEditData(company); setEditingSection('notes'); }}
               onCancel={() => { setEditingSection(''); setEditData(company); }}
               onSave={handleSave} saving={saving}>
               {editingSection === 'notes' ? (
@@ -274,7 +266,7 @@ export default function CompanyProfilePage() {
             {/* Pricing */}
             <SectionCard title="Ценообразуване" icon="ri-price-tag-3-line"
               editing={editingSection === 'pricing'}
-              onEdit={() => setEditingSection('pricing')}
+              onEdit={() => { setEditData(company); setEditingSection('pricing'); }}
               onCancel={() => { setEditingSection(''); setEditData(company); }}
               onSave={handleSave} saving={saving}>
               {editingSection === 'pricing' ? (
@@ -323,7 +315,7 @@ export default function CompanyProfilePage() {
                       <p className="text-xs text-gray-500">{c.email} {c.mobile ? `· ${c.mobile}` : ''}</p>
                     </div>
                     <button onClick={() => handleDeleteContact(c.id)}
-                      className="p-1 text-gray-400 hover:text-red-500 cursor-pointer"><i className="ri-close-line"></i></button>
+                      className="p-1 text-gray-400 hover:text-red-500 cursor-pointer"><i aria-hidden="true" className="ri-close-line"></i></button>
                   </div>
                 ))}
                 <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100">
@@ -352,6 +344,7 @@ export default function CompanyProfilePage() {
             </SectionCard>
           </div>
         </div>
+        </fieldset>
       </main>
     </div>
   );
@@ -365,7 +358,7 @@ function SectionCard({ title, icon, children, editing, onEdit, onCancel, onSave,
     <div className="bg-white rounded-xl border border-gray-200">
       <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
         <h3 className="font-bold text-gray-900 text-sm flex items-center gap-2">
-          <i className={`${icon} text-emerald-600`}></i> {title}
+          <i aria-hidden="true" className={`${icon} text-emerald-600`}></i> {title}
         </h3>
         {onEdit && (
           editing ? (
@@ -380,7 +373,7 @@ function SectionCard({ title, icon, children, editing, onEdit, onCancel, onSave,
           ) : (
             <button onClick={onEdit}
               className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg cursor-pointer">
-              <i className="ri-edit-line"></i>
+              <i aria-hidden="true" className="ri-edit-line"></i>
             </button>
           )
         )}
