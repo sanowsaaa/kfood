@@ -1,6 +1,12 @@
+import { useAdminAction } from '@/hooks/useAdminAction';
+import { useAdminRead } from '@/hooks/useAdminRead';
+import { checkedData, confirmedRecord } from '@/utils/admin';
+import AdminFeedback from '@/pages/admin/components/AdminFeedback';
+import AdminHeader from '../components/AdminHeader';
 import { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import AdminAccess from '@/pages/admin/components/AdminAccess';
 import { supabase } from '@/utils/supabase';
 
 interface Review {
@@ -19,25 +25,18 @@ function StarRating({ rating }: { rating: number }) {
   return (
     <div className="flex gap-0.5">
       {[1, 2, 3, 4, 5].map((s) => (
-        <i key={s} className={`ri-star-fill text-base ${s <= rating ? 'text-yellow-400' : 'text-gray-200'}`} />
+        <i aria-hidden="true" key={s} className={`ri-star-fill text-base ${s <= rating ? 'text-yellow-400' : 'text-gray-200'}`} />
       ))}
     </div>
   );
 }
 
 export default function AdminReviewsPage() {
-  const navigate = useNavigate();
-  const { isAdmin, loading: authLoading } = useAdminAuth();
+  const { isAdmin, loading: authLoading, error: authError, retry: retryAuth } = useAdminAuth();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [filter, setFilter] = useState<Filter>('pending');
-  const [loading, setLoading] = useState(true);
-  const [toast, setToast] = useState('');
-
-  useEffect(() => {
-    if (!authLoading && !isAdmin) {
-      navigate('/login');
-    }
-  }, [authLoading, isAdmin, navigate]);
+  const { loading, error: loadError, load } = useAdminRead();
+  const action = useAdminAction();
 
   useEffect(() => {
     if (isAdmin) {
@@ -45,70 +44,42 @@ export default function AdminReviewsPage() {
     }
   }, [isAdmin, filter]);
 
-  const showToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(''), 2800);
-  };
-
-  const fetchReviews = useCallback(async () => {
-    setLoading(true);
+  const fetchReviews = useCallback(() => load(async () => {
     let query = supabase.from('reviews').select('*').order('created_at', { ascending: false });
     if (filter === 'pending') query = query.eq('is_approved', false);
     if (filter === 'approved') query = query.eq('is_approved', true);
-    const { data } = await query;
-    setReviews((data as Review[]) || []);
-    setLoading(false);
-  }, [filter]);
+    return checkedData(await query) as Review[];
+  }, setReviews), [filter, load]);
 
-  const approve = async (id: string) => {
-    await supabase.from('reviews').update({ is_approved: true }).eq('id', id);
-    showToast('Ревюто е одобрено и ще се покаже на сайта!');
-    fetchReviews();
-  };
+  const approve = (id: string) => action.run(`approve:${id}`, async () => {
+    confirmedRecord(await supabase.from('reviews').update({ is_approved: true }).eq('id', id).select('id').single(), id);
+    await fetchReviews();
+  }, 'Ревюто е одобрено.');
 
   const remove = async (id: string) => {
-    await supabase.from('reviews').delete().eq('id', id);
-    showToast('Ревюто е изтрито.');
-    fetchReviews();
+    if (action.pending || !confirm('Сигурни ли сте, че искате да изтриете това ревю?')) return;
+    await action.run(`delete:${id}`, async () => {
+      confirmedRecord(await supabase.from('reviews').delete().eq('id', id).select('id').single(), id);
+      await fetchReviews();
+    }, 'Ревюто е изтрито.');
   };
 
   const pending = reviews.filter((r) => !r.is_approved).length;
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <i className="ri-loader-4-line text-4xl text-teal-600 animate-spin"></i>
-          <p className="mt-4 text-gray-600">Проверка на достъпа...</p>
-        </div>
-      </div>
-    );
-  }
+  if (authLoading || authError) return <AdminAccess error={authError} onRetry={retryAuth} />;
 
-  if (!isAdmin) return null;
+  if (!isAdmin) return <Navigate to="/login" replace />;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Link to="/admin" className="text-gray-400 hover:text-gray-600 cursor-pointer">
-            <i className="ri-arrow-left-line text-xl" />
-          </Link>
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">Управление на ревюта</h1>
-            <p className="text-xs text-gray-400">Преглед и одобряване на клиентски отзиви</p>
-          </div>
+    <div className="admin-page min-h-screen bg-gray-50">
+      <AdminHeader />
+      <main id="admin-content" tabIndex={-1} className="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <div><h1 className="text-3xl font-bold text-slate-900">Управление на ревюта</h1><p className="mt-1 text-sm text-slate-500">Преглед и одобряване на клиентски отзиви</p></div>
+          {!loading && !loadError && pending > 0 && <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">{pending} чакат одобрение в списъка</span>}
         </div>
-        {pending > 0 && (
-          <div className="flex items-center gap-2 bg-orange-50 border border-orange-200 text-orange-700 text-sm font-semibold px-4 py-2 rounded-lg">
-            <i className="ri-time-line" />
-            {pending} чакат одобрение
-          </div>
-        )}
-      </div>
-
-      <div className="max-w-5xl mx-auto px-6 py-8">
+        <AdminFeedback message={loadError ? { type: 'error', text: loadError } : null} onRetry={fetchReviews} />
+        <AdminFeedback message={action.message} onDismiss={action.clearMessage} />
         {/* Filter tabs */}
         <div className="flex gap-2 mb-6 bg-white rounded-xl border border-gray-100 p-1.5 w-fit">
           {(['pending', 'approved', 'all'] as Filter[]).map((f) => (
@@ -126,11 +97,11 @@ export default function AdminReviewsPage() {
 
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <i className="ri-loader-4-line animate-spin text-3xl text-emerald-500" />
+            <i aria-hidden="true" className="ri-loader-4-line animate-spin text-3xl text-emerald-500" />
           </div>
-        ) : reviews.length === 0 ? (
+        ) : loadError ? null : reviews.length === 0 ? (
           <div className="text-center py-20 text-gray-400">
-            <i className="ri-star-line text-5xl mb-3 block" />
+            <i aria-hidden="true" className="ri-star-line text-5xl mb-3 block" />
             <p className="font-medium">Няма ревюта в тази категория</p>
           </div>
         ) : (
@@ -170,7 +141,7 @@ export default function AdminReviewsPage() {
 
                     {review.product_name && (
                       <div className="flex items-center gap-1.5 text-xs text-gray-500 mb-2">
-                        <i className="ri-shopping-bag-2-line text-emerald-500" />
+                        <i aria-hidden="true" className="ri-shopping-bag-2-line text-emerald-500" />
                         <span>{review.product_name}</span>
                       </div>
                     )}
@@ -181,18 +152,18 @@ export default function AdminReviewsPage() {
                   <div className="flex flex-col gap-2 flex-shrink-0">
                     {!review.is_approved && (
                       <button
-                        onClick={() => approve(review.id)}
+                        disabled={!!action.pending} onClick={() => approve(review.id)}
                         className="flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
                       >
-                        <i className="ri-checkbox-circle-line" />
+                        <i aria-hidden="true" className="ri-checkbox-circle-line" />
                         Одобри
                       </button>
                     )}
                     <button
-                      onClick={() => remove(review.id)}
+                      disabled={!!action.pending} onClick={() => remove(review.id)}
                       className="flex items-center gap-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold px-4 py-2 rounded-lg transition-colors cursor-pointer whitespace-nowrap border border-red-100"
                     >
-                      <i className="ri-delete-bin-line" />
+                      <i aria-hidden="true" className="ri-delete-bin-line" />
                       Изтрий
                     </button>
                   </div>
@@ -201,15 +172,7 @@ export default function AdminReviewsPage() {
             ))}
           </div>
         )}
-      </div>
-
-      {/* Toast */}
-      {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-sm font-medium px-6 py-3 rounded-xl z-50 flex items-center gap-2">
-          <i className="ri-checkbox-circle-fill text-emerald-400" />
-          {toast}
-        </div>
-      )}
+      </main>
     </div>
   );
 }

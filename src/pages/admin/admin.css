@@ -1,0 +1,15 @@
+.admin-page {
+  background-color: #f3f6fa;
+  background-image: radial-gradient(ellipse at 85% 0%, #d7f2ec 0, transparent 38%), linear-gradient(#e8edf433 1px, transparent 1px), linear-gradient(90deg, #e8edf433 1px, transparent 1px);
+  background-size: auto, 32px 32px, 32px 32px;
+}
+.admin-header { background: linear-gradient(110deg, #111c2f, #0d1726 65%, #10342f); box-shadow: 0 6px 28px #0d17261a; }
+.admin-page main h1 { letter-spacing: -.035em; }
+.admin-page main .bg-white { box-shadow: 0 3px 20px #18304e05; }
+.admin-page :is(button, a, input, select, textarea):focus-visible { outline: 3px solid #0d9488; outline-offset: 3px; }
+.admin-page button:disabled, .admin-page fieldset:disabled button { cursor: wait; opacity: .55; }
+.admin-page :is(input, select, textarea):disabled { cursor: wait; opacity: .6; }
+.admin-page button { transition: background-color .15s, border-color .15s, opacity .15s; }
+.admin-skip { position: absolute; top: -5rem; left: 1rem; padding: .75rem 1rem; border-radius: .75rem; background: #fff; color: #0f172a; }
+.admin-skip:focus { top: .5rem; z-index: 50; }
+@media (prefers-reduced-motion: reduce) { .admin-page *, .admin-header * { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }

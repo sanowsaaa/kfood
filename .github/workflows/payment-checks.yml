@@ -35,6 +35,8 @@ jobs:
       - run: npm run test:payments
       - run: npm run check:b2b
       - run: npm run test:b2b
+      - run: npm run check:admin
+      - run: npm run test:admin
       - run: npm run build
       # Global frontend typecheck has pre-existing failures. It is documented in
       # the rollout runbook rather than concealed as a passing payment check.

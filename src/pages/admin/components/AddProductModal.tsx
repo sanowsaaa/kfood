@@ -1,4 +1,6 @@
-import { useState, useEffect, FormEvent } from 'react';
+import { useAdminDialog } from '@/hooks/useAdminDialog';
+import { adminErrorMessage, confirmedRecord, createActionLock } from '@/utils/admin';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../../utils/supabase';
 import { scrollToTop } from '../../../utils/scrollToTop';
 
@@ -43,8 +45,10 @@ export default function AddProductModal({ onClose, onSuccess }: AddProductModalP
     moq_unit: 'бр.',
     pieces_per_carton: ''
   });
+  const submitLock = useRef(createActionLock());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const dialogRef = useAdminDialog(true, saving, onClose);
 
   useEffect(() => {
     scrollToTop();
@@ -65,6 +69,7 @@ export default function AddProductModal({ onClose, onSuccess }: AddProductModalP
     if (!formData.price || parseFloat(formData.price) <= 0) { setError('Моля, въведете валидна цена'); return; }
     if (!formData.image.trim()) { setError('Моля, въведете URL на снимка'); return; }
 
+    if (!submitLock.current.acquire()) return;
     setSaving(true);
     try {
       const productData = {
@@ -90,31 +95,30 @@ export default function AddProductModal({ onClose, onSuccess }: AddProductModalP
         pieces_per_carton: parseInt(formData.pieces_per_carton) || 0
       };
 
-      const { data, error: insertError } = await supabase.from('products').insert([productData]).select();
-      if (insertError) throw new Error(insertError.message);
-      if (!data || data.length === 0) throw new Error('Продуктът не беше добавен');
+      confirmedRecord(await supabase.from('products').insert([productData]).select('id').single());
 
       onSuccess();
       onClose();
-    } catch (err: any) {
-      setError(err.message || 'Грешка при добавяне на продукта. Моля, опитайте отново.');
-    } finally { setSaving(false); }
+    } catch (cause) {
+      setError(adminErrorMessage(cause));
+    } finally { submitLock.current.release(); setSaving(false); }
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-start justify-center p-4 pt-8 overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full flex flex-col my-4">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="admin-dialog-title" tabIndex={-1} className="bg-white rounded-xl shadow-xl max-w-2xl w-full flex flex-col my-4">
         <div className="flex-shrink-0 bg-white border-b px-6 py-4 flex items-center justify-between rounded-t-xl">
-          <h2 className="text-xl font-bold text-gray-900">Добавяне на нов продукт</h2>
-          <button onClick={onClose} type="button" className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
-            <i className="ri-close-line text-2xl"></i>
+          <h2 id="admin-dialog-title" className="text-xl font-bold text-gray-900">Добавяне на нов продукт</h2>
+          <button onClick={onClose} disabled={saving} aria-label="Затвори" type="button" className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
+            <i aria-hidden="true" className="ri-close-line text-2xl"></i>
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
+          <fieldset disabled={saving} className="min-w-0">
           {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
-              <i className="ri-error-warning-fill text-red-600 text-xl flex-shrink-0 mt-0.5"></i>
+            <div role="alert" className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+              <i aria-hidden="true" className="ri-error-warning-fill text-red-600 text-xl flex-shrink-0 mt-0.5"></i>
               <p className="text-sm text-red-800">{error}</p>
             </div>
           )}
@@ -145,7 +149,7 @@ export default function AddProductModal({ onClose, onSuccess }: AddProductModalP
             {/* B2B Section */}
             <div className="border-t pt-4">
               <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-                <i className="ri-briefcase-line text-teal-600"></i>
+                <i aria-hidden="true" className="ri-briefcase-line text-teal-600"></i>
                 B2B / Цени на едро
               </h3>
               <div className="grid grid-cols-3 gap-4">
@@ -241,9 +245,10 @@ export default function AddProductModal({ onClose, onSuccess }: AddProductModalP
           <div className="flex gap-3 mt-6 pt-6 border-t">
             <button type="button" onClick={onClose} disabled={saving} className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer">Отказ</button>
             <button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-teal-600 text-white rounded-lg hover:bg-teal-700 font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap flex items-center justify-center gap-2 cursor-pointer">
-              {saving ? <><i className="ri-loader-4-line animate-spin"></i> Добавяне...</> : <><i className="ri-add-line"></i> Добави продукт</>}
+              {saving ? <><i aria-hidden="true" className="ri-loader-4-line animate-spin"></i> Добавяне...</> : <><i aria-hidden="true" className="ri-add-line"></i> Добави продукт</>}
             </button>
           </div>
+          </fieldset>
         </form>
       </div>
     </div>

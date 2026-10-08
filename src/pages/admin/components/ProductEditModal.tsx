@@ -1,9 +1,11 @@
-import { useState, useEffect } from 'react';
+import { useAdminDialog } from '@/hooks/useAdminDialog';
+import { adminErrorMessage, confirmedRecord, createActionLock } from '@/utils/admin';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/utils/supabase';
 import { scrollToTop } from '@/utils/scrollToTop';
 
-interface Product {
-  id: number;
+export interface Product {
+  id: string | number;
   name: string;
   description: string;
   price: number;
@@ -24,6 +26,7 @@ interface Product {
   moq: number;
   moq_unit: string;
   pieces_per_carton: number;
+  visibility?: string;
 }
 
 interface ProductEditModalProps {
@@ -40,7 +43,10 @@ export default function ProductEditModal({ product, onClose, onSuccess }: Produc
     wholesale_price: product.wholesale_price || 0,
     carton_price: product.carton_price || 0,
   }));
+  const submitLock = useRef(createActionLock());
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const dialogRef = useAdminDialog(true, saving, onClose);
 
   useEffect(() => {
     scrollToTop();
@@ -55,10 +61,12 @@ export default function ProductEditModal({ product, onClose, onSuccess }: Produc
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!submitLock.current.acquire()) return;
+    setError('');
     setSaving(true);
 
     try {
-      const { error } = await supabase.from('products').update({
+      const result = await supabase.from('products').update({
         name: formData.name,
         description: formData.description,
         price: formData.price,
@@ -79,29 +87,31 @@ export default function ProductEditModal({ product, onClose, onSuccess }: Produc
         moq: formData.moq || 1,
         moq_unit: formData.moq_unit || 'бр.',
         pieces_per_carton: formData.pieces_per_carton || 0,
-        visibility: (formData as any).visibility || 'retail',
+        visibility: formData.visibility || 'retail',
         updated_at: new Date().toISOString()
-      }).eq('id', product.id);
+      }).eq('id', product.id).select('id').single();
 
-      if (error) throw error;
+      confirmedRecord(result, product.id);
       onSuccess();
       onClose();
-    } catch {
-      alert('Грешка при запазване на промените');
-    } finally { setSaving(false); }
+    } catch (cause) {
+      setError(adminErrorMessage(cause));
+    } finally { submitLock.current.release(); setSaving(false); }
   };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 p-4 pt-8 overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full flex flex-col my-4">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="admin-dialog-title" tabIndex={-1} className="bg-white rounded-xl shadow-xl max-w-2xl w-full flex flex-col my-4">
         <div className="flex-shrink-0 bg-white border-b px-6 py-4 flex items-center justify-between rounded-t-xl">
-          <h2 className="text-xl font-bold text-gray-900">Редактиране на продукт</h2>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
-            <i className="ri-close-line text-2xl"></i>
+          <h2 id="admin-dialog-title" className="text-xl font-bold text-gray-900">Редактиране на продукт</h2>
+          <button onClick={onClose} disabled={saving} aria-label="Затвори" className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer">
+            <i aria-hidden="true" className="ri-close-line text-2xl"></i>
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
+          <fieldset disabled={saving} className="min-w-0">
+          {error && <p role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</p>}
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -128,7 +138,7 @@ export default function ProductEditModal({ product, onClose, onSuccess }: Produc
             {/* B2B Section */}
             <div className="border-t pt-4">
               <h3 className="text-sm font-bold text-gray-900 mb-3 flex items-center gap-2">
-                <i className="ri-briefcase-line text-teal-600"></i>
+                <i aria-hidden="true" className="ri-briefcase-line text-teal-600"></i>
                 B2B / Цени на едро
               </h3>
               <div className="grid grid-cols-3 gap-4">
@@ -243,6 +253,7 @@ export default function ProductEditModal({ product, onClose, onSuccess }: Produc
               {saving ? 'Запазване...' : 'Запази промените'}
             </button>
           </div>
+          </fieldset>
         </form>
       </div>
     </div>

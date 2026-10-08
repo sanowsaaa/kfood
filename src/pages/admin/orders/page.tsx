@@ -1,10 +1,16 @@
+import { useAdminDialog } from '@/hooks/useAdminDialog';
+import { useAdminAction } from '@/hooks/useAdminAction';
+import { useAdminRead } from '@/hooks/useAdminRead';
+import { checkedData, confirmedRecord } from '@/utils/admin';
+import AdminFeedback from '@/pages/admin/components/AdminFeedback';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/utils/supabase';
-import { useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
+import AdminAccess from '@/pages/admin/components/AdminAccess';
 import AdminHeader from '../components/AdminHeader';
 
-const REVIEW_ORDER_URL = 'https://quqlovoiwgqfmgjumpgd.supabase.co/functions/v1/review-b2b-order';
+const REVIEW_ORDER_URL = `${import.meta.env.VITE_PUBLIC_SUPABASE_URL}/functions/v1/review-b2b-order`;
 
 interface ShippingAddress {
   full_name?: string;
@@ -67,37 +73,29 @@ const statusOptions = [
 ];
 
 export default function OrdersManagement() {
-  const navigate = useNavigate();
-  const { isAdmin, loading: authLoading } = useAdminAuth();
+  const { isAdmin, loading: authLoading, error: authError, retry: retryAuth } = useAdminAuth();
   const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { loading, error: loadError, load } = useAdminRead();
+  const mutation = useAdminAction();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const dialogRef = useAdminDialog(!!selectedOrder, !!mutation.pending, () => setSelectedOrder(null));
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [savingNotes, setSavingNotes] = useState(false);
+  const savingNotes = mutation.pending === 'notes';
   const [localNotes, setLocalNotes] = useState('');
 
   // B2B review state
   const [discountPercent, setDiscountPercent] = useState<string>('0');
   const [discountNotes, setDiscountNotes] = useState('');
-  const [reviewLoading, setReviewLoading] = useState(false);
-  const [reviewError, setReviewError] = useState('');
+  const reviewLoading = mutation.pending === 'review';
   const [companyInfo, setCompanyInfo] = useState<B2BCompanyInfo | null>(null);
-  const [loadingCompany, setLoadingCompany] = useState(false);
-  const [reviewSuccess, setReviewSuccess] = useState('');
-  const [notificationLoading, setNotificationLoading] = useState(false);
-  const [notificationMessage, setNotificationMessage] = useState('');
+  const { loading: loadingCompany, error: companyError, load: loadCompany, reset: resetCompanyRead } = useAdminRead();
+  const notificationLoading = mutation.pending === 'notification';
 
   // Custom line item prices for B2B approval
   const [lineItems, setLineItems] = useState<Array<{id: number; name: string; quantity: number; pieces_per_carton: number; unit_price: string; carton_price: string; sku: string | null}>>([]);
   const [useCustomPrices, setUseCustomPrices] = useState(false);
-
-  useEffect(() => {
-    if (!authLoading && !isAdmin) {
-      navigate('/login');
-    }
-  }, [authLoading, isAdmin, navigate]);
 
   useEffect(() => {
     if (isAdmin) {
@@ -105,100 +103,49 @@ export default function OrdersManagement() {
     }
   }, [isAdmin]);
 
-  const fetchOrders = async () => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('orders')
-        .select('*')
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      setOrders(data || []);
-    } catch {
-      // Silently handle
-    } finally {
-      setLoading(false);
-    }
-  };
+  const fetchOrders = () => load(async () => checkedData(await supabase.from('orders').select('*').order('created_at', { ascending: false })) as Order[], data => {
+    setOrders(data);
+    setSelectedOrder(current => current ? data.find(order => order.id === current.id) || current : null);
+  });
 
-  const refreshStripeOrder = async (order: Order) => {
+  const refreshStripeOrder = (order: Order) => {
     if (!order.stripe_session_id) return;
-    try {
-      const { data, error } = await supabase.functions.invoke('reconcile-checkouts', {
-        body: {
-          orderId: order.id,
-        },
-      });
-
-      if (!error) {
-        await fetchOrders();
-        setSelectedOrder(null);
-        if (data?.reviews) window.alert('Плащането изисква ръчен преглед. Статусът не е променен автоматично.');
-      } else {
-        window.alert('Проверете плащането ръчно. Автоматичната проверка не успя.');
-      }
-    } catch {
-      window.alert('Автоматичната проверка на плащането не успя.');
-    }
+    return mutation.run('stripe-refresh', async () => {
+      const { data, error } = await supabase.functions.invoke('reconcile-checkouts', { body: { orderId: order.id } });
+      if (error || !data || typeof data.checked !== 'number') throw new Error('Автоматичната проверка не е потвърдена. Проверете плащането ръчно.');
+      await fetchOrders();
+      mutation.setMessage(data.reviews > 0
+        ? { type: 'info', text: 'Плащането изисква ръчен преглед. Статусът не е променен автоматично.' }
+        : { type: 'success', text: 'Проверката приключи. Показани са записаните данни за поръчката.' });
+    });
   };
+  const updateOrderStatus = (orderId: string, newStatus: string) => mutation.run(`status:${orderId}`, async () => {
+    confirmedRecord(await supabase.from('orders').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', orderId).select('id').single(), orderId);
+    setOrders(current => current.map(order => order.id === orderId ? { ...order, status: newStatus } : order));
+    setSelectedOrder(current => current?.id === orderId ? { ...current, status: newStatus } : current);
+  }, 'Статусът е записан.');
 
-  const updateOrderStatus = async (orderId: string, newStatus: string) => {
-    try {
-      const { error } = await supabase
-        .from('orders')
-        .update({ status: newStatus, updated_at: new Date().toISOString() })
-        .eq('id', orderId);
-      if (error) throw error;
-      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
-      if (selectedOrder?.id === orderId) setSelectedOrder(prev => prev ? { ...prev, status: newStatus } : null);
-    } catch {
-      alert('Грешка при обновяване на статуса');
-    }
-  };
-
-  const saveTrackingNotes = async () => {
+  const saveTrackingNotes = () => {
     if (!selectedOrder) return;
-    setSavingNotes(true);
-    try {
-      const { error } = await supabase
-        .from('orders')
-        .update({ tracking_notes: localNotes, updated_at: new Date().toISOString() })
-        .eq('id', selectedOrder.id);
-      if (error) throw error;
-      setOrders(prev => prev.map(o => o.id === selectedOrder.id ? { ...o, tracking_notes: localNotes } : o));
-      setSelectedOrder(prev => prev ? { ...prev, tracking_notes: localNotes } : null);
-    } catch {
-      alert('Грешка при запазване');
-    } finally {
-      setSavingNotes(false);
-    }
+    const orderId = selectedOrder.id;
+    return mutation.run('notes', async () => {
+      confirmedRecord(await supabase.from('orders').update({ tracking_notes: localNotes, updated_at: new Date().toISOString() }).eq('id', orderId).select('id').single(), orderId);
+      setOrders(current => current.map(order => order.id === orderId ? { ...order, tracking_notes: localNotes } : order));
+      setSelectedOrder(current => current?.id === orderId ? { ...current, tracking_notes: localNotes } : current);
+    }, 'Бележките са запазени.');
   };
 
-  const fetchCompanyInfo = async (companyId: string) => {
-    setLoadingCompany(true);
-    setCompanyInfo(null);
-    try {
-      const { data } = await supabase
-        .from('b2b_companies')
-        .select('company_name, bulstat, vat_number, mol, address, city, postal_code, email, phone')
-        .eq('id', companyId)
-        .single();
-
-      if (data) setCompanyInfo(data as B2BCompanyInfo);
-    } catch {
-      // Silently handle
-    } finally {
-      setLoadingCompany(false);
-    }
-  };
+  const fetchCompanyInfo = (companyId: string) => loadCompany(async () => checkedData(await supabase.from('b2b_companies')
+    .select('company_name, bulstat, vat_number, mol, address, city, postal_code, email, phone').eq('id', companyId).single()) as B2BCompanyInfo, setCompanyInfo);
 
   const openOrder = (order: Order) => {
+    if (mutation.pending) return;
     setSelectedOrder(order);
     setLocalNotes(order.tracking_notes || '');
-    setReviewError('');
-    setReviewSuccess('');
+    mutation.clearMessage();
+    resetCompanyRead();
+    setCompanyInfo(null);
     setDiscountNotes(order.discount_notes || '');
-    setNotificationMessage('');
 
     // For B2B orders, reset discount to 0 or load existing
     if (order.is_b2b_order) {
@@ -234,105 +181,51 @@ export default function OrdersManagement() {
   const isStripe = (order: Order) => !!order.stripe_session_id;
   const isB2B = (order: Order) => !!(order.b2b_company_id || order.is_b2b_order || order.payment_method === 'b2b_invoice');
 
-  const retryB2BNotification = async (order: Order) => {
-    setNotificationLoading(true);
-    setNotificationMessage('');
-    try {
-      const { data, error } = await supabase.functions.invoke('create-b2b-checkout', {
-        body: { mode: 'resend_notification', order_id: order.id },
-      });
-      if (error || !data?.success) throw new Error(data?.error || 'Известието не беше изпратено. Опитайте по-късно.');
-      setNotificationMessage(data.email_sent ? 'Известието до магазина е доставено или вече е било изпратено.' : data.email_status);
-    } catch (error) {
-      setNotificationMessage(error instanceof Error ? error.message : 'Временен проблем с известието.');
-    } finally {
-      setNotificationLoading(false);
-    }
-  };
+  const retryB2BNotification = (order: Order) => mutation.run('notification', async () => {
+    const { data, error } = await supabase.functions.invoke('create-b2b-checkout', {
+      body: { mode: 'resend_notification', order_id: order.id },
+    });
+    if (error || data?.success !== true) throw new Error(data?.error || 'Известието не е потвърдено. Проверете изпращането преди нов опит.');
+    mutation.setMessage(data.email_sent
+      ? { type: 'success', text: 'Известието до магазина е прието за изпращане или вече е било изпратено.' }
+      : { type: 'info', text: 'Изпращането още не е потвърдено. Проверете известието преди нов опит.' });
+  });
 
-  const handleReviewOrder = async (action: 'approve' | 'reject') => {
+  const handleReviewOrder = (action: 'approve' | 'reject') => {
     if (!selectedOrder) return;
-    setReviewError('');
-    setReviewSuccess('');
-    setReviewLoading(true);
-
-    try {
+    const orderId = selectedOrder.id;
+    return mutation.run('review', async () => {
       const session = await supabase.auth.getSession();
       const token = session.data.session?.access_token;
-
-      if (!token) {
-        setReviewError('Сесията е изтекла. Моля, влезте отново.');
-        setReviewLoading(false);
-        return;
-      }
-
-      const body: Record<string, unknown> = {
-        order_id: selectedOrder.id,
-        action,
-      };
-
+      if (session.error || !token) throw new Error('Сесията е изтекла. Моля, влезте отново.');
+      const body: Record<string, unknown> = { order_id: orderId, action };
       if (action === 'approve') {
-        // If using custom prices, send line_items instead of discount_percent
         if (useCustomPrices) {
-          body.line_items = lineItems.map(li => ({
-            id: li.id,
-            unit_price: (parseFloat(li.unit_price) || 0),
-            carton_price: (parseFloat(li.carton_price) || 0),
-          }));
+          body.line_items = lineItems.map(li => ({ id: li.id, unit_price: parseFloat(li.unit_price) || 0, carton_price: parseFloat(li.carton_price) || 0 }));
           body.discount_percent = 0;
         } else {
           const disc = parseFloat(discountPercent) || 0;
-          if (disc < 0 || disc > 100) {
-            setReviewError('Отстъпката трябва да е между 0% и 100%');
-            setReviewLoading(false);
-            return;
-          }
+          if (disc < 0 || disc > 100) throw new Error('Отстъпката трябва да е между 0% и 100%');
           body.discount_percent = disc;
         }
-        body.discount_notes = discountNotes;
-      } else {
-        body.discount_notes = discountNotes;
       }
-
+      body.discount_notes = discountNotes;
       const response = await fetch(REVIEW_ORDER_URL, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
+        method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body),
       });
-
       const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        setReviewError(result.error || 'Грешка при обработка на поръчката');
-        setReviewLoading(false);
-        return;
-      }
-
-      setReviewSuccess(result.message || 'Операцията е успешна!');
-
-      // Refresh orders and update selected order
+      if (!response.ok || result.success !== true) throw new Error(result.error || 'Обработката не е потвърдена. Обновете данните преди нов опит.');
+      mutation.setMessage({ type: 'success', text: result.message || 'Операцията е потвърдена.' });
       await fetchOrders();
-
-      // Update selected order locally
-      const updatedOrders = await supabase
-        .from('orders')
-        .select('*')
-        .eq('id', selectedOrder.id)
-        .single();
-
-      if (updatedOrders.data) {
-        setSelectedOrder(updatedOrders.data as Order);
-        setLocalNotes(updatedOrders.data.tracking_notes || '');
+      const updated = await supabase.from('orders').select('*').eq('id', orderId).single();
+      if (updated.error || !updated.data) {
+        setSelectedOrder(null);
+        mutation.setMessage({ type: 'info', text: 'Операцията е потвърдена, но новите данни не са заредени. Обновете списъка преди следващо действие.' });
+      } else {
+        setSelectedOrder(updated.data as Order);
+        setLocalNotes(updated.data.tracking_notes || '');
       }
-
-    } catch {
-      setReviewError('Грешка при свързване със сървъра. Опитайте отново.');
-    } finally {
-      setReviewLoading(false);
-    }
+    });
   };
 
   // Discount preview calculations
@@ -375,26 +268,20 @@ export default function OrdersManagement() {
     totalRevenue: orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + Number(o.total_amount), 0),
   };
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <i className="ri-loader-4-line text-4xl text-teal-600 animate-spin"></i>
-          <p className="mt-4 text-gray-600">Проверка на достъпа...</p>
-        </div>
-      </div>
-    );
-  }
+  if (authLoading || authError) return <AdminAccess error={authError} onRetry={retryAuth} />;
 
-  if (!isAdmin) return null;
+  if (!isAdmin) return <Navigate to="/login" replace />;
 
   const preview = getDiscountPreview();
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="admin-page min-h-screen bg-gray-50">
       <AdminHeader />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main id="admin-content" tabIndex={-1} className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <AdminFeedback message={loadError ? { type: 'error', text: loadError } : null} onRetry={fetchOrders} />
+        {!selectedOrder && <AdminFeedback message={mutation.message} onDismiss={mutation.clearMessage} />}
+
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Управление на поръчки</h1>
           <p className="mt-1 text-gray-500">Всички поръчки от магазина</p>
@@ -412,7 +299,7 @@ export default function OrdersManagement() {
           ].map((stat, i) => (
             <div key={i} className="bg-white rounded-xl p-4 border border-gray-100">
               <div className={`w-8 h-8 flex items-center justify-center mb-2 ${stat.color}`}>
-                <i className={`${stat.icon} text-xl`}></i>
+                <i aria-hidden="true" className={`${stat.icon} text-xl`}></i>
               </div>
               <div className={`text-2xl font-bold ${stat.color}`}>{stat.value}</div>
               <div className="text-xs text-gray-500 mt-0.5">{stat.label}</div>
@@ -426,7 +313,7 @@ export default function OrdersManagement() {
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1.5 uppercase tracking-wide">Търсене</label>
               <div className="relative">
-                <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <i aria-hidden="true" className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
                 <input
                   type="text"
                   placeholder="Номер, имейл, телефон, име..."
@@ -474,10 +361,10 @@ export default function OrdersManagement() {
 
         {/* Таблица */}
         <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-          {filteredOrders.length === 0 ? (
+          {loading ? <div role="status" className="p-12 text-center text-slate-500"><i aria-hidden="true" className="ri-loader-4-line animate-spin mr-2" />Зареждане на поръчки...</div> : loadError ? null : filteredOrders.length === 0 ? (
             <div className="text-center py-16">
               <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center bg-gray-100 rounded-full">
-                <i className="ri-inbox-2-line text-3xl text-gray-400"></i>
+                <i aria-hidden="true" className="ri-inbox-2-line text-3xl text-gray-400"></i>
               </div>
               <p className="text-gray-500 font-medium">Няма намерени поръчки</p>
               <p className="text-gray-400 text-sm mt-1">Опитайте с различни филтри</p>
@@ -531,22 +418,22 @@ export default function OrdersManagement() {
                           </span>
                           {order.admin_discount_percent && order.admin_discount_percent > 0 && (
                             <span className="inline-flex items-center gap-0.5 text-[10px] text-emerald-600 font-medium mt-0.5">
-                              <i className="ri-discount-percent-line"></i> -{order.admin_discount_percent}%
+                              <i aria-hidden="true" className="ri-discount-percent-line"></i> -{order.admin_discount_percent}%
                             </span>
                           )}
                         </td>
                         <td className="px-5 py-4 whitespace-nowrap">
                           {stripe ? (
                             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
-                              <i className="ri-bank-card-line"></i> Карта
+                              <i aria-hidden="true" className="ri-bank-card-line"></i> Карта
                             </span>
                           ) : b2b ? (
                             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-gray-800 text-white">
-                              <i className="ri-building-2-line"></i> B2B
+                              <i aria-hidden="true" className="ri-building-2-line"></i> B2B
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-orange-50 text-orange-700">
-                              <i className="ri-truck-line"></i> Наложен
+                              <i aria-hidden="true" className="ri-truck-line"></i> Наложен
                             </span>
                           )}
                         </td>
@@ -572,58 +459,63 @@ export default function OrdersManagement() {
             </div>
           )}
         </div>
-      </div>
+      </main>
 
       {/* Модал детайли */}
       {selectedOrder && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => setSelectedOrder(null)}>
-          <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50" onClick={() => { if (!mutation.pending) setSelectedOrder(null); }}>
+          <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="admin-order-title" tabIndex={-1} className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             {/* Header */}
-            <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-4 sm:px-6 py-4 flex flex-wrap items-start sm:items-center justify-between gap-3 rounded-t-2xl z-10">
               <div>
-                <h2 className="text-lg font-bold text-gray-900">Поръчка {selectedOrder.order_number}</h2>
+                <h2 id="admin-order-title" className="text-lg font-bold text-gray-900">Поръчка {selectedOrder.order_number}</h2>
                 <p className="text-xs text-gray-400 mt-0.5">
                   {new Date(selectedOrder.created_at).toLocaleString('bg-BG')}
                 </p>
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2">
                 {isStripe(selectedOrder) && (!selectedOrder.customer_email || !selectedOrder.shipping_address?.full_name) && (
                   <button
-                    onClick={() => refreshStripeOrder(selectedOrder)}
+                    disabled={!!mutation.pending} onClick={() => refreshStripeOrder(selectedOrder)}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors whitespace-nowrap cursor-pointer"
                     title="Вземи данните от Stripe"
                   >
-                    <i className="ri-refresh-line"></i> Обнови от Stripe
+                    <i aria-hidden="true" className="ri-refresh-line"></i> Обнови от Stripe
                   </button>
                 )}
                 {isB2B(selectedOrder) ? (
                   <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-gray-800 text-white">
-                    <i className="ri-building-2-line"></i> B2B Поръчка
+                    <i aria-hidden="true" className="ri-building-2-line"></i> B2B Поръчка
                   </span>
                 ) : isStripe(selectedOrder) ? (
                   <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">
-                    <i className="ri-bank-card-line"></i> Платено онлайн
+                    <i aria-hidden="true" className="ri-bank-card-line"></i> Онлайн плащане
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-orange-50 text-orange-700">
-                    <i className="ri-truck-line"></i> Наложен платеж
+                    <i aria-hidden="true" className="ri-truck-line"></i> Наложен платеж
                   </span>
                 )}
                 <button
-                  onClick={() => setSelectedOrder(null)}
+                  disabled={!!mutation.pending} aria-label="Затвори" onClick={() => { if (!mutation.pending) setSelectedOrder(null); }}
                   className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  <i className="ri-close-line text-xl"></i>
+                  <i aria-hidden="true" className="ri-close-line text-xl"></i>
                 </button>
               </div>
             </div>
 
-            <div className="p-6 space-y-5">
+            <div className="p-6">
+              <AdminFeedback message={mutation.message} onDismiss={mutation.clearMessage} />
+              <AdminFeedback message={companyError ? { type: 'error', text: 'Фирмените данни не са заредени. Опитайте отново.' } : null} onRetry={() => { if (selectedOrder.b2b_company_id) void fetchCompanyInfo(selectedOrder.b2b_company_id); }} />
+            </div>
+            <fieldset disabled={!!mutation.pending || !!loadError} aria-busy={!!mutation.pending} className="min-w-0">
+            <div className="px-6 pb-6 space-y-5">
               {/* B2B Review Panel — only for B2B orders */}
               {isB2B(selectedOrder) && (
                 <div className="bg-amber-50/50 border border-amber-200 rounded-xl p-5">
                   <h3 className="text-sm font-bold text-amber-900 mb-4 flex items-center gap-2">
-                    <i className="ri-admin-line"></i>
+                    <i aria-hidden="true" className="ri-admin-line"></i>
                     {selectedOrder.status === 'pending_review' ? 'B2B Преглед и одобрение' : 'B2B Детайли за одобрение'}
                   </h3>
 
@@ -633,14 +525,13 @@ export default function OrdersManagement() {
                         className="text-teal-700 font-semibold hover:underline disabled:opacity-50">
                         {notificationLoading ? 'Проверка на известието...' : 'Повтори известието до магазина'}
                       </button>
-                      {notificationMessage && <p role="status" className="mt-2 text-gray-700">{notificationMessage}</p>}
                     </div>
                   )}
 
                   {/* Company info */}
                   {loadingCompany ? (
                     <div className="flex items-center gap-2 text-sm text-gray-500 mb-4">
-                      <i className="ri-loader-4-line animate-spin"></i> Зареждане на фирмени данни...
+                      <i aria-hidden="true" className="ri-loader-4-line animate-spin"></i> Зареждане на фирмени данни...
                     </div>
                   ) : companyInfo ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4 bg-white rounded-lg p-4 border border-amber-100">
@@ -683,7 +574,7 @@ export default function OrdersManagement() {
                   {selectedOrder.status === 'approved' && selectedOrder.admin_discount_percent !== null && (
                     <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 mb-4">
                       <div className="flex items-center gap-2 mb-2">
-                        <i className="ri-check-double-line text-emerald-600"></i>
+                        <i aria-hidden="true" className="ri-check-double-line text-emerald-600"></i>
                         <span className="text-sm font-bold text-emerald-800">Вече одобрена</span>
                       </div>
                       <div className="grid grid-cols-2 gap-3 text-sm">
@@ -716,7 +607,7 @@ export default function OrdersManagement() {
                   {selectedOrder.status === 'cancelled' && (
                     <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
                       <div className="flex items-center gap-2 mb-2">
-                        <i className="ri-close-circle-line text-red-600"></i>
+                        <i aria-hidden="true" className="ri-close-circle-line text-red-600"></i>
                         <span className="text-sm font-bold text-red-800">Отказана поръчка</span>
                       </div>
                       {selectedOrder.discount_notes && (
@@ -738,7 +629,7 @@ export default function OrdersManagement() {
                             className="w-4 h-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
                           />
                           <span className="text-sm font-semibold text-gray-700">
-                            <i className="ri-price-tag-3-line mr-1.5 text-teal-600"></i>
+                            <i aria-hidden="true" className="ri-price-tag-3-line mr-1.5 text-teal-600"></i>
                             Задай персонализирани цени за всеки продукт
                           </span>
                         </label>
@@ -764,7 +655,6 @@ export default function OrdersManagement() {
                               <tbody className="divide-y divide-gray-50">
                                 {lineItems.map((li, idx) => {
                                   const unitPrice = parseFloat(li.unit_price) || 0;
-                                  const cartonPrice = parseFloat(li.carton_price) || 0;
                                   const hasCarton = li.pieces_per_carton > 0;
                                   const lineTotal = unitPrice * li.quantity;
                                   return (
@@ -846,7 +736,7 @@ export default function OrdersManagement() {
                               max="100"
                               step="0.5"
                               value={discountPercent}
-                              onChange={e => { setDiscountPercent(e.target.value); setReviewError(''); }}
+                              onChange={e => { setDiscountPercent(e.target.value); mutation.clearMessage(); }}
                               className="w-full px-4 py-2.5 pr-8 border border-gray-200 rounded-lg text-sm font-mono focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                               placeholder="0"
                             />
@@ -860,7 +750,7 @@ export default function OrdersManagement() {
                           <input
                             type="text"
                             value={discountNotes}
-                            onChange={e => { setDiscountNotes(e.target.value); setReviewError(''); }}
+                            onChange={e => { setDiscountNotes(e.target.value); mutation.clearMessage(); }}
                             className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                             placeholder="Пример: лоялен клиент, голяма поръчка..."
                             maxLength={500}
@@ -904,7 +794,7 @@ export default function OrdersManagement() {
                           <input
                             type="text"
                             value={discountNotes}
-                            onChange={e => { setDiscountNotes(e.target.value); setReviewError(''); }}
+                            onChange={e => { setDiscountNotes(e.target.value); mutation.clearMessage(); }}
                             className="w-full px-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent"
                             placeholder="Пример: цени по договаряне, специална оферта..."
                             maxLength={500}
@@ -913,19 +803,6 @@ export default function OrdersManagement() {
                       )}
 
                       {/* Error / Success */}
-                      {reviewError && (
-                        <div className="mb-4 bg-red-50 border border-red-200 rounded-lg p-3 flex items-start gap-2">
-                          <i className="ri-error-warning-line text-red-500 mt-0.5"></i>
-                          <p className="text-sm text-red-700">{reviewError}</p>
-                        </div>
-                      )}
-                      {reviewSuccess && (
-                        <div className="mb-4 bg-emerald-50 border border-emerald-200 rounded-lg p-3 flex items-start gap-2">
-                          <i className="ri-check-line text-emerald-500 mt-0.5"></i>
-                          <p className="text-sm text-emerald-700">{reviewSuccess}</p>
-                        </div>
-                      )}
-
                       {/* Action buttons */}
                       <div className="flex flex-wrap gap-3">
                         <button
@@ -934,11 +811,11 @@ export default function OrdersManagement() {
                           className="flex-1 min-w-[160px] py-3 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white rounded-xl font-bold text-sm transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-2"
                         >
                           {reviewLoading ? (
-                            <><i className="ri-loader-4-line animate-spin"></i> Обработка...</>
+                            <><i aria-hidden="true" className="ri-loader-4-line animate-spin"></i> Обработка...</>
                           ) : useCustomPrices ? (
-                            <><i className="ri-check-line text-lg"></i> Одобри с персонализирани цени</>
+                            <><i aria-hidden="true" className="ri-check-line text-lg"></i> Одобри с персонализирани цени</>
                           ) : (
-                            <><i className="ri-check-line text-lg"></i> Одобри с отстъпка</>
+                            <><i aria-hidden="true" className="ri-check-line text-lg"></i> Одобри с отстъпка</>
                           )}
                         </button>
                         <button
@@ -947,9 +824,9 @@ export default function OrdersManagement() {
                           className="flex-1 min-w-[160px] py-3 bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white rounded-xl font-bold text-sm transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-2"
                         >
                           {reviewLoading ? (
-                            <><i className="ri-loader-4-line animate-spin"></i> Обработка...</>
+                            <><i aria-hidden="true" className="ri-loader-4-line animate-spin"></i> Обработка...</>
                           ) : (
-                            <><i className="ri-close-line text-lg"></i> Откажи поръчката</>
+                            <><i aria-hidden="true" className="ri-close-line text-lg"></i> Откажи поръчката</>
                           )}
                         </button>
                       </div>
@@ -986,17 +863,17 @@ export default function OrdersManagement() {
                   <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Клиент</h3>
                   <div className="space-y-2 text-sm">
                     <div className="flex items-start gap-2">
-                      <i className="ri-user-line text-gray-400 mt-0.5"></i>
+                      <i aria-hidden="true" className="ri-user-line text-gray-400 mt-0.5"></i>
                       <span className="font-medium text-gray-900">{selectedOrder.shipping_address?.full_name || '—'}</span>
                     </div>
                     <div className="flex items-start gap-2">
-                      <i className="ri-phone-line text-gray-400 mt-0.5"></i>
+                      <i aria-hidden="true" className="ri-phone-line text-gray-400 mt-0.5"></i>
                       <a href={`tel:${selectedOrder.customer_phone}`} className="text-teal-600 hover:underline">
                         {selectedOrder.customer_phone}
                       </a>
                     </div>
                     <div className="flex items-start gap-2">
-                      <i className="ri-mail-line text-gray-400 mt-0.5"></i>
+                      <i aria-hidden="true" className="ri-mail-line text-gray-400 mt-0.5"></i>
                       <a href={`mailto:${selectedOrder.customer_email}`} className="text-teal-600 hover:underline break-all">
                         {selectedOrder.customer_email}
                       </a>
@@ -1088,17 +965,18 @@ export default function OrdersManagement() {
                   className="mt-2 px-4 py-2 bg-teal-600 text-white rounded-lg text-sm font-medium hover:bg-teal-700 transition-colors disabled:opacity-50 whitespace-nowrap"
                 >
                   {savingNotes ? (
-                    <><i className="ri-loader-4-line animate-spin mr-2"></i>Запазване...</>
+                    <><i aria-hidden="true" className="ri-loader-4-line animate-spin mr-2"></i>Запазване...</>
                   ) : (
-                    <><i className="ri-save-line mr-2"></i>Запази бележките</>
+                    <><i aria-hidden="true" className="ri-save-line mr-2"></i>Запази бележките</>
                   )}
                 </button>
               </div>
             </div>
 
+            </fieldset>
             <div className="sticky bottom-0 bg-gray-50 border-t border-gray-100 px-6 py-4 rounded-b-2xl">
               <button
-                onClick={() => setSelectedOrder(null)}
+                disabled={!!mutation.pending} onClick={() => { if (!mutation.pending) setSelectedOrder(null); }}
                 className="w-full py-2.5 bg-gray-900 text-white rounded-xl hover:bg-gray-800 transition-colors text-sm font-medium whitespace-nowrap"
               >
                 Затвори
