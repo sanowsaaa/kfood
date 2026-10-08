@@ -89,7 +89,7 @@ export default function KoreanCulture() {
                     : 'border-transparent text-gray-400 hover:text-gray-600'
                 }`}
               >
-                <i className={`${c.icon} text-sm`}></i>
+                <i aria-hidden="true" className={`${c.icon} text-sm`}></i>
                 {tab}
               </button>
             );
@@ -111,7 +111,7 @@ export default function KoreanCulture() {
           {/* Text */}
           <div className="p-8 md:p-12 lg:p-14 flex flex-col justify-center">
             <div className="w-11 h-11 rounded-xl bg-red-50 flex items-center justify-center mb-5">
-              <i className={`${current.icon} text-red-600 text-xl`}></i>
+              <i aria-hidden="true" className={`${current.icon} text-red-600 text-xl`}></i>
             </div>
 
             <h3 className="font-heading text-xl md:text-2xl font-light text-gray-900 mb-4 leading-snug tracking-tight">
@@ -138,7 +138,7 @@ export default function KoreanCulture() {
               className="inline-flex items-center gap-2 text-[13px] font-semibold text-red-600 uppercase tracking-wider hover:text-red-700 transition-colors cursor-pointer whitespace-nowrap"
             >
               Прочети повече в блога
-              <i className="ri-arrow-right-line"></i>
+              <i aria-hidden="true" className="ri-arrow-right-line"></i>
             </Link>
           </div>
         </div>

@@ -1,30 +1,27 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { useB2B, type B2BProduct } from '@/contexts/B2BContext';
 import { supabase } from '@/utils/supabase';
 import B2BHeader from '@/pages/b2b/components/B2BHeader';
+import { useCustomerRead } from '@/hooks/useCustomerRead';
+import CustomerReadError from '@/components/CustomerReadError';
 import B2BFooter from '@/pages/b2b/components/B2BFooter';
+
+async function load(signal: AbortSignal): Promise<B2BProduct[]> {
+  const { data, error } = await supabase.from('products')
+    .select('id, name, description, price, wholesale_price, carton_price, image, category, badge, rating, reviews, in_stock, stock, weight, volume, sku, slug, moq, moq_unit, pieces_per_carton')
+    .order('category').order('name').abortSignal(signal);
+  if (error) throw error;
+  return (data || []) as B2BProduct[];
+}
 
 export default function B2BQuickOrderPage() {
   const { calculateB2BPrice, calculateCartonPrice, cart, addToB2BCart, addCarton, updateB2BCartQty, removeFromB2BCart, cartTotal, cartItemsCount, sessionLoading } = useB2B();
-  const [products, setProducts] = useState<B2BProduct[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { data: products, loading, error: readError, retry } = useCustomerRead<B2BProduct[]>(load, []);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchMode, setSearchMode] = useState<'name' | 'sku'>('name');
   const [bulkInput, setBulkInput] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    supabase
-      .from('products')
-      .select('id, name, price, wholesale_price, carton_price, image, category, sku, stock, in_stock, moq, moq_unit, pieces_per_carton, slug')
-      .order('category').order('name')
-      .then(({ data }) => {
-        if (data) setProducts(data);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
 
   const filteredProducts = products.filter(p => {
     if (!searchQuery) return false;
@@ -66,6 +63,9 @@ export default function B2BQuickOrderPage() {
       }
     }
   };
+
+  if (sessionLoading || loading) return <div className="min-h-screen bg-gray-50"><B2BHeader /><p role="status" className="p-8 text-center">Зареждане…</p><B2BFooter /></div>;
+  if (readError) return <div className="min-h-screen bg-gray-50"><B2BHeader /><CustomerReadError message={readError} onRetry={retry} /><B2BFooter /></div>;
 
   return (
     <div className="min-h-screen bg-gray-50">

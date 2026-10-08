@@ -48,13 +48,13 @@ export default function Hero() {
                 className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 bg-red-600 text-white text-sm font-semibold tracking-wide uppercase hover:bg-red-700 transition-colors whitespace-nowrap cursor-pointer rounded-lg shadow-[0_4px_14px_rgba(220,38,38,0.35)] touch-target"
               >
                 Разгледай Продуктите
-                <i className="ri-arrow-right-line text-lg"></i>
+                <i aria-hidden="true" className="ri-arrow-right-line text-lg"></i>
               </Link>
               <Link
                 to="/categories"
                 className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 border border-white/30 text-white text-sm font-medium tracking-wide uppercase hover:bg-white/10 transition-colors whitespace-nowrap cursor-pointer rounded-lg touch-target"
               >
-                <i className="ri-grid-line"></i>
+                <i aria-hidden="true" className="ri-grid-line"></i>
                 Категории
               </Link>
             </div>
@@ -67,7 +67,7 @@ export default function Hero() {
                 { icon: 'ri-star-fill', text: '4.9★ от 2,847+ клиенти' },
               ].map(item => (
                 <div key={item.text} className="flex items-center gap-2 text-white/80 animate-fade-up delay-400 opacity-0">
-                  <i className={`${item.icon} text-red-400 text-xs sm:text-sm`}></i>
+                  <i aria-hidden="true" className={`${item.icon} text-red-400 text-xs sm:text-sm`}></i>
                   <span className="text-[11px] sm:text-xs md:text-sm font-medium">{item.text}</span>
                 </div>
               ))}

@@ -70,10 +70,11 @@ interface SearchParams {
   search_string?: string;
 }
 
-const PIXEL_ID = '4367746813495227';
 
 function fbq(event: FBQEvent, params?: Record<string, any>): void {
-  if (typeof window !== 'undefined' && window.fbq) {
+  let consent = false;
+  try { consent = localStorage.getItem('cookieConsent') === 'accepted'; } catch { /* No marketing without a stored choice. */ }
+  if (consent && typeof window !== 'undefined' && window.fbq) {
     window.fbq('track', event, params);
   }
 }
@@ -82,7 +83,9 @@ function fbq(event: FBQEvent, params?: Record<string, any>): void {
  * Засича PageView — вика се при промяна на маршрут
  */
 export function trackPageView(url?: string): void {
-  fbq('PageView', url ? { page_url: url } : undefined);
+  // Order/status URLs can contain personal data or payment IDs.
+  const pageUrl = url ? new URL(url).origin + new URL(url).pathname : undefined;
+  fbq('PageView', pageUrl ? { page_url: pageUrl } : undefined);
 }
 
 /**

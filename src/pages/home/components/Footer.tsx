@@ -19,13 +19,13 @@ export default function Footer() {
             </p>
             <div className="flex gap-2.5">
               <a href="https://www.facebook.com/profile.php?id=61556516122723" target="_blank" rel="noopener noreferrer" className="w-9 h-9 border border-gray-700 rounded-lg flex items-center justify-center hover:bg-red-600 hover:border-red-600 transition-all cursor-pointer">
-                <i className="ri-facebook-fill text-sm"></i>
+                <i aria-hidden="true" className="ri-facebook-fill text-sm"></i>
               </a>
               <a href="https://www.instagram.com/kfood_veliko_tarnovo/" target="_blank" rel="noopener noreferrer" className="w-9 h-9 border border-gray-700 rounded-lg flex items-center justify-center hover:bg-red-600 hover:border-red-600 transition-all cursor-pointer">
-                <i className="ri-instagram-line text-sm"></i>
+                <i aria-hidden="true" className="ri-instagram-line text-sm"></i>
               </a>
               <a href="https://www.tiktok.com/@kfoodveliko" target="_blank" rel="noopener noreferrer" className="w-9 h-9 border border-gray-700 rounded-lg flex items-center justify-center hover:bg-red-600 hover:border-red-600 transition-all cursor-pointer">
-                <i className="ri-tiktok-line text-sm"></i>
+                <i aria-hidden="true" className="ri-tiktok-line text-sm"></i>
               </a>
             </div>
           </div>
@@ -73,19 +73,19 @@ export default function Footer() {
             <h4 className="text-[11px] font-semibold text-red-400 uppercase tracking-[0.15em] mb-5">Контакти</h4>
             <ul className="space-y-3">
               <li className="flex items-start gap-3">
-                <i className="ri-map-pin-line text-red-400 text-sm mt-0.5"></i>
+                <i aria-hidden="true" className="ri-map-pin-line text-red-400 text-sm mt-0.5"></i>
                 <span className="text-gray-400 text-xs font-light">ул. "Велчо Джамджията" 6, Велико Търново</span>
               </li>
               <li className="flex items-start gap-3">
-                <i className="ri-phone-line text-red-400 text-sm mt-0.5"></i>
+                <i aria-hidden="true" className="ri-phone-line text-red-400 text-sm mt-0.5"></i>
                 <a href="tel:+359899897566" className="text-gray-400 hover:text-red-400 transition-colors text-xs font-light">0899 897 566</a>
               </li>
               <li className="flex items-start gap-3">
-                <i className="ri-mail-line text-red-400 text-sm mt-0.5"></i>
+                <i aria-hidden="true" className="ri-mail-line text-red-400 text-sm mt-0.5"></i>
                 <a href="mailto:kfoodtarnovo@gmail.com" className="text-gray-400 hover:text-red-400 transition-colors text-xs font-light">kfoodtarnovo@gmail.com</a>
               </li>
               <li className="flex items-start gap-3">
-                <i className="ri-time-line text-red-400 text-sm mt-0.5"></i>
+                <i aria-hidden="true" className="ri-time-line text-red-400 text-sm mt-0.5"></i>
                 <span className="text-gray-400 text-xs font-light">Пон-Съб: 9:00 - 19:00</span>
               </li>
             </ul>

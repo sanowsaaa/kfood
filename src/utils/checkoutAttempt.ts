@@ -13,7 +13,8 @@ export function getCheckoutAttempt(fingerprint: string, storage: Storage, now = 
   let saved: CheckoutAttempt | null = null;
   try { saved = JSON.parse(storage.getItem(ATTEMPT_KEY) || 'null'); } catch { /* replace corrupt data */ }
   if (saved?.fingerprint === fingerprint && /^[0-9a-f]{64}$/.test(saved.token) &&
-      /^[0-9a-f-]{36}$/.test(saved.id) && saved.createdAt <= now && now - saved.createdAt < 65 * 60_000) {
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(saved.id) &&
+      Number.isSafeInteger(saved.createdAt) && saved.createdAt <= now && now - saved.createdAt < 65 * 60_000) {
     return saved;
   }
   const token = Array.from(crypto.getRandomValues(new Uint8Array(32)), (n) => n.toString(16).padStart(2, '0')).join('');

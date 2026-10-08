@@ -46,7 +46,7 @@ export default function AboutSection() {
               {features.map((feature, index) => (
                 <div key={index} className="flex items-start gap-3 p-4 rounded-xl border border-gray-100 hover:border-red-200 hover:bg-red-50/30 transition-all">
                   <div className="w-10 h-10 rounded-lg bg-red-50 flex items-center justify-center flex-shrink-0">
-                    <i className={`${feature.icon} text-red-600 text-lg`}></i>
+                    <i aria-hidden="true" className={`${feature.icon} text-red-600 text-lg`}></i>
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-1 text-sm">{feature.title}</h3>
@@ -63,7 +63,7 @@ export default function AboutSection() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-5 py-2.5 border-2 border-gray-200 text-gray-700 text-xs font-semibold uppercase tracking-wider hover:border-red-600 hover:text-red-600 hover:bg-red-50 transition-all whitespace-nowrap cursor-pointer rounded-lg"
               >
-                <i className="ri-facebook-fill text-sm"></i>
+                <i aria-hidden="true" className="ri-facebook-fill text-sm"></i>
                 Facebook
               </a>
               <a
@@ -72,7 +72,7 @@ export default function AboutSection() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-5 py-2.5 border-2 border-gray-200 text-gray-700 text-xs font-semibold uppercase tracking-wider hover:border-red-600 hover:text-red-600 hover:bg-red-50 transition-all whitespace-nowrap cursor-pointer rounded-lg"
               >
-                <i className="ri-instagram-line text-sm"></i>
+                <i aria-hidden="true" className="ri-instagram-line text-sm"></i>
                 Instagram
               </a>
               <a
@@ -81,7 +81,7 @@ export default function AboutSection() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-5 py-2.5 border-2 border-gray-200 text-gray-700 text-xs font-semibold uppercase tracking-wider hover:border-red-600 hover:text-red-600 hover:bg-red-50 transition-all whitespace-nowrap cursor-pointer rounded-lg"
               >
-                <i className="ri-tiktok-line text-sm"></i>
+                <i aria-hidden="true" className="ri-tiktok-line text-sm"></i>
                 TikTok
               </a>
             </div>
@@ -104,7 +104,7 @@ export default function AboutSection() {
                 <div className="text-4xl font-heading font-bold text-red-600">4.8</div>
                 <div>
                   <div className="flex gap-0.5">
-                    {[1,2,3,4,5].map(s => <i key={s} className="ri-star-fill text-amber-500 text-xs"></i>)}
+                    {[1,2,3,4,5].map(s => <i aria-hidden="true" key={s} className="ri-star-fill text-amber-500 text-xs"></i>)}
                   </div>
                   <div className="text-xs text-gray-500 font-light">Средна оценка</div>
                 </div>

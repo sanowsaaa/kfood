@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAdminDialog as useDialog } from '../hooks/useAdminDialog';
 
 export default function CookieConsent() {
   const [showBanner, setShowBanner] = useState(false);
 
   useEffect(() => {
-    const consent = localStorage.getItem('cookieConsent');
+    let consent: string | null = null;
+    try { consent = localStorage.getItem('cookieConsent'); } catch { /* Still let the customer choose. */ }
     if (!consent) {
       // Малко забавяне за по-добро UX
       const timer = setTimeout(() => setShowBanner(true), 800);
@@ -25,21 +27,22 @@ export default function CookieConsent() {
   }, [showBanner]);
 
   const handleAccept = () => {
-    localStorage.setItem('cookieConsent', 'accepted');
-    localStorage.setItem('cookieConsentDate', new Date().toISOString());
+    try { localStorage.setItem('cookieConsent', 'accepted'); localStorage.setItem('cookieConsentDate', new Date().toISOString()); } catch { /* Storage may be unavailable. */ }
+    window.dispatchEvent(new Event('kfood:consent-changed'));
     setShowBanner(false);
   };
 
   const handleDecline = () => {
-    localStorage.setItem('cookieConsent', 'declined');
-    localStorage.setItem('cookieConsentDate', new Date().toISOString());
+    try { localStorage.setItem('cookieConsent', 'declined'); localStorage.setItem('cookieConsentDate', new Date().toISOString()); } catch { /* Storage may be unavailable. */ }
     setShowBanner(false);
   };
 
+  const dialog = useDialog(showBanner, false, handleDecline);
   if (!showBanner) return null;
 
   return (
     <div
+      className="customer-shell"
       style={{
         position: 'fixed',
         top: 0,
@@ -57,7 +60,7 @@ export default function CookieConsent() {
         backdropFilter: 'blur(4px)',
       }}
     >
-      <div className="bg-white rounded-2xl w-full p-8" style={{ maxWidth: '520px' }}>
+      <div ref={dialog} role="dialog" aria-modal="true" aria-labelledby="consent-title" tabIndex={-1} className="bg-white rounded-2xl w-full p-5 sm:p-8 max-h-[calc(100dvh-32px)] overflow-y-auto" style={{ maxWidth: '520px' }}>
         {/* Икона */}
         <div className="flex justify-center mb-5">
           <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center">
@@ -66,7 +69,7 @@ export default function CookieConsent() {
         </div>
 
         {/* Заглавие */}
-        <h2 className="text-2xl font-bold text-gray-900 text-center mb-3">
+        <h2 id="consent-title" className="text-2xl font-bold text-gray-900 text-center mb-3">
           Използваме бисквитки
         </h2>
 
@@ -126,7 +129,7 @@ export default function CookieConsent() {
 
         <p className="text-center text-xs text-gray-400 mt-4">
           Научете повече в нашата{' '}
-          <Link to="/privacy" onClick={handleAccept} className="text-emerald-600 hover:underline">
+          <Link to="/privacy" onClick={() => setShowBanner(false)} className="text-emerald-700 hover:underline">
             Политика за поверителност
           </Link>
         </p>

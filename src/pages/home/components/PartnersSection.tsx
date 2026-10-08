@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+
 
 export default function PartnersSection() {
   return (
@@ -25,7 +25,7 @@ export default function PartnersSection() {
             <div className="lg:col-span-3 p-8 md:p-12 lg:p-14 flex flex-col justify-center">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-11 h-11 rounded-xl bg-red-50 flex items-center justify-center">
-                  <i className="ri-plant-line text-red-600 text-xl"></i>
+                  <i aria-hidden="true" className="ri-plant-line text-red-600 text-xl"></i>
                 </div>
                 <div>
                   <h3 className="font-heading text-xl font-medium text-gray-900 tracking-tight">
@@ -60,11 +60,11 @@ export default function PartnersSection() {
 
               <div className="flex flex-wrap gap-3">
                 <a href="tel:+359899897566" className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 text-white text-xs font-bold uppercase tracking-wider hover:bg-red-700 transition-colors whitespace-nowrap cursor-pointer rounded-lg">
-                  <i className="ri-phone-line"></i>
+                  <i aria-hidden="true" className="ri-phone-line"></i>
                   Обади се
                 </a>
                 <a href="https://sunrisefood.eu/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 border-2 border-gray-200 text-gray-700 text-xs font-semibold uppercase tracking-wider hover:border-red-600 hover:text-red-600 hover:bg-red-50 transition-all whitespace-nowrap cursor-pointer rounded-lg">
-                  <i className="ri-external-link-line"></i>
+                  <i aria-hidden="true" className="ri-external-link-line"></i>
                   sunrisefood.eu
                 </a>
               </div>

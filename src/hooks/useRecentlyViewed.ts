@@ -15,6 +15,12 @@ interface RecentProduct {
 
 const STORAGE_KEY = 'recently_viewed';
 const MAX_ITEMS = 8;
+function validRecent(value: unknown): RecentProduct[] {
+  if (!Array.isArray(value)) return [];
+  return value.filter(p => p && Number.isSafeInteger(p.id) && p.id > 0 && typeof p.name === 'string' &&
+    Number.isFinite(p.price) && p.price >= 0 && typeof p.image === 'string' && typeof p.category === 'string' &&
+    Number.isFinite(p.rating) && Number.isFinite(p.reviews) && typeof p.in_stock === 'boolean' && Number.isFinite(p.viewedAt)).slice(0, MAX_ITEMS);
+}
 
 export function useRecentlyViewed() {
   const [recentProducts, setRecentProducts] = useState<RecentProduct[]>([]);
@@ -27,7 +33,7 @@ export function useRecentlyViewed() {
         const parsed = JSON.parse(stored);
         // Validate data structure
         if (Array.isArray(parsed)) {
-          setRecentProducts(parsed);
+          setRecentProducts(validRecent(parsed));
         }
       }
     } catch {
@@ -42,7 +48,7 @@ export function useRecentlyViewed() {
         try {
           const parsed = e.newValue ? JSON.parse(e.newValue) : [];
           if (Array.isArray(parsed)) {
-            setRecentProducts(parsed);
+            setRecentProducts(validRecent(parsed));
           }
         } catch {
           // ignore
@@ -68,7 +74,7 @@ export function useRecentlyViewed() {
 
   const clearRecentlyViewed = useCallback(() => {
     setRecentProducts([]);
-    localStorage.removeItem(STORAGE_KEY);
+    try { localStorage.removeItem(STORAGE_KEY); } catch { /* Memory state is cleared. */ }
   }, []);
 
   return { recentProducts, addToRecentlyViewed, clearRecentlyViewed };

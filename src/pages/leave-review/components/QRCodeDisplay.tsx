@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 
 const REVIEW_URL = 'https://k-foodvelikotarnovo.com/leave-review';
 

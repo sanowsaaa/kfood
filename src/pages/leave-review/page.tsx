@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/utils/supabase';
 import QRCodeDisplay from './components/QRCodeDisplay';
 import { useSEO } from '@/utils/seo';
+import { createActionLock } from '@/utils/admin';
 
 type Step = 'form' | 'success';
 
@@ -47,6 +48,7 @@ export default function LeaveReviewPage() {
   const [productName, setProductName] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const submission = useRef(createActionLock());
 
   useSEO({
     title: 'Остави Ревю | K-FOOD Велико Търново - Корейска Храна',
@@ -66,6 +68,7 @@ export default function LeaveReviewPage() {
       setError('Моля, попълни всички задължителни полета.');
       return;
     }
+    if (!submission.current.acquire()) return;
     setError('');
     setSubmitting(true);
     try {
@@ -81,6 +84,7 @@ export default function LeaveReviewPage() {
       setError('Нещо се обърка. Опитай пак след малко.');
     } finally {
       setSubmitting(false);
+      submission.current.release();
     }
   };
 
@@ -116,7 +120,8 @@ export default function LeaveReviewPage() {
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-8 border border-gray-100 space-y-6">
+            <form onSubmit={handleSubmit} className="bg-white rounded-2xl p-5 sm:p-8 border border-gray-100">
+              <fieldset disabled={submitting} className="space-y-6">
               {/* Rating */}
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-3">
@@ -132,7 +137,7 @@ export default function LeaveReviewPage() {
 
               {/* Name */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label htmlFor="reviewer-name" className="block text-sm font-semibold text-gray-700 mb-2">
                   Твоето име <span className="text-red-400">*</span>
                 </label>
                 <input
@@ -149,7 +154,7 @@ export default function LeaveReviewPage() {
 
               {/* Product */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label htmlFor="product-name" className="block text-sm font-semibold text-gray-700 mb-2">
                   Продукт (по избор)
                 </label>
                 <input
@@ -166,10 +171,11 @@ export default function LeaveReviewPage() {
 
               {/* Text */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                <label htmlFor="review-text" className="block text-sm font-semibold text-gray-700 mb-2">
                   Твоят отзив <span className="text-red-400">*</span>
                 </label>
                 <textarea
+                  id="review-text"
                   value={text}
                   onChange={(e) => setText(e.target.value.slice(0, 500))}
                   placeholder="Разкажи ни за опита си с продукта или магазина..."
@@ -180,7 +186,7 @@ export default function LeaveReviewPage() {
               </div>
 
               {error && (
-                <div className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-600">
+                <div role="alert" className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-600">
                   <i className="ri-error-warning-line" />
                   {error}
                 </div>
@@ -204,6 +210,7 @@ export default function LeaveReviewPage() {
               <p className="text-center text-xs text-gray-400">
                 Ревютата се преглеждат от нас преди публикуване.
               </p>
+              </fieldset>
             </form>
           </div>
         ) : (

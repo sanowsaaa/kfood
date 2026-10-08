@@ -33,41 +33,47 @@ export default function QuickViewModal({ product, onClose }: QuickViewModalProps
   const touchStartY = useRef(0);
   const touchCurrentY = useRef(0);
   const [swipeOffset, setSwipeOffset] = useState(0);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Open animation
   useEffect(() => {
+    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const overflow = document.body.style.overflow;
     if (product) {
+      closeTimer.current = null;
       setQuantity(1);
       setAdded(false);
       setIsClosing(false);
       setSwipeOffset(0);
       document.body.style.overflow = 'hidden';
-      document.body.style.touchAction = 'none';
       requestAnimationFrame(() => setIsVisible(true));
     }
     return () => {
-      document.body.style.overflow = '';
-      document.body.style.touchAction = '';
+      document.body.style.overflow = overflow;
+      if (closeTimer.current) clearTimeout(closeTimer.current);
+      if (previous?.isConnected) previous.focus();
     };
   }, [product]);
 
   // Close with animation
   const handleClose = useCallback(() => {
+    if (closeTimer.current) return;
     setIsClosing(true);
     setIsVisible(false);
-    setTimeout(() => {
+    closeTimer.current = setTimeout(() => {
       onClose();
     }, 300);
   }, [onClose]);
 
   // Escape key
   useEffect(() => {
+    if (!product) return;
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') handleClose();
     };
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
-  }, [handleClose]);
+  }, [handleClose, product]);
 
   // Focus trap
   useEffect(() => {
@@ -76,7 +82,7 @@ export default function QuickViewModal({ product, onClose }: QuickViewModalProps
     if (!modal) return;
 
     const focusable = modal.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      'button:not(:disabled), [href], input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])'
     );
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
@@ -125,7 +131,7 @@ export default function QuickViewModal({ product, onClose }: QuickViewModalProps
   const handleAddToCart = () => {
     if (!product.in_stock) return;
     addToCart(
-      { id: product.id, name: product.name, price: product.price, image: product.image },
+      { ...product },
       quantity
     );
     setAdded(true);
@@ -134,7 +140,7 @@ export default function QuickViewModal({ product, onClose }: QuickViewModalProps
 
   const modalContent = (
     <div
-      className="fixed inset-0 flex items-end sm:items-center justify-center"
+      className="customer-shell fixed inset-0 flex items-end sm:items-center justify-center"
       style={{ zIndex: 9999 }}
       onClick={handleClose}
     >
@@ -147,9 +153,12 @@ export default function QuickViewModal({ product, onClose }: QuickViewModalProps
       {/* Modal */}
       <div
         ref={modalRef}
-        className="relative bg-white w-full sm:max-w-2xl sm:mx-4 rounded-t-2xl sm:rounded-xl overflow-hidden transition-transform duration-300 ease-out"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="quick-view-title"
+        className="relative bg-white w-full sm:max-w-2xl sm:mx-4 rounded-t-2xl sm:rounded-xl overflow-y-auto overscroll-contain transition-transform duration-300 ease-out"
         style={{
-          maxHeight: 'calc(100vh - 24px)',
+          maxHeight: 'calc(100dvh - 24px)',
           transform: isClosing
             ? 'translateY(100%)'
             : isVisible
@@ -157,9 +166,6 @@ export default function QuickViewModal({ product, onClose }: QuickViewModalProps
               : 'translateY(100%)',
         }}
         onClick={(e) => e.stopPropagation()}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
       >
         {/* Close button */}
         <button
@@ -171,7 +177,7 @@ export default function QuickViewModal({ product, onClose }: QuickViewModalProps
         </button>
 
         {/* Drag handle - mobile only */}
-        <div className="sm:hidden flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing">
+        <div onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd} className="sm:hidden flex justify-center pt-3 pb-1 cursor-grab active:cursor-grabbing">
           <div className="w-10 h-1 bg-gray-300 rounded-full"></div>
         </div>
 
@@ -205,7 +211,7 @@ export default function QuickViewModal({ product, onClose }: QuickViewModalProps
             </span>
 
             {/* Title */}
-            <h2 className="text-lg sm:text-xl font-bold text-gray-900 mb-2 leading-snug">
+            <h2 id="quick-view-title" className="text-lg sm:text-xl font-bold text-gray-900 mb-2 leading-snug">
               {product.name}
             </h2>
 

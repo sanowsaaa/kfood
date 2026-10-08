@@ -1,0 +1,53 @@
+.customer-shell {
+  color: #1f2937;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  line-height: 1.6;
+  padding-bottom: 0;
+}
+.customer-shell :is(h1, h2, h3, h4) { text-wrap: balance; }
+.customer-shell :is(input, textarea, select) { min-width: 0; }
+.customer-shell :is(button, a, input, select, textarea):focus-visible {
+  outline: 3px solid #b91c1c;
+  outline-offset: 3px;
+}
+.customer-shell :is(button, .touch-target-sm) { min-height: 44px; min-width: 44px; }
+.customer-shell button:disabled { cursor: not-allowed; }
+.customer-shell .text-\[10px\], .customer-shell .text-\[11px\] { font-size: 0.75rem; line-height: 1.5; }
+.customer-shell .text-gray-400 { color: #64748b; }
+.customer-shell .text-gray-300 { color: #64748b; }
+.customer-shell .text-red-500 { color: #b91c1c; }
+.customer-shell footer :is(.text-gray-300, .text-gray-400, .text-gray-500, .text-gray-600) { color: #cbd5e1; }
+.customer-shell footer :is(.text-red-500, .text-red-600) { color: #fca5a5; }
+.customer-shell [data-product-shop] h3 { font-size: 0.875rem; line-height: 1.45; }
+.customer-shell .customer-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  background: white;
+  box-shadow: 0 6px 24px rgb(15 23 42 / 0.035);
+}
+.customer-shell .customer-input {
+  width: 100%; padding: 0.8rem 1rem; border: 1px solid #cbd5e1;
+  border-radius: 0.75rem; font-size: 1rem; background: white;
+}
+.customer-shell .customer-primary, .customer-shell .customer-secondary {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 48px;
+  padding: 0.7rem 1.2rem; border-radius: 0.75rem; font-weight: 600; line-height: 1.5;
+  transition: background-color 150ms; cursor: pointer;
+}
+.customer-shell .customer-primary { color: white; background: #dc2626; }
+.customer-shell .customer-primary:hover { background: #b91c1c; }
+.customer-shell .customer-primary:disabled { opacity: 0.5; }
+.customer-shell .customer-secondary { color: #991b1b; border: 1px solid #fecaca; background: #fff; }
+.customer-shell .customer-secondary:hover { background: #fef2f2; }
+.customer-shell #main-content { scroll-margin-top: 6rem; }
+@media (max-width: 1023px) { .customer-root { padding-bottom: calc(76px + env(safe-area-inset-bottom)); } }
+@media (max-width: 767px) {
+  .customer-shell :is(input:not([type='checkbox']):not([type='radio']), select, textarea) { font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .customer-shell *, .customer-shell *::before, .customer-shell *::after {
+    animation-duration: 0.01ms !important; animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important; scroll-behavior: auto !important;
+  }
+  .customer-shell .animate-fade-up { opacity: 1 !important; transform: none !important; }
+}

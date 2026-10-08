@@ -10,13 +10,14 @@ export default function CartToast({ product, onClose }: CartToastProps) {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    let closeTimer: ReturnType<typeof setTimeout> | undefined;
     if (product) {
       setVisible(true);
       const timer = setTimeout(() => {
         setVisible(false);
-        setTimeout(onClose, 300);
+        closeTimer = setTimeout(onClose, 300);
       }, 3500);
-      return () => clearTimeout(timer);
+      return () => { clearTimeout(timer); clearTimeout(closeTimer); };
     }
   }, [product, onClose]);
 
@@ -24,7 +25,8 @@ export default function CartToast({ product, onClose }: CartToastProps) {
 
   return (
     <div
-      className={`fixed top-20 left-1/2 -translate-x-1/2 z-[200] w-[calc(100%-2rem)] max-w-sm transition-all duration-300 ${
+      role="status"
+      className={`customer-shell fixed top-20 left-1/2 -translate-x-1/2 z-[200] w-[calc(100%_-_2rem)] max-w-sm transition-all duration-300 ${
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4'
       }`}
     >
@@ -54,7 +56,7 @@ export default function CartToast({ product, onClose }: CartToastProps) {
           <Link
             to="/cart"
             onClick={onClose}
-            className="flex-shrink-0 bg-emerald-600 text-white text-xs font-bold px-3 py-2 rounded-xl cursor-pointer hover:bg-emerald-700 transition-colors whitespace-nowrap"
+            className="flex-shrink-0 inline-flex min-h-11 items-center bg-emerald-600 text-white text-xs font-bold px-3 py-2 rounded-xl cursor-pointer hover:bg-emerald-700 transition-colors whitespace-nowrap"
           >
             Към количката
           </Link>

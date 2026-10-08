@@ -28,7 +28,7 @@ function StarRating({ rating }: { rating: number }) {
   return (
     <div className="flex gap-0.5">
       {[1, 2, 3, 4, 5].map((star) => (
-        <i key={star} className={`text-xs ${star <= rating ? 'ri-star-fill text-amber-500' : 'ri-star-fill text-gray-200'}`} />
+        <i aria-hidden="true" key={star} className={`text-xs ${star <= rating ? 'ri-star-fill text-amber-500' : 'ri-star-fill text-gray-200'}`} />
       ))}
     </div>
   );
@@ -80,7 +80,7 @@ export default function ReviewsSection() {
             <div className="text-right">
               <div className="text-3xl font-heading font-bold text-red-600">{avgRating}</div>
               <div className="flex gap-0.5 justify-end mb-0.5">
-                {[1,2,3,4,5].map(s => <i key={s} className="ri-star-fill text-amber-500 text-[10px]"></i>)}
+                {[1,2,3,4,5].map(s => <i aria-hidden="true" key={s} className="ri-star-fill text-amber-500 text-[10px]"></i>)}
               </div>
               <div className="text-[11px] text-gray-400 uppercase tracking-wider">{all.length}+ отзива</div>
             </div>
@@ -88,7 +88,7 @@ export default function ReviewsSection() {
               to="/leave-review"
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 text-white text-xs font-semibold uppercase tracking-wider hover:bg-red-700 transition-all whitespace-nowrap cursor-pointer rounded-lg"
             >
-              <i className="ri-star-line text-sm" />
+              <i aria-hidden="true" className="ri-star-line text-sm" />
               Остави ревю
             </Link>
           </div>
@@ -137,7 +137,7 @@ export default function ReviewsSection() {
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 text-[13px] font-medium text-gray-500 hover:text-red-600 transition-colors cursor-pointer tracking-wide uppercase"
           >
-            <i className="ri-google-line text-sm" />
+            <i aria-hidden="true" className="ri-google-line text-sm" />
             Виж всички отзиви в Google
           </a>
         </div>

@@ -35,7 +35,7 @@ function injectSchema(schema: object) {
 export default function BlogDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const [post, setPost] = useState<BlogPost | null>(null);
-  const [relatedPosts, setRelatedPosts] = useState<BlogPost[]>([]);
+  const [relatedPosts, setRelatedPosts] = useState<Pick<BlogPost, 'id' | 'title' | 'slug' | 'excerpt' | 'cover_image' | 'category' | 'read_time' | 'created_at' | 'views'>[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Inject schema + SEO when post loads
