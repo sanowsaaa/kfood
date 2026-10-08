@@ -15,3 +15,15 @@ verify_jwt = false
 
 [functions.update-stripe-order]
 verify_jwt = false
+
+[functions.b2b-auth]
+# Login and email verification are public; profile access verifies the real user.
+verify_jwt = false
+
+[functions.create-b2b-checkout]
+# Handler verifies the user and the active company, including retries.
+verify_jwt = false
+
+[functions.generate-b2b-invoice]
+# Retired endpoint keeps its existing JWT gateway setting and performs no database operations.
+verify_jwt = true

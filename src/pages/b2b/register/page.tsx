@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useB2B } from '@/contexts/B2BContext';
 
 export default function B2BRegisterPage() {
-  const { registerB2B, companyId: alreadyLoggedIn } = useB2B();
+  const { requestB2BActivation, registerB2B, companyId: alreadyLoggedIn } = useB2B();
   const navigate = useNavigate();
   const [companyId, setCompanyId] = useState('');
   const [email, setEmail] = useState('');
@@ -12,24 +12,36 @@ export default function B2BRegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [code, setCode] = useState('');
+  const [codeSent, setCodeSent] = useState(false);
 
-  // Already logged in → redirect to dashboard
-  if (alreadyLoggedIn) {
-    navigate('/b2b/dashboard', { replace: true });
-    return null;
-  }
+  useEffect(() => {
+    if (alreadyLoggedIn) navigate('/b2b/dashboard', { replace: true });
+  }, [alreadyLoggedIn, navigate]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    if (!companyId.trim() || !email.trim() || !password.trim()) {
+    if (!companyId.trim() || !email.trim()) {
       setError('Моля, попълнете всички полета.');
       return;
     }
 
-    if (password.length < 6) {
-      setError('Паролата трябва да е поне 6 символа.');
+    if (!codeSent) {
+      setLoading(true);
+      const result = await requestB2BActivation(companyId.trim(), email.trim().toLowerCase());
+      setLoading(false);
+      if (result.success) setCodeSent(true);
+      else setError(result.error || 'Кодът не беше изпратен. Опитайте отново.');
+      return;
+    }
+    if (!/^\d{6}$/.test(code)) {
+      setError('Въведете шестцифрения код от фирмения имейл.');
+      return;
+    }
+    if (password.length < 8) {
+      setError('Паролата трябва да е поне 8 символа.');
       return;
     }
 
@@ -39,7 +51,7 @@ export default function B2BRegisterPage() {
     }
 
     setLoading(true);
-    const result = await registerB2B(companyId.trim(), email.trim().toLowerCase(), password);
+    const result = await registerB2B(companyId.trim(), email.trim().toLowerCase(), password, code);
     setLoading(false);
 
     if (!result.success) {
@@ -64,7 +76,7 @@ export default function B2BRegisterPage() {
           </Link>
           <h1 className="text-2xl font-extrabold text-gray-900 font-heading">Активирайте B2B акаунт</h1>
           <p className="text-gray-500 text-sm mt-2 max-w-xs mx-auto">
-            Въведете Company ID от одобрителния имейл, имейл адреса и създайте парола за вход.
+            Въведете данните от одобрението. Ще изпратим код на фирмения имейл, за да активирате достъпа си.
           </p>
         </div>
 
@@ -95,7 +107,7 @@ export default function B2BRegisterPage() {
                 <input
                   type="text"
                   value={companyId}
-                  onChange={e => setCompanyId(e.target.value)}
+                  onChange={e => { setCompanyId(e.target.value); setCodeSent(false); setCode(''); }}
                   placeholder="От одобрителния имейл"
                   className="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50"
                 />
@@ -115,7 +127,7 @@ export default function B2BRegisterPage() {
                 <input
                   type="email"
                   value={email}
-                  onChange={e => setEmail(e.target.value)}
+                  onChange={e => { setEmail(e.target.value); setCodeSent(false); setCode(''); }}
                   placeholder="your@email.com"
                   className="w-full pl-10 pr-4 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50"
                 />
@@ -125,6 +137,16 @@ export default function B2BRegisterPage() {
               </p>
             </div>
 
+            {codeSent && <>
+            <div className="p-3 bg-emerald-50 rounded-xl text-sm text-emerald-800">
+              Изпратихме код на фирмения имейл. Проверете и папката за спам.
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-gray-600 mb-2">Код от имейла</label>
+              <input inputMode="numeric" autoComplete="one-time-code" maxLength={6}
+                value={code} onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl text-center tracking-widest" />
+            </div>
             {/* Password */}
             <div>
               <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wider mb-2">
@@ -136,7 +158,7 @@ export default function B2BRegisterPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  placeholder="Минимум 6 символа"
+                  placeholder="Минимум 8 символа"
                   className="w-full pl-10 pr-12 py-3 bg-white border border-gray-300 rounded-xl text-gray-900 placeholder-gray-400 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50"
                 />
                 <button
@@ -170,6 +192,10 @@ export default function B2BRegisterPage() {
               )}
             </div>
 
+            <button type="button" disabled={loading} onClick={() => { setCodeSent(false); setCode(''); setError(''); }}
+              className="text-xs text-emerald-700 hover:underline">Поискай нов код</button>
+            </>}
+
             {/* Submit */}
             <button
               type="submit"
@@ -179,12 +205,12 @@ export default function B2BRegisterPage() {
               {loading ? (
                 <>
                   <i className="ri-loader-4-line animate-spin text-lg"></i>
-                  Създаване на акаунт...
+                  Обработване...
                 </>
               ) : (
                 <>
                   <i className="ri-user-add-line text-lg"></i>
-                  Активиране на акаунт
+                  {codeSent ? 'Активиране на акаунт' : 'Изпрати код на имейла'}
                 </>
               )}
             </button>

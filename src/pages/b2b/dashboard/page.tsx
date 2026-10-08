@@ -59,7 +59,7 @@ export default function B2BDashboardPage() {
     setOrdersLoading(true);
     Promise.all([
       supabase.from('orders').select('id, order_number, total_amount, status, created_at').eq('b2b_company_id', companyId).order('created_at', { ascending: false }).limit(10),
-      supabase.from('products').select('id, name, price, wholesale_price, cost_price, carton_price, image, category, sku, stock, in_stock, moq, moq_unit, pieces_per_carton, slug').order('category').order('name'),
+      supabase.from('products').select('id, name, price, wholesale_price, carton_price, image, category, sku, stock, in_stock, moq, moq_unit, pieces_per_carton, slug').order('category').order('name'),
     ]).then(([ordersRes, productsRes]) => {
       if (ordersRes.data) {
         setOrders(ordersRes.data);

@@ -2,7 +2,7 @@ name: Payment checks
 on:
   pull_request:
   push:
-    branches: [main, codex/payment-integrity-20261007]
+    branches: [main, codex/payment-integrity-20261007, codex/b2b-security-20261008]
 permissions:
   contents: read
 jobs:
@@ -33,6 +33,8 @@ jobs:
       - run: npm ci
       - run: npm run check:payments
       - run: npm run test:payments
+      - run: npm run check:b2b
+      - run: npm run test:b2b
       - run: npm run build
       # Global frontend typecheck has pre-existing failures. It is documented in
       # the rollout runbook rather than concealed as a passing payment check.

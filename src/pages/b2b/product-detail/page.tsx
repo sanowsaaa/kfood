@@ -20,7 +20,7 @@ export default function B2BProductDetailPage() {
     const numericId = parseInt(slugOrId);
     const query = supabase
       .from('products')
-      .select('id, name, description, price, wholesale_price, carton_price, cost_price, image, category, badge, rating, reviews, in_stock, stock, weight, volume, sku, slug, moq, moq_unit, pieces_per_carton');
+      .select('id, name, description, price, wholesale_price, carton_price, image, category, badge, rating, reviews, in_stock, stock, weight, volume, sku, slug, moq, moq_unit, pieces_per_carton');
 
     const doQuery = async () => {
       // Try by slug first (most common case)
@@ -146,12 +146,6 @@ export default function B2BProductDetailPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-gray-600 text-sm">Цена на едро</span>
                     <span className="text-gray-900 font-bold text-xl">€{cartonPrice.toFixed(2)}</span>
-                  </div>
-                )}
-                {product.cost_price > 0 && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-gray-600 text-sm">Доставна цена</span>
-                    <span className="text-gray-700 font-medium">€{product.cost_price.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex items-start gap-2 pt-1 border-t border-emerald-200">
