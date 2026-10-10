@@ -38,16 +38,16 @@ export default function Newsletter() {
   };
 
   return (
-    <section className="brand-dark-section py-16 md:py-24 bg-gradient-to-br from-brand-primary via-brand-hover to-rose-800 section-below-fold">
+    <section className="brand-newsletter brand-dark-section py-16 md:py-24 bg-gradient-to-br from-brand-primary to-brand-hover section-below-fold">
       <div className="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-16">
         <div className="max-w-2xl mx-auto text-center">
-          <p className="text-xs md:text-sm font-medium tracking-[0.2em] uppercase text-white/90 mb-3">
+          <p className="text-xs md:text-sm font-semibold tracking-[0.2em] uppercase text-white mb-3">
             Бюлетин
           </p>
           <h2 className="font-heading text-2xl md:text-4xl font-light text-white tracking-tight mb-4">
             Още вкусни открития
           </h2>
-          <p className="text-sm md:text-base text-white/90 mb-9 font-light leading-relaxed max-w-lg mx-auto">
+          <p className="text-sm md:text-base text-white mb-9 leading-relaxed max-w-lg mx-auto">
             Нови продукти, идеи за рецепти и предложения от K-FOOD — направо в пощата ти.
           </p>
 
@@ -63,7 +63,7 @@ export default function Newsletter() {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Твоят имейл адрес"
                 required
-                className="flex-1 px-5 py-3.5 bg-white/10 border-2 border-white/20 text-white placeholder-white/80 text-sm rounded-lg focus:outline-none focus:border-white/50 transition-all font-light"
+                className="flex-1 px-5 py-3.5 bg-white border-2 border-white text-brand-ink placeholder-brand-muted text-sm rounded-lg transition-colors"
               />
               <input
                 type="text"
@@ -91,7 +91,7 @@ export default function Newsletter() {
             )}
           </form>
 
-          <p className="text-white/90 text-xs mt-6 font-light">
+          <p className="text-white text-xs mt-6">
             Можеш да се отпишеш по всяко време.
           </p>
         </div>

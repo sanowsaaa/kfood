@@ -252,7 +252,7 @@ export default function Checkout() {
         )}
 
         {/* Desktop Pay Button */}
-        <button onClick={handlePayNow} disabled={isProcessing || checkingCart || !!cartError || isBelowMinimum || !!promoCode} className="hidden lg:block w-full p-4 sm:p-5 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-95 touch-target">
+        <button onClick={handlePayNow} disabled={isProcessing || checkingCart || !!cartError || isBelowMinimum || !!promoCode} className="hidden lg:block w-full p-4 sm:p-5 bg-brand-primary text-white rounded-xl hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-95 touch-target">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 sm:w-11 sm:h-11 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
@@ -260,16 +260,16 @@ export default function Checkout() {
               </div>
               <div className="text-left">
                 <div className="font-bold text-sm sm:text-base whitespace-nowrap">Към плащане</div>
-                <div className="text-[10px] sm:text-xs text-red-100">Карта / Apple Pay / Google Pay</div>
+                <div className="text-[10px] sm:text-xs text-white">Карта / Apple Pay / Google Pay</div>
               </div>
             </div>
             <div className="text-right">
-              {(discountTier || promoCode) && <div className="text-[10px] sm:text-xs text-red-300 line-through">€{totalPriceEur.toFixed(2)}</div>}
+              {(discountTier || promoCode) && <div className="text-[10px] sm:text-xs text-brand-petal line-through">€{totalPriceEur.toFixed(2)}</div>}
               <div className="font-bold text-lg sm:text-xl">€{finalPriceEur.toFixed(2)}</div>
               
             </div>
           </div>
-          <div className="flex items-center justify-center gap-3 bg-white/10 rounded-lg py-2">
+          <div className="flex items-center justify-center gap-3 bg-brand-hover rounded-lg py-2">
             <i aria-hidden="true" className="ri-visa-line text-lg sm:text-xl"></i>
             <i aria-hidden="true" className="ri-mastercard-line text-lg sm:text-xl"></i>
             <i aria-hidden="true" className="ri-apple-line text-sm sm:text-base"></i>
@@ -279,17 +279,17 @@ export default function Checkout() {
         </button>
 
         {/* Mobile Sticky Pay Button */}
-        <button onClick={handlePayNow} disabled={isProcessing || checkingCart || !!cartError || isBelowMinimum || !!promoCode} className="lg:hidden fixed left-3 right-3 sm:left-4 sm:right-4 p-3 sm:p-4 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-95 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] touch-target" style={{ bottom: 'calc(60px + env(safe-area-inset-bottom))', zIndex: 60 }}>
+        <button onClick={handlePayNow} disabled={isProcessing || checkingCart || !!cartError || isBelowMinimum || !!promoCode} className="lg:hidden fixed left-3 right-3 sm:left-4 sm:right-4 p-3 sm:p-4 bg-brand-primary text-white rounded-xl hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-95 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] touch-target" style={{ bottom: 'calc(60px + env(safe-area-inset-bottom))', zIndex: 60 }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <i aria-hidden="true" className="ri-bank-card-line text-lg sm:text-xl"></i>
               <div>
                 <div className="font-bold text-xs sm:text-sm whitespace-nowrap">Към плащане</div>
-                <div className="text-[10px] text-red-100">Карта / Apple Pay</div>
+                <div className="text-[10px] text-white">Карта / Apple Pay</div>
               </div>
             </div>
             <div className="text-right">
-              {(discountTier || promoCode) && <div className="text-[10px] text-red-300 line-through">€{totalPriceEur.toFixed(2)}</div>}
+              {(discountTier || promoCode) && <div className="text-[10px] text-brand-petal line-through">€{totalPriceEur.toFixed(2)}</div>}
               <div className="font-bold text-base sm:text-lg">€{finalPriceEur.toFixed(2)}</div>
             </div>
           </div>

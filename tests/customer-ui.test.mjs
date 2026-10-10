@@ -2,7 +2,7 @@
 // Supply CUSTOMER_PLAYWRIGHT_MODULE_PATH and CUSTOMER_BROWSER_EXECUTABLE if not installed globally.
 import test, { before } from 'node:test';
 import assert from 'node:assert/strict';
-import { readFile, mkdir } from 'node:fs/promises';
+import { readFile, mkdir, writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 const { chromium } = await import(process.env.CUSTOMER_PLAYWRIGHT_MODULE_PATH ? pathToFileURL(process.env.CUSTOMER_PLAYWRIGHT_MODULE_PATH).href : 'playwright');
 const base = 'http://127.0.0.1:4317';
@@ -25,7 +25,7 @@ const browserOptions = { headless: true, executablePath: process.env.CUSTOMER_BR
 before(async () => { if (artifacts) await mkdir(artifacts, { recursive: true }); });
 
 async function setup(options = {}) {
-  const browser = await chromium.launch(browserOptions);
+  const browser = await chromium.launch({ ...browserOptions, args: [...browserOptions.args, ...(options.debugPort ? [`--remote-debugging-port=${options.debugPort}`] : [])] });
   const context = await browser.newContext({ viewport: { width: options.width || 1440, height: 900 }, serviceWorkers: 'block', reducedMotion: 'reduce' });
   await context.addInitScript(options => {
     if (options.consent !== null) localStorage.setItem('cookieConsent', options.consent || 'declined');
@@ -127,6 +127,117 @@ async function sameTick(locator) { await locator.evaluate(button => { button.cli
 async function waitEnabled(locator) { await locator.waitFor(); for (let n = 0; n < 100 && await locator.isDisabled(); n++) await locator.page().waitForTimeout(40); assert.equal(await locator.isEnabled(), true); }
 const calls = (requests, name) => requests.filter(row => row.name === name);
 async function shot(page, name) { if (artifacts) await page.screenshot({ path: `${artifacts}/${name}.png`, fullPage: true }); }
+
+// Optional real DOM audit using the same color-contrast engine as Lighthouse.
+// Images, gradients and focus indicators also need customer-colors and overlay-bounds tests.
+for (const width of [360, 1440]) {
+  test(`${width}px contrast audit: customer routes and open dialogs`, { skip: !process.env.CUSTOMER_AXE_PATH }, async () => {
+    const debugPort = process.env.CUSTOMER_LIGHTHOUSE_PATH ? (width < 1024 ? 9332 : 9333) : undefined;
+    const qa = await setup({ width, cart: cart(), session: proof, debugPort });
+    const report = [];
+    let auditPage = qa.page;
+    let lighthouseBrowser, snapshot;
+    const scan = async name => {
+      await auditPage.evaluate(async () => {
+        await document.fonts.ready;
+        for (let y = 0; y < document.documentElement.scrollHeight; y += innerHeight) {
+          scrollTo(0, y);
+          await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+        }
+        scrollTo(0, 0);
+      });
+      await auditPage.addScriptTag({ path: process.env.CUSTOMER_AXE_PATH });
+      const result = await auditPage.evaluate(async () => {
+        const result = await window.axe.run(document, { runOnly: ['color-contrast'] });
+        const nodes = rules => rules.flatMap(rule => rule.nodes.map(node => ({
+          target: node.target, html: node.html,
+          details: [...node.any, ...node.all, ...node.none].map(check => ({ message: check.message, data: check.data })),
+        })));
+        return { version: result.testEngine.version, violations: nodes(result.violations), incomplete: nodes(result.incomplete), passes: result.passes.reduce((count, rule) => count + rule.nodes.length, 0) };
+      });
+      let lighthouse;
+      if (lighthouseBrowser && ['home', 'catalog', 'product', 'article', 'cart', 'checkout'].includes(name)) {
+        const page = (await lighthouseBrowser.pages()).find(page => page.url() === auditPage.url());
+        assert.ok(page, 'Lighthouse must audit the same locally fulfilled page');
+        const run = await snapshot(page, { flags: { onlyAudits: ['color-contrast'], formFactor: width < 1024 ? 'mobile' : 'desktop', screenEmulation: { disabled: true } } });
+        const audit = run.lhr.audits['color-contrast'];
+        lighthouse = { version: run.lhr.lighthouseVersion, score: audit.score, mode: audit.scoreDisplayMode, details: audit.details, error: audit.errorMessage };
+        if (artifacts) await writeFile(`${artifacts}/lighthouse-${name}-${width}.json`, JSON.stringify(run.lhr, null, 2));
+      }
+      report.push({ name, ...result, lighthouse });
+      if (artifacts && ['home', 'newsletter', 'product', 'catalog', 'consent'].includes(name)) await auditPage.screenshot({ path: `${artifacts}/contrast-${name}-${width}.png` });
+    };
+    try {
+      if (debugPort) {
+        ({ snapshot } = await import(pathToFileURL(process.env.CUSTOMER_LIGHTHOUSE_PATH).href));
+        const { default: puppeteer } = await import(pathToFileURL(process.env.CUSTOMER_PUPPETEER_PATH).href);
+        lighthouseBrowser = await puppeteer.connect({ browserURL: `http://127.0.0.1:${debugPort}`, defaultViewport: null });
+      }
+      const routes = [
+        ['/', 'home'], ['/products', 'catalog'], ['/categories', 'categories'], ['/category/noodles', 'category'],
+        ['/product/ramen-buldak', 'product'], ['/product/kimchi', 'low-stock'], ['/blog', 'blog'],
+        ['/blog/top-10-koreiska-hrana', 'article'], ['/about', 'about'], ['/cart', 'cart'], ['/checkout', 'checkout'],
+        ['/track-order', 'tracking-form'], [`/track-order?order=${orderNumber}&email=buyer%40example.invalid`, 'tracking-result'],
+        [`/order-success?orderNumber=${orderNumber}`, 'payment-result'], ['/leave-review', 'review-form'],
+        ['/faq', 'faq'], ['/shipping', 'shipping'], ['/payment', 'payment-info'], ['/returns', 'returns'],
+        ['/privacy', 'privacy'], ['/terms', 'terms'], ['/missing-page', 'not-found'],
+      ];
+      for (const [path, name] of routes) {
+        await ready(qa.page, path);
+        await qa.page.locator('h1, [role="dialog"]').first().waitFor();
+        if (['catalog', 'category'].includes(name)) await qa.page.getByRole('link', { name: products[0].name, exact: true }).first().waitFor();
+        if (name === 'tracking-result') await qa.page.getByRole('heading', { name: 'Обработва се', exact: true }).waitFor();
+        if (name === 'payment-result') await qa.page.getByRole('heading', { name: 'Плащането е потвърдено!', exact: true }).waitFor();
+        await scan(name);
+        if (name === 'checkout') {
+          await waitEnabled(visiblePay(qa.page));
+          await visiblePay(qa.page).click();
+          await qa.page.locator('#checkout-email[aria-invalid="true"]').waitFor();
+          await qa.page.waitForFunction(() => getComputedStyle(document.querySelector('#checkout-email')).borderColor === 'rgb(185, 28, 28)');
+          const border = await qa.page.locator('#checkout-email').evaluate(input => getComputedStyle(input).borderColor);
+          assert.equal(border, 'rgb(185, 28, 28)', 'invalid input keeps a distinct high-contrast error border');
+          await scan('checkout-invalid');
+          await contact(qa.page);
+          await scan('checkout-contact');
+        }
+      }
+      await ready(qa.page, '/products', 'Корейска Храна Онлайн');
+      const quick = qa.page.getByRole('button', { name: `Бърз преглед на ${products[0].name}`, exact: true });
+      await quick.click();
+      await qa.page.getByRole('dialog', { name: products[0].name, exact: true }).waitFor();
+      await scan('quick-view');
+      await qa.page.keyboard.press('Escape');
+      if (width < 1024) {
+        await qa.page.getByRole('button', { name: 'Филтри', exact: true }).click();
+        await qa.page.getByRole('dialog', { name: 'Филтри', exact: true }).waitFor();
+        await scan('filters');
+        await qa.page.keyboard.press('Escape');
+      }
+      await ready(qa.page, '/product/soju');
+      await qa.page.getByRole('dialog').waitFor();
+      await scan('age-confirmation');
+      await qa.page.keyboard.press('Escape');
+      await ready(qa.page, '/');
+      const newsletter = qa.page.getByRole('textbox', { name: 'Имейл за бюлетина', exact: true });
+      await newsletter.scrollIntoViewIfNeeded();
+      await newsletter.fill('contrast@example.invalid');
+      await newsletter.focus();
+      await scan('newsletter');
+      const consentQa = await setup({ width, consent: null });
+      try {
+        auditPage = consentQa.page;
+        await ready(auditPage, '/');
+        await auditPage.getByRole('dialog', { name: 'Използваме бисквитки', exact: true }).waitFor();
+        await scan('consent');
+      } finally { await consentQa.close(); }
+      if (artifacts) await writeFile(`${artifacts}/contrast-audit-${width}.json`, JSON.stringify(report, null, 2));
+      const failures = report.flatMap(page => page.violations.map(node => ({ page: page.name, ...node })));
+      assert.deepEqual(failures, [], JSON.stringify(failures.map(node => ({ page: node.page, target: node.target, details: node.details })), null, 2));
+      for (const page of report.filter(page => page.lighthouse)) assert.equal(page.lighthouse.score, 1, `${page.name}: Lighthouse contrast audit must pass`);
+      assert.deepEqual(qa.errors, []);
+    } finally { if (lighthouseBrowser) await lighthouseBrowser.disconnect(); await qa.close(); }
+  });
+}
 
 for (const width of [390, 1440]) {
   test(`${width}px guest: catalog → product → cart → checkout → Stripe preserves the server contract`, async () => {
@@ -287,6 +398,10 @@ for (const width of [360, 1440]) {
       await action.waitFor();
       const colors = await action.evaluate(element => { const style = getComputedStyle(element); return { fg: style.color, bg: style.backgroundColor }; });
       assert.ok(contrast(colors.fg, colors.bg) >= 4.5, 'hero action text needs readable contrast');
+      await action.hover();
+      const hover = await action.evaluate(element => { const style = getComputedStyle(element); return { fg: style.color, bg: style.backgroundColor }; });
+      assert.ok(contrast(hover.fg, hover.bg) >= 4.5, 'hero action hover needs readable contrast');
+      await qa.page.mouse.move(0, 0);
       await action.focus();
       assert.ok(await action.evaluate(element => getComputedStyle(element).outlineWidth !== '0px'));
       await shot(qa.page, `brand-home-${width}`);
@@ -312,6 +427,39 @@ for (const width of [360, 1440]) {
     } finally { await qa.close(); }
   });
 }
+
+test('overlay bounds: photo text stays inside the verified contrast area at every header breakpoint', async () => {
+  const qa = await setup({ width: 360 });
+  try {
+    await ready(qa.page, '/');
+    await qa.page.locator('.brand-hero h1').waitFor();
+    await qa.page.evaluate(() => document.fonts.ready);
+    for (const width of [360, 390, 768, 1024, 1280, 1440, 1920]) {
+      await qa.page.setViewportSize({ width, height: 900 });
+      const issues = await qa.page.locator('.brand-hero').evaluate(hero => {
+        const area = hero.getBoundingClientRect();
+        const maxRight = area.left + area.width * (innerWidth < 1280 ? 1 : 0.62);
+        return [...hero.querySelectorAll('p, h1, span')].filter(element => !element.closest('a')).flatMap(element =>
+          [...element.getClientRects()].filter(rect => rect.right > maxRight + 1).map(() => element.textContent));
+      });
+      assert.deepEqual(issues, [], `${width}px: hero text extends outside the high-contrast overlay`);
+    }
+    for (const [path, selector, fraction] of [['/categories', '.brand-category-shade', 0.48], ['/blog/top-10-koreiska-hrana', '.brand-article-shade', 0.65]]) {
+      await ready(qa.page, path);
+      await qa.page.locator(selector).first().waitFor();
+      for (const width of [360, 768, 1440]) {
+        await qa.page.setViewportSize({ width, height: 900 });
+        const issues = await qa.page.locator(selector).evaluateAll((shades, fraction) => shades.flatMap(shade => {
+          const image = shade.parentElement.getBoundingClientRect();
+          const minTop = image.bottom - image.height * fraction;
+          return [...shade.parentElement.querySelectorAll('h1, h3, p')].filter(element => element.getBoundingClientRect().top < minTop - 1).map(element => element.textContent);
+        }), fraction);
+        assert.deepEqual(issues, [], `${width}px: ${path} text extends outside the verified photo overlay`);
+      }
+    }
+    assert.deepEqual(qa.errors, []);
+  } finally { await qa.close(); }
+});
 
 test('catalog: denied reads show a retry instead of a false empty store and recover', async () => {
   const qa = await setup({ readFailure: true });

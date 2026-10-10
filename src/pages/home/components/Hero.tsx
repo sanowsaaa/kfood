@@ -21,11 +21,11 @@ export default function Hero() {
       <div className="brand-hero-overlay absolute inset-0" />
 
       {/* Content */}
-      <div className="relative z-10 w-full px-4 sm:px-6 md:px-10 lg:px-16 pb-10 sm:pb-14 md:pb-20">
+      <div className="relative z-10 w-full px-4 sm:px-6 md:px-10 lg:px-16 pt-8 md:pt-12 pb-10 sm:pb-14 md:pb-20">
         <div className="max-w-[1440px] mx-auto">
           <div className="max-w-2xl">
             {/* Label */}
-            <p className="text-xs md:text-sm font-medium tracking-[0.16em] uppercase text-brand-petal mb-3 md:mb-4 animate-fade-up opacity-0">
+            <p className="text-xs md:text-sm font-semibold tracking-[0.16em] uppercase text-white mb-3 md:mb-4 animate-fade-up opacity-0">
               Taste Everyday · Вкус за всеки ден
             </p>
 
@@ -33,11 +33,11 @@ export default function Hero() {
             <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] text-white leading-[1.15] mb-4 md:mb-5 animate-fade-up delay-100 opacity-0 text-balance tracking-tight">
               Корейска храна.
               <br />
-              <span className="font-normal italic text-brand-petal">Твоят нов любим вкус.</span>
+              <span className="font-normal italic text-brand-sun">Твоят нов любим вкус.</span>
             </h1>
 
             {/* Description - tighter on mobile */}
-            <p className="text-base md:text-lg text-white/90 leading-relaxed mb-6 md:mb-7 max-w-xl animate-fade-up delay-200 opacity-0">
+            <p className="text-base md:text-lg text-white leading-relaxed mb-6 md:mb-7 max-w-xl animate-fade-up delay-200 opacity-0">
               Люто, сладко или нещо съвсем ново? Открий рамен Samyang и Buldak, кимчи, сосове и снакове. Избери своя вкус — доставяме в цяла България.
             </p>
 
@@ -45,14 +45,14 @@ export default function Hero() {
             <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 animate-fade-up delay-300 opacity-0">
               <Link
                 to="/products"
-                className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 bg-brand-petal text-brand-ink text-base font-semibold hover:bg-white transition-colors whitespace-nowrap cursor-pointer rounded-xl shadow-lg touch-target"
+                className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 bg-white text-brand-primary text-base font-bold hover:bg-brand-sun hover:text-brand-ink transition-colors whitespace-nowrap cursor-pointer rounded-xl shadow-lg touch-target"
               >
                 Разгледай продуктите
                 <i aria-hidden="true" className="ri-arrow-right-line text-lg"></i>
               </Link>
               <Link
                 to="/categories"
-                className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 border border-white/30 text-white text-sm font-medium tracking-wide uppercase hover:bg-white/10 transition-colors whitespace-nowrap cursor-pointer rounded-lg touch-target"
+                className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 border-2 border-white text-white text-sm font-semibold tracking-wide uppercase hover:bg-white hover:text-brand-primary transition-colors whitespace-nowrap cursor-pointer rounded-xl touch-target"
               >
                 <i aria-hidden="true" className="ri-grid-line"></i>
                 Категории
@@ -66,8 +66,8 @@ export default function Hero() {
                 { icon: 'ri-shopping-bag-line', text: 'Поръчка без регистрация' },
                 { icon: 'ri-map-pin-line', text: 'Магазин във Велико Търново' },
               ].map(item => (
-                <div key={item.text} className="flex items-center gap-2 text-white/80 animate-fade-up delay-400 opacity-0">
-                  <i aria-hidden="true" className={`${item.icon} text-brand-petal text-sm`}></i>
+                <div key={item.text} className="flex items-center gap-2 text-white animate-fade-up delay-400 opacity-0">
+                  <i aria-hidden="true" className={`${item.icon} text-brand-sun text-sm`}></i>
                   <span className="text-[11px] sm:text-xs md:text-sm font-medium">{item.text}</span>
                 </div>
               ))}

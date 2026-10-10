@@ -152,7 +152,7 @@ export default function BlogDetailPage() {
           alt={post.title}
           className="w-full h-full object-cover object-top"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+        <div className="brand-article-shade absolute inset-0"></div>
         <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12 max-w-4xl mx-auto">
           <span className="inline-block bg-brand-primary text-white text-xs font-bold px-3 py-1.5 rounded-full mb-3 whitespace-nowrap">
             {post.category}
