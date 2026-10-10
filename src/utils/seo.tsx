@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { absoluteSiteUrl } from './urls';
 
 interface SEOProps {
   title: string;
@@ -56,7 +57,7 @@ export const useSEO = ({
 
     const siteUrl = import.meta.env.VITE_SITE_URL || 'https://k-foodvelikotarnovo.com';
     if (canonical) {
-      updateMetaTag('og:url', `${siteUrl}${canonical}`, true);
+      updateMetaTag('og:url', absoluteSiteUrl(canonical, siteUrl), true);
       
       // Update canonical link
       let canonicalLink = document.querySelector('link[rel="canonical"]');
@@ -65,7 +66,7 @@ export const useSEO = ({
         canonicalLink.setAttribute('rel', 'canonical');
         document.head.appendChild(canonicalLink);
       }
-      canonicalLink.setAttribute('href', `${siteUrl}${canonical}`);
+      canonicalLink.setAttribute('href', absoluteSiteUrl(canonical, siteUrl));
     }
 
     // Schema.org JSON-LD - remove all managed scripts first, then add new one
@@ -121,7 +122,7 @@ export const updateSEO = (seoData: SEOProps) => {
 
   const siteUrl = import.meta.env.VITE_SITE_URL || 'https://k-foodvelikotarnovo.com';
   if (seoData.canonical) {
-    updateMetaTag('og:url', `${siteUrl}${seoData.canonical}`, true);
+    updateMetaTag('og:url', absoluteSiteUrl(seoData.canonical, siteUrl), true);
     
     // Update canonical link
     let canonicalLink = document.querySelector('link[rel="canonical"]');
@@ -130,7 +131,7 @@ export const updateSEO = (seoData: SEOProps) => {
       canonicalLink.setAttribute('rel', 'canonical');
       document.head.appendChild(canonicalLink);
     }
-    canonicalLink.setAttribute('href', `${siteUrl}${seoData.canonical}`);
+    canonicalLink.setAttribute('href', absoluteSiteUrl(seoData.canonical, siteUrl));
   }
 
   // Schema.org JSON-LD
@@ -334,7 +335,7 @@ export const getProductSchema = (product: {
 }) => {
   const siteUrl = import.meta.env.VITE_SITE_URL || 'https://k-foodvelikotarnovo.com';
   const productUrl = product.productId
-    ? `${siteUrl}/product/${product.slug || product.productId}`
+    ? absoluteSiteUrl(`/product/${product.slug || product.productId}`, siteUrl)
     : siteUrl;
   
   return {
@@ -377,7 +378,7 @@ export const getBreadcrumbSchema = (items: Array<{ name: string; url: string }>)
       '@type': 'ListItem',
       position: index + 1,
       name: item.name,
-      item: `${siteUrl}${item.url}`
+      item: absoluteSiteUrl(item.url, siteUrl)
     }))
   };
 };
