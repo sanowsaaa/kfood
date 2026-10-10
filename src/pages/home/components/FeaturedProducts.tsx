@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../../../contexts/CartContext';
-import { loadProducts } from '../../../utils/catalog';
+import { loadFeaturedProducts } from '../../../utils/catalog';
 import { useCustomerRead } from '../../../hooks/useCustomerRead';
 import CustomerReadError from '../../../components/CustomerReadError';
 
@@ -21,7 +21,7 @@ interface Product {
 }
 
 export default function FeaturedProducts() {
-  const { data: products, loading, error: readError, retry } = useCustomerRead<Product[]>(loadProducts, []);
+  const { data: products, loading, error: readError, retry } = useCustomerRead<Product[]>(loadFeaturedProducts, []);
   const [addedProducts, setAddedProducts] = useState<Set<number>>(new Set());
   const { addToCart } = useCart();
   const navigate = useNavigate();
