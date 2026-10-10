@@ -54,7 +54,7 @@ export default function Products() {
 
   useSEO({
     title: 'Корейска Храна Онлайн | Купи Корейски Продукти - K-FOOD Магазин',
-    description: 'Купи автентична корейска храна онлайн с доставка до вкъщи. Рамен Samyang, кимчи, токбоки, корейски сосове, снакове и напитки. Над 200 корейски продукта на топ цени.',
+    description: 'Намери следващия си любим вкус: рамен Samyang, кимчи, токбоки, сосове, снакове и напитки. Поръчай от K-FOOD без регистрация, с доставка в България.',
     keywords: 'купи корейска храна онлайн, корейски продукти онлайн, рамен Samyang България, кимчи купи, токбоки онлайн',
     canonical: '/products',
     ogType: 'website',
@@ -131,7 +131,7 @@ export default function Products() {
         <Header />
         <div className="flex items-center justify-center py-24 sm:py-32">
           <div className="text-center">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+            <div className="w-10 h-10 sm:w-12 sm:h-12 border-4 border-brand-primary border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
             <p className="text-gray-500 text-sm">Зареждане...</p>
           </div>
         </div>
@@ -179,7 +179,7 @@ export default function Products() {
                     onClick={() => handleCategoryClick(category)}
                     className={`px-3 py-2 rounded-full text-sm font-medium cursor-pointer whitespace-nowrap transition-colors touch-target-sm ${
                       selectedCategory === category
-                        ? 'bg-red-600 text-white'
+                        ? 'bg-brand-primary text-white'
                         : 'bg-gray-100 text-gray-700'
                     }`}
                   >
@@ -204,7 +204,7 @@ export default function Products() {
                   onClick={() => { setSortBy(opt.value); setShowFilterDrawer(false); }}
                   className={`py-3 rounded-xl text-sm font-medium cursor-pointer transition-colors touch-target-sm ${
                     sortBy === opt.value
-                      ? 'bg-red-600 text-white'
+                      ? 'bg-brand-primary text-white'
                       : 'bg-gray-100 text-gray-700'
                   }`}
                 >
@@ -225,12 +225,12 @@ export default function Products() {
       </div>}
 
       {/* Page Header - mobile optimized */}
-      <div className="bg-gradient-to-r from-red-600 via-red-700 to-rose-800 py-6 sm:py-10 md:py-16">
+      <div className="brand-dark-section bg-gradient-to-r from-brand-primary via-brand-hover to-rose-800 py-6 sm:py-10 md:py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 id="main-content" tabIndex={-1} className="text-xl sm:text-2xl md:text-5xl font-bold text-white mb-1 sm:mb-2 md:mb-4">Корейска Храна Онлайн</h1>
-          <p className="text-sm sm:text-base md:text-xl text-red-50 mb-2 sm:mb-3 md:mb-6">Доставка в цяла България · 1-2 дни</p>
+          <p className="text-sm sm:text-base md:text-xl text-brand-petal mb-2 sm:mb-3 md:mb-6">Намери следващия си любим вкус · Доставка в България</p>
           <div className="hidden md:flex flex-wrap gap-3">
-            {['Доставката се заплаща при получаване', 'Бърза доставка 1-2 дни', '100% Оригинални продукти'].map(text => (
+            {['Доставката се заплаща при получаване', 'Поръчка без регистрация', '100% Оригинални продукти'].map(text => (
               <div key={text} className="bg-white/20 backdrop-blur-sm px-5 py-2.5 rounded-full text-white font-semibold flex items-center gap-2 whitespace-nowrap text-sm">
                 <i aria-hidden="true" className="ri-check-line"></i>
                 <span>{text}</span>
@@ -251,7 +251,7 @@ export default function Products() {
                 placeholder="Търси продукт..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-9 py-2.5 sm:py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm bg-gray-50"
+                className="w-full pl-9 pr-9 py-2.5 sm:py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-primary text-sm bg-gray-50"
               />
               <i aria-hidden="true" className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-base"></i>
               {searchQuery && (
@@ -272,7 +272,7 @@ export default function Products() {
             >
               <i aria-hidden="true" className="ri-equalizer-line text-lg"></i>
               {activeFiltersCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
+                <span className="absolute -top-1 -right-1 bg-brand-primary text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">
                   {activeFiltersCount}
                 </span>
               )}
@@ -282,7 +282,7 @@ export default function Products() {
               aria-label="Сортиране на продуктите"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="hidden md:block px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-red-500 text-sm bg-gray-50 cursor-pointer"
+              className="hidden md:block px-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-primary text-sm bg-gray-50 cursor-pointer"
             >
               <option value="featured">Препоръчани</option>
               <option value="price-low">Цена: ↑</option>
@@ -305,8 +305,8 @@ export default function Products() {
                   onClick={() => handleCategoryClick(category)}
                   className={`flex-shrink-0 px-3.5 py-2 rounded-full text-[13px] font-medium cursor-pointer whitespace-nowrap transition-all active:scale-95 touch-target-sm ${
                     selectedCategory === category
-                      ? 'bg-red-600 text-white shadow-sm'
-                      : 'bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-600'
+                      ? 'bg-brand-primary text-white shadow-sm'
+                      : 'bg-gray-100 text-gray-600 hover:bg-brand-blush hover:text-brand-primary'
                   }`}
                 >
                   {category}
@@ -318,9 +318,9 @@ export default function Products() {
       </div>
 
       {/* Promo Banner */}
-      <div className="bg-red-50 border-b border-red-100">
+      <div className="bg-brand-blush border-b border-brand-border">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
-          <p className="text-xs sm:text-sm text-red-700 font-medium text-center">
+          <p className="text-xs sm:text-sm text-brand-hover font-medium text-center">
             <i aria-hidden="true" className="ri-percent-line mr-1"></i>
             Намаление 5% за поръчки над 50€ · 10% над 100€
           </p>
@@ -331,11 +331,11 @@ export default function Products() {
         {/* Results count */}
         <div className="flex items-center justify-between mb-3 sm:mb-4">
           <p className="text-sm text-gray-600">
-            <strong className="text-red-600">{filteredProducts.length}</strong> продукта
+            <strong className="text-brand-primary">{filteredProducts.length}</strong> продукта
             {selectedCategory !== 'Всички' && <span className="text-gray-400"> в {selectedCategory}</span>}
           </p>
           {searchQuery && (
-            <button onClick={() => setSearchQuery('')} className="text-xs text-red-600 font-medium cursor-pointer">
+            <button onClick={() => setSearchQuery('')} className="text-xs text-brand-primary font-medium cursor-pointer">
               Изчисти търсенето
             </button>
           )}
@@ -354,7 +354,7 @@ export default function Products() {
           <div className="text-center py-12 sm:py-16">
             <i aria-hidden="true" className="ri-search-line text-4xl sm:text-5xl text-gray-300 mb-4 block"></i>
             <p className="text-gray-500 font-medium text-sm sm:text-base">Няма намерени продукти</p>
-            <button onClick={() => { setSearchQuery(''); setSelectedCategory('Всички'); }} className="mt-3 text-red-600 text-sm font-medium cursor-pointer">
+            <button onClick={() => { setSearchQuery(''); setSelectedCategory('Всички'); }} className="mt-3 text-brand-primary text-sm font-medium cursor-pointer">
               Виж всички продукти
             </button>
           </div>
@@ -373,7 +373,7 @@ export default function Products() {
                       className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-300"
                     />
                     {product.badge && (
-                      <div className="absolute top-2 left-2 bg-red-600 text-white px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold whitespace-nowrap">
+                      <div className="absolute top-2 left-2 bg-brand-primary text-white px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold whitespace-nowrap">
                         {product.badge}
                       </div>
                     )}
@@ -403,14 +403,14 @@ export default function Products() {
                   </div>
 
                   <Link to={`/product/${product.slug || product.id}`}>
-                    <h3 className="text-xs sm:text-sm md:text-base font-bold text-gray-900 mb-1.5 sm:mb-2 line-clamp-2 leading-tight group-hover:text-red-600 transition-colors" style={{ minHeight: '2.2rem' }}>
+                    <h3 className="text-xs sm:text-sm md:text-base font-bold text-gray-900 mb-1.5 sm:mb-2 line-clamp-2 leading-tight group-hover:text-brand-primary transition-colors" style={{ minHeight: '2.2rem' }}>
                       {product.name}
                     </h3>
                   </Link>
 
                   <div className="flex items-center justify-between gap-2">
                     <div>
-                      <div className="text-sm sm:text-base md:text-lg font-bold text-red-700">
+                      <div className="text-sm sm:text-base md:text-lg font-bold text-brand-hover">
                         €{product.price.toFixed(2)}
                       </div>
                     </div>
@@ -420,7 +420,7 @@ export default function Products() {
                       disabled={!product.in_stock}
                       className={`flex-shrink-0 w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all active:scale-90 touch-target-sm ${
                         product.in_stock
-                          ? 'bg-red-600 text-white hover:bg-red-700 cursor-pointer shadow-sm'
+                          ? 'bg-brand-primary text-white hover:bg-brand-hover cursor-pointer shadow-sm'
                           : 'bg-gray-100 text-gray-300 cursor-not-allowed'
                       }`}
                       aria-label="Добави в количката"

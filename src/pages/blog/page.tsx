@@ -107,7 +107,7 @@ export default function BlogPage() {
       <Header />
 
       {/* Hero */}
-      <section className="bg-gradient-to-br from-red-900 via-red-800 to-rose-900 text-white py-10 sm:py-14 md:py-20 px-4">
+      <section className="brand-dark-section bg-gradient-to-br from-brand-ink via-brand-hover to-rose-900 text-white py-10 sm:py-14 md:py-20 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <span className="inline-block bg-white/20 text-white text-sm font-semibold px-4 py-1.5 rounded-full mb-4 tracking-wide">
             K-FOOD БЛОГ
@@ -115,7 +115,7 @@ export default function BlogPage() {
           <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">
             Корейска храна, рецепти<br />и Велико Търново
           </h1>
-          <p className="text-red-100 text-lg max-w-2xl mx-auto mb-8">
+          <p className="text-brand-petal text-lg max-w-2xl mx-auto mb-8">
             Статии за азиатска кухня, интересни места, рамен предизвикателства и всичко за K-FOOD
           </p>
           <div className="relative max-w-md mx-auto">
@@ -125,7 +125,7 @@ export default function BlogPage() {
               placeholder="Търси статии..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-3.5 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+              className="w-full pl-12 pr-4 py-3.5 rounded-xl text-gray-900 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary"
             />
           </div>
         </div>
@@ -141,8 +141,8 @@ export default function BlogPage() {
                 onClick={() => setActiveCategory(cat)}
                 className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-medium transition-all cursor-pointer ${
                   activeCategory === cat
-                    ? 'bg-red-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-700'
+                    ? 'bg-brand-primary text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-brand-blush hover:text-brand-hover'
                 }`}
               >
                 {cat}
@@ -178,7 +178,7 @@ export default function BlogPage() {
             {featuredPost && activeCategory === 'Всички' && searchQuery === '' && (
               <Link
                 to={`/blog/${featuredPost.slug}`}
-                className="group block mb-12 bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-red-200 transition-all cursor-pointer"
+                className="group block mb-12 bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-brand-border transition-all cursor-pointer"
               >
                 <div className="grid grid-cols-1 lg:grid-cols-2">
                   <div className="h-48 sm:h-56 md:h-72 lg:h-auto overflow-hidden">
@@ -190,12 +190,12 @@ export default function BlogPage() {
                   </div>
                   <div className="p-8 lg:p-12 flex flex-col justify-center">
                     <div className="flex items-center gap-3 mb-4">
-                      <span className="bg-red-100 text-red-700 text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap">
+                      <span className="bg-brand-petal text-brand-hover text-xs font-semibold px-3 py-1 rounded-full whitespace-nowrap">
                         {featuredPost.category}
                       </span>
                       <span className="text-gray-400 text-sm whitespace-nowrap">Препоръчано</span>
                     </div>
-                    <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-4 group-hover:text-red-700 transition-colors leading-tight">
+                    <h2 className="text-2xl lg:text-3xl font-bold text-gray-900 mb-4 group-hover:text-brand-hover transition-colors leading-tight">
                       {featuredPost.title}
                     </h2>
                     <p className="text-gray-600 mb-6 leading-relaxed line-clamp-3">{featuredPost.excerpt}</p>
@@ -224,7 +224,7 @@ export default function BlogPage() {
                 <Link
                   key={post.id}
                   to={`/blog/${post.slug}`}
-                  className="group bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-red-200 transition-all cursor-pointer flex flex-col"
+                  className="group bg-white rounded-2xl overflow-hidden border border-gray-100 hover:border-brand-border transition-all cursor-pointer flex flex-col"
                 >
                   <div className="h-40 sm:h-48 md:h-52 overflow-hidden">
                     <img
@@ -235,12 +235,12 @@ export default function BlogPage() {
                   </div>
                   <div className="p-6 flex flex-col flex-1">
                     <div className="flex items-center gap-2 mb-3">
-                      <span className="bg-red-50 text-red-700 text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap">
+                      <span className="bg-brand-blush text-brand-hover text-xs font-semibold px-2.5 py-1 rounded-full whitespace-nowrap">
                         {post.category}
                       </span>
                       <span className="text-gray-400 text-xs whitespace-nowrap">{formatDate(post.created_at)}</span>
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-red-700 transition-colors leading-snug line-clamp-2">
+                    <h3 className="text-lg font-bold text-gray-900 mb-2 group-hover:text-brand-hover transition-colors leading-snug line-clamp-2">
                       {post.title}
                     </h3>
                     <p className="text-gray-500 text-sm leading-relaxed line-clamp-3 flex-1">{post.excerpt}</p>
@@ -255,7 +255,7 @@ export default function BlogPage() {
                           {post.views.toLocaleString()}
                         </span>
                       </div>
-                      <span className="text-red-600 text-sm font-semibold group-hover:underline whitespace-nowrap">
+                      <span className="text-brand-primary text-sm font-semibold group-hover:underline whitespace-nowrap">
                         Прочети →
                       </span>
                     </div>

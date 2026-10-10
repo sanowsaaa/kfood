@@ -148,10 +148,10 @@ export default function Categories() {
       <Header />
       
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-red-600 to-red-700 text-white py-20">
+      <div className="bg-gradient-to-r from-brand-primary to-brand-hover text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 id="main-content" tabIndex={-1} className="text-4xl md:text-5xl font-bold mb-4">Категории Корейска Храна</h1>
-          <p className="text-xl text-red-100 max-w-2xl mx-auto mb-3">
+          <p className="text-xl text-brand-petal max-w-2xl mx-auto mb-3">
             Онлайн магазин за корейски продукти — рамен, кимчи, токбоки, сосове и още
           </p>
           <div className="flex flex-wrap justify-center gap-2 mt-4">
@@ -180,7 +180,7 @@ export default function Categories() {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
                 {category.requiresAge && (
-                  <div className="absolute top-4 right-4 bg-red-600 text-white px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1">
+                  <div className="absolute top-4 right-4 bg-brand-primary text-white px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1">
                     <i aria-hidden="true" className="ri-error-warning-line"></i>
                     18+
                   </div>
@@ -203,7 +203,7 @@ export default function Categories() {
               <div className="p-6">
                 <p className="text-gray-600 mb-4 line-clamp-2">{category.description}</p>
                 <div className="flex items-center justify-between">
-                  <span className="text-red-600 font-semibold group-hover:text-red-700 flex items-center gap-2 whitespace-nowrap">
+                  <span className="text-brand-primary font-semibold group-hover:text-brand-hover flex items-center gap-2 whitespace-nowrap">
                     Разгледай продуктите
                     <i aria-hidden="true" className="ri-arrow-right-line group-hover:translate-x-1 transition-transform"></i>
                   </span>
@@ -214,9 +214,9 @@ export default function Categories() {
         </div>
 
         {/* Info Section */}
-        <div className="mt-16 bg-red-50 rounded-2xl p-8 text-center">
+        <div className="mt-16 bg-brand-blush rounded-2xl p-8 text-center">
           <div className="max-w-3xl mx-auto">
-            <i aria-hidden="true" className="ri-information-line text-4xl text-red-600 mb-4"></i>
+            <i aria-hidden="true" className="ri-information-line text-4xl text-brand-primary mb-4"></i>
             <h2 className="text-2xl font-bold text-gray-900 mb-3">Не намирате това, което търсите?</h2>
             <p className="text-gray-600 mb-6">
               Разгледайте всички наши продукти или се свържете с нас за специални поръчки
@@ -224,14 +224,14 @@ export default function Categories() {
             <div className="flex flex-wrap gap-4 justify-center">
               <Link
                 to="/products"
-                className="bg-red-600 text-white px-8 py-3 rounded-full font-semibold hover:bg-red-700 transition-colors flex items-center gap-2 whitespace-nowrap cursor-pointer"
+                className="bg-brand-primary text-white px-8 py-3 rounded-full font-semibold hover:bg-brand-hover transition-colors flex items-center gap-2 whitespace-nowrap cursor-pointer"
               >
                 <i aria-hidden="true" className="ri-grid-line"></i>
                 Всички продукти
               </Link>
               <a
                 href="tel:+359123456789"
-                className="bg-white text-red-600 px-8 py-3 rounded-full font-semibold hover:bg-gray-50 transition-colors border-2 border-red-600 flex items-center gap-2 whitespace-nowrap cursor-pointer"
+                className="bg-white text-brand-primary px-8 py-3 rounded-full font-semibold hover:bg-gray-50 transition-colors border-2 border-brand-primary flex items-center gap-2 whitespace-nowrap cursor-pointer"
               >
                 <i aria-hidden="true" className="ri-phone-line"></i>
                 Свържете се с нас

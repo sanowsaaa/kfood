@@ -36,13 +36,13 @@ export default function RecentlyViewed() {
       <div className="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-16">
         <div className="flex items-end justify-between mb-7 md:mb-9">
           <div>
-            <p className="text-[10px] md:text-xs font-medium tracking-[0.2em] uppercase text-red-400 mb-2">История</p>
+            <p className="text-[10px] md:text-xs font-medium tracking-[0.2em] uppercase text-brand-primary mb-2">История</p>
             <h2 className="font-heading text-lg md:text-2xl font-light text-gray-900 tracking-tight flex items-center gap-2">
-              <i aria-hidden="true" className="ri-history-line text-red-600 text-xl"></i>
+              <i aria-hidden="true" className="ri-history-line text-brand-primary text-xl"></i>
               Последно разгледани
             </h2>
           </div>
-          <Link to="/products" className="text-[11px] font-semibold text-gray-500 hover:text-red-600 transition-colors whitespace-nowrap uppercase tracking-wider">
+          <Link to="/products" className="text-[11px] font-semibold text-gray-500 hover:text-brand-primary transition-colors whitespace-nowrap uppercase tracking-wider">
             Всички <i aria-hidden="true" className="ri-arrow-right-line"></i>
           </Link>
         </div>
@@ -64,7 +64,7 @@ export default function RecentlyViewed() {
                 )}
               </Link>
               <Link to={`/product/${product.slug || product.id}`}>
-                <h3 className="text-xs font-semibold text-gray-900 line-clamp-2 leading-snug mb-1.5 group-hover:text-red-600 transition-colors">
+                <h3 className="text-xs font-semibold text-gray-900 line-clamp-2 leading-snug mb-1.5 group-hover:text-brand-primary transition-colors">
                   {product.name}
                 </h3>
               </Link>
@@ -74,7 +74,7 @@ export default function RecentlyViewed() {
                   onClick={(e) => handleAddToCart(e, product)}
                   disabled={!product.in_stock}
                   className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all flex-shrink-0 ${
-                    product.in_stock ? 'bg-red-600 text-white hover:bg-red-700 active:scale-90 shadow-sm cursor-pointer' : 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                    product.in_stock ? 'bg-brand-primary text-white hover:bg-brand-hover active:scale-90 shadow-sm cursor-pointer' : 'bg-gray-100 text-gray-300 cursor-not-allowed'
                   }`}
                   aria-label="Добави в количката"
                 >

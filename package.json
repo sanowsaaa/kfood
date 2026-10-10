@@ -53,7 +53,7 @@
     "test:admin": "node --test tests/admin-operations.test.mjs",
     "check:admin": "tsc --project tsconfig.admin.json",
     "test:client": "node --test tests/customer-operations.test.mjs tests/customer-service-worker.test.mjs",
-    "test:seo": "node --test tests/product-seo.test.mjs"
+    "test:seo": "node --test tests/product-seo.test.mjs tests/editorial-seo.test.mjs"
   },
   "type": "module",
   "version": "0.0.0"

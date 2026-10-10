@@ -25,7 +25,7 @@ export default function FAQSection() {
       <div className="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-16">
         <div className="max-w-3xl mx-auto">
           <div className="mb-10 md:mb-14">
-            <p className="text-xs md:text-sm font-medium tracking-[0.2em] uppercase text-red-500 mb-3">Имаш въпрос?</p>
+            <p className="text-xs md:text-sm font-medium tracking-[0.2em] uppercase text-brand-primary mb-3">Имаш въпрос?</p>
             <h2 id="faq-heading" className="font-heading text-2xl md:text-4xl font-light text-gray-900 tracking-tight">Често задавани въпроси</h2>
           </div>
 
@@ -35,10 +35,10 @@ export default function FAQSection() {
                 <button
                   onClick={() => setOpenIndex(openIndex === i ? null : i)}
                   aria-expanded={openIndex === i}
-                  className="w-full flex items-center justify-between py-5 px-4 text-left cursor-pointer group hover:bg-red-50/30 transition-colors"
+                  className="w-full flex items-center justify-between py-5 px-4 text-left cursor-pointer group hover:bg-brand-blush/30 transition-colors"
                 >
-                  <span className="text-sm md:text-[15px] font-semibold text-gray-900 pr-6 group-hover:text-red-600 transition-colors">{faq.question}</span>
-                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all ${openIndex === i ? 'bg-red-600 text-white rotate-45' : 'bg-gray-100 text-gray-400 group-hover:bg-red-100 group-hover:text-red-600'}`}>
+                  <span className="text-sm md:text-[15px] font-semibold text-gray-900 pr-6 group-hover:text-brand-primary transition-colors">{faq.question}</span>
+                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-all ${openIndex === i ? 'bg-brand-primary text-white rotate-45' : 'bg-gray-100 text-gray-400 group-hover:bg-brand-petal group-hover:text-brand-primary'}`}>
                     <i aria-hidden="true" className="ri-add-line text-sm"></i>
                   </div>
                 </button>
@@ -52,7 +52,7 @@ export default function FAQSection() {
           </div>
 
           <div className="text-center mt-10">
-            <Link to="/faq" className="inline-flex items-center gap-2 text-[13px] font-semibold text-red-600 hover:text-red-700 transition-colors cursor-pointer tracking-wide uppercase">
+            <Link to="/faq" className="inline-flex items-center gap-2 text-[13px] font-semibold text-brand-primary hover:text-brand-hover transition-colors cursor-pointer tracking-wide uppercase">
               Виж всички въпроси
               <i aria-hidden="true" className="ri-arrow-right-line"></i>
             </Link>
