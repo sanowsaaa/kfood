@@ -132,7 +132,7 @@ const CartPage = () => {
     <div className="min-h-screen bg-gray-50">
       <Header />
 
-      <main id="main-content" className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-56 lg:pb-10">
+      <main id="main-content" className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8 pb-40 lg:pb-10">
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-3 mb-5 md:mb-6">
           <div>
@@ -207,18 +207,18 @@ const CartPage = () => {
           </div>
         )}
 
-        <div className="grid lg:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
           {/* Left column */}
-          <div className="lg:col-span-2 space-y-2 sm:space-y-3">
+          <div className="min-w-0 lg:col-span-2 space-y-2 sm:space-y-3">
             {cartItems.map((item) => (
-              <div key={item.id} className="bg-white rounded-xl p-2.5 sm:p-3 md:p-4 flex items-center gap-2.5 sm:gap-3 border border-gray-100">
-                <Link to={`/product/${item.slug || item.id}`} className="flex-shrink-0">
+              <div key={item.id} className="customer-cart-row bg-white rounded-xl p-2.5 sm:p-3 md:p-4 flex items-center gap-2.5 sm:gap-3 border border-gray-100">
+                <Link to={`/product/${item.slug || item.id}`} className="customer-cart-thumb flex-shrink-0">
                   <img src={item.image} alt={item.name} className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 object-contain rounded-lg bg-white" />
                 </Link>
 
-                <div className="flex-1 min-w-0">
+                <div className="customer-cart-info flex-1 min-w-0">
                   <Link to={`/product/${item.slug || item.id}`}>
-                    <h3 className="font-semibold text-gray-900 text-xs sm:text-sm md:text-base line-clamp-2 leading-tight">{item.name}</h3>
+                    <h3 className="customer-product-name font-semibold text-gray-900 text-sm md:text-base leading-relaxed">{item.name}</h3>
                   </Link>
                   <div className="mt-0.5 sm:mt-1">
                     <span className="text-red-600 font-bold text-xs sm:text-sm">€{item.price.toFixed(2)}</span>
@@ -230,7 +230,7 @@ const CartPage = () => {
                   </button>
                 </div>
 
-                <div className="flex flex-col items-end gap-1.5 sm:gap-2 flex-shrink-0">
+                <div className="customer-cart-controls flex flex-col items-end gap-1.5 sm:gap-2 flex-shrink-0">
                   <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
                     <button aria-label={`Намали количеството на ${item.name}`} onClick={() => updateQuantity(item.id, Math.max(0, item.quantity - 1))} className="w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center bg-gray-50 hover:bg-gray-100 cursor-pointer active:bg-gray-200 transition-colors touch-target-sm">
                       <i aria-hidden="true" className="ri-subtract-line text-xs sm:text-sm"></i>
@@ -241,7 +241,7 @@ const CartPage = () => {
                     </button>
                   </div>
                   <div className="text-right">
-                    <div className="text-xs sm:text-sm font-bold text-gray-900">€{(item.price * item.quantity).toFixed(2)}</div>
+                    <div className="customer-product-price font-bold text-gray-900">€{(item.price * item.quantity).toFixed(2)}</div>
                     
                   </div>
                   <button onClick={() => removeFromCart(item.id)} className="text-gray-300 hover:text-red-500 transition-colors cursor-pointer p-1" aria-label={`Премахни ${item.name}`}>
@@ -259,13 +259,13 @@ const CartPage = () => {
                 </h2>
                 <div className="space-y-2">
                   {savedItems.map(item => (
-                    <div key={item.id} className="bg-white rounded-xl p-2.5 sm:p-3 flex items-center gap-2.5 sm:gap-3 border border-dashed border-gray-200">
+                    <div key={item.id} className="customer-cart-row bg-white rounded-xl p-2.5 sm:p-3 flex items-center gap-2.5 sm:gap-3 border border-dashed border-gray-200">
                       <img src={item.image} alt={item.name} className="w-12 h-12 sm:w-14 sm:h-14 object-contain rounded-lg flex-shrink-0 opacity-70 bg-white" />
-                      <div className="flex-1 min-w-0">
-                        <h3 className="text-xs sm:text-sm font-semibold text-gray-700 line-clamp-1">{item.name}</h3>
+                      <div className="customer-cart-info flex-1 min-w-0">
+                        <h3 className="customer-product-name text-sm font-semibold text-gray-700">{item.name}</h3>
                         <p className="text-[10px] sm:text-xs text-red-600 font-bold mt-0.5">€{item.price.toFixed(2)}</p>
                       </div>
-                      <div className="flex flex-col gap-1 flex-shrink-0">
+                      <div className="customer-saved-actions flex flex-col gap-1 flex-shrink-0">
                         <button onClick={() => moveToCart(item.id)} className="text-[10px] sm:text-xs bg-red-600 text-white px-2.5 sm:px-3 py-1.5 rounded-lg font-semibold cursor-pointer hover:bg-red-700 transition-colors whitespace-nowrap touch-target-sm">
                           Добави в количката
                         </button>
@@ -285,21 +285,21 @@ const CartPage = () => {
                   <i aria-hidden="true" className="ri-thumb-up-line text-red-600"></i>
                   Още продукти за вас
                 </h2>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+                <div className="customer-product-grid grid grid-cols-2 sm:grid-cols-4 gap-3" data-product-shop>
                   {recommended.map(product => (
-                    <div key={product.id} className="bg-white rounded-xl overflow-hidden border border-gray-100 group">
+                    <div key={product.id} className="customer-product-card bg-white rounded-xl overflow-hidden border border-gray-100 group">
                       <Link to={`/product/${product.slug || product.id}`}>
-                        <div className="relative overflow-hidden bg-white flex items-center justify-center" style={{ aspectRatio: '3 / 4' }}>
-                          <img src={product.image} alt={product.name} className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-300" />
+                        <div className="customer-product-image">
+                          <img src={product.image} alt={product.name} className="transition-transform duration-300" />
                         </div>
                       </Link>
-                      <div className="p-2 sm:p-2.5">
+                      <div className="customer-product-body p-3">
                         <Link to={`/product/${product.slug || product.id}`}>
-                          <h3 className="text-[11px] sm:text-xs font-semibold text-gray-800 line-clamp-2 leading-tight mb-1 group-hover:text-red-600 transition-colors">{product.name}</h3>
+                          <h3 className="customer-product-name font-semibold text-gray-800 mb-2 group-hover:text-brand-primary transition-colors">{product.name}</h3>
                         </Link>
-                        <div className="flex items-center justify-between gap-1">
+                        <div className="customer-product-actions flex items-center justify-between gap-2">
                           <div>
-                            <div className="text-xs sm:text-sm font-bold text-red-700">€{product.price.toFixed(2)}</div>
+                            <div className="customer-product-price font-bold text-brand-hover">€{product.price.toFixed(2)}</div>
                             
                           </div>
                           <button onClick={() => handleAddRecommended(product)} disabled={!product.in_stock} className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all flex-shrink-0 cursor-pointer active:scale-90 touch-target-sm ${product.in_stock ? 'bg-red-600 text-white hover:bg-red-700' : 'bg-gray-100 text-gray-300 cursor-not-allowed'}`} aria-label={`Добави ${product.name}`}>
@@ -314,9 +314,9 @@ const CartPage = () => {
             )}
           </div>
 
-          {/* Order Summary - Desktop */}
-          <div className="hidden lg:block lg:col-span-1">
-            <div className="bg-white rounded-xl p-4 sm:p-5 border border-gray-100 sticky top-24">
+          {/* One summary and promo form for every screen size. */}
+          <div className="min-w-0 lg:col-span-1">
+            <div className="customer-cart-summary bg-white rounded-xl p-4 sm:p-5 border border-gray-100 top-24">
               <h2 className="text-base sm:text-lg font-bold text-gray-900 mb-4">Обобщение</h2>
               <div className="space-y-2 sm:space-y-3 mb-4 sm:mb-5 text-sm">
                 <div className="flex justify-between text-gray-600">
@@ -388,7 +388,7 @@ const CartPage = () => {
                 </div>
               )}
 
-              <button onClick={() => navigate('/checkout')} disabled={isBelowMinimum || cartItems.length === 0 || checking || !!cartError || unavailable} className="w-full bg-red-600 text-white py-3 sm:py-3.5 rounded-xl font-bold hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap touch-target">
+              <button onClick={() => navigate('/checkout')} disabled={isBelowMinimum || cartItems.length === 0 || checking || !!cartError || unavailable} className="hidden lg:flex w-full bg-brand-primary text-white py-3 sm:py-3.5 rounded-xl font-bold hover:bg-brand-hover disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors items-center justify-center gap-2 cursor-pointer whitespace-nowrap touch-target">
                 <i aria-hidden="true" className="ri-bank-card-line text-base sm:text-lg"></i>
                 Поръчай и плати
               </button>
@@ -403,23 +403,7 @@ const CartPage = () => {
 
       {/* Mobile Sticky Checkout Bar */}
       {cartItems.length > 0 && (
-        <div className="lg:hidden fixed left-0 right-0 bg-white border-t border-gray-200 px-3 sm:px-4 py-2.5 sm:py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.12)]" style={{ bottom: 'calc(60px + env(safe-area-inset-bottom))', zIndex: 60 }}>
-          {!promoCode && (
-            <div className="flex gap-2 mb-2">
-              <input type="text" value={promoInput} onChange={e => setPromoInput(e.target.value)} aria-label="Промо код" disabled={promoLoading} placeholder="Промо код..." className="flex-1 px-3 py-1.5 border border-gray-200 rounded-lg text-sm" />
-              <button onClick={handleApplyPromo} disabled={promoLoading || !promoInput.trim()} className="px-3 py-1.5 bg-red-600 text-white rounded-lg text-sm font-semibold disabled:bg-gray-300 cursor-pointer touch-target-sm">
-                {promoLoading ? <i aria-hidden="true" className="ri-loader-4-line animate-spin"></i> : 'OK'}
-              </button>
-            </div>
-          )}
-          {promoCode && (
-            <div className="flex items-center justify-between mb-2 bg-red-50 rounded-lg px-3 py-1.5">
-              <span className="text-xs text-red-700 font-semibold"><i aria-hidden="true" className="ri-gamepad-line mr-1"></i>{promoCode.discountPercent}% отстъпка</span>
-              <button onClick={removePromoCode} className="text-xs text-red-500 cursor-pointer">Премахни</button>
-            </div>
-          )}
-          {promoError && !promoCode && <p className="text-xs text-red-600 mb-1">{promoError}</p>}
-
+        <div className="customer-mobile-actions lg:hidden fixed left-0 right-0 bg-white border-t border-gray-200 px-3 sm:px-4 py-2.5 sm:py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.12)]">
           <div className="flex items-center justify-between mb-2">
             <span className="text-xs sm:text-sm text-gray-600">
               Общо ({getCartCount()})
@@ -432,7 +416,7 @@ const CartPage = () => {
               
             </div>
           </div>
-          <button onClick={() => navigate('/checkout')} disabled={isBelowMinimum || checking || !!cartError || unavailable} className="w-full bg-red-600 text-white py-3 sm:py-3.5 rounded-xl font-bold disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap active:scale-95 touch-target">
+          <button onClick={() => navigate('/checkout')} disabled={isBelowMinimum || checking || !!cartError || unavailable} className="w-full min-h-12 bg-brand-primary text-white py-3 sm:py-3.5 rounded-xl font-bold disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap active:scale-95 touch-target">
             <i aria-hidden="true" className="ri-bank-card-line text-base sm:text-lg"></i> Поръчай и плати
           </button>
           {isBelowMinimum && <p className="text-center text-[10px] sm:text-xs text-amber-600 mt-1.5">Добавете още €{remaining.toFixed(2)} за минималната поръчка (€{MIN_ORDER_EUR})</p>}

@@ -34,7 +34,7 @@ export default function CartToast({ product, onClose }: CartToastProps) {
         {/* Green progress bar */}
         <div className="h-1 bg-emerald-600 animate-shrink-bar"></div>
 
-        <div className="flex items-center gap-3 p-3">
+        <div className="customer-cart-toast items-center gap-3 p-3">
           {/* Product image */}
           <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-white flex items-center justify-center">
             <img src={product.image} alt={product.name} className="w-full h-full object-contain object-center" />
@@ -48,7 +48,7 @@ export default function CartToast({ product, onClose }: CartToastProps) {
               </div>
               <span className="text-xs font-semibold text-emerald-700">Добавено в количката</span>
             </div>
-            <p className="text-sm font-bold text-gray-900 line-clamp-1">{product.name}</p>
+            <p className="text-sm font-bold text-gray-900">{product.name}</p>
             <p className="text-xs text-gray-500">€{product.price.toFixed(2)}</p>
           </div>
 

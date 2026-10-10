@@ -1,3 +1,7 @@
+/* A horizontal clip must not turn body into an unscrolled sticky container.
+   Dialogs still lock scrolling through their existing inline overflow style. */
+body:has(.customer-root) { overflow-x: clip; overflow-y: visible; }
+
 .customer-shell {
   --brand-primary: #c90073;
   --brand-hover: #ab005d;
@@ -47,10 +51,75 @@
 .customer-shell :is(.brand-footer, .brand-hero, .brand-dark-section) :is(a, button, input):focus-visible { outline-color: #fff; }
 .customer-shell .brand-category-shade { background: linear-gradient(0deg, rgb(43 11 34 / 0.97) 0%, rgb(43 11 34 / 0.9) 48%, rgb(43 11 34 / 0) 85%); }
 .customer-shell .brand-article-shade { background: linear-gradient(0deg, rgb(43 11 34 / 0.98) 0%, rgb(43 11 34 / 0.94) 65%, rgb(43 11 34 / 0.12) 100%); }
-.customer-shell [data-product-shop] > a { border-color: #eadde5; box-shadow: 0 4px 16px rgb(49 35 50 / 0.04); }
+.customer-shell .customer-product-card {
+  display: flex; flex-direction: column; min-width: 0;
+  border: 1px solid #eadde5;
+  box-shadow: 0 4px 16px rgb(49 35 50 / 0.04);
+}
+.customer-shell .customer-product-image {
+  position: relative; display: flex; align-items: center; justify-content: center;
+  width: 100%; aspect-ratio: 1; flex-shrink: 0;
+  padding: clamp(12px, 2vw, 20px); overflow: hidden; background: #fff;
+}
+.customer-shell .customer-product-image > img {
+  display: block; width: 100%; height: 100%; min-width: 0; min-height: 0;
+  object-fit: contain; object-position: center; transform: none;
+}
+.customer-shell .customer-product-body { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+.customer-shell .customer-product-name { overflow-wrap: anywhere; text-wrap: pretty; }
+.customer-shell .customer-product-card h3 {
+  font-size: 0.875rem; line-height: 1.5; min-height: 3em;
+  overflow-wrap: anywhere; text-wrap: pretty;
+}
+.customer-shell .customer-product-actions { margin-top: auto; padding-top: 8px; flex-wrap: wrap; row-gap: 8px; }
+.customer-shell .customer-product-price { font-size: 1rem; line-height: 1.4; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.customer-shell .customer-product-badge {
+  max-width: calc(100% - 16px); white-space: normal; text-align: left; line-height: 1.4;
+}
+.customer-shell .customer-product-unavailable { background: rgb(255 255 255 / 0.45); }
+.customer-shell .customer-product-unavailable > span { border: 1px solid #eadde5; box-shadow: 0 2px 10px rgb(43 11 34 / 0.12); }
+.customer-shell .customer-detail-image { max-width: 560px; margin-inline: auto; }
+.customer-shell .customer-mobile-actions { bottom: calc(60px + env(safe-area-inset-bottom)); z-index: 60; }
+.customer-shell .customer-cart-summary { position: static; }
+.customer-shell .customer-checkout-summary { overflow-wrap: anywhere; }
+.customer-shell .customer-checkout-summary img { width: 56px; height: 56px; object-fit: contain; }
+.customer-shell .customer-checkout-summary :is(h2, p) { font-size: 0.875rem; line-height: 1.5; }
+.customer-shell .customer-checkout-contact :is(label, h2) { font-size: 0.875rem; }
+.customer-shell :is(.customer-checkout-contact, .customer-catalog-search, .customer-cart-summary) input { min-height: 48px; }
+.customer-shell .customer-checkout-contact :is(input, [id$='-help']) { scroll-margin-block: 96px 160px; }
+.customer-shell .customer-mobile-menu { max-height: calc(100dvh - 180px - env(safe-area-inset-bottom)); overflow-y: auto; overscroll-behavior: contain; }
+.customer-shell .customer-catalog-search { top: 60px; }
+.customer-shell .customer-cart-toast { display: grid; grid-template-columns: 56px minmax(0, 1fr); }
+.customer-shell .customer-cart-toast > a { grid-column: 1 / -1; justify-content: center; }
+.customer-shell .customer-cart-toast p { overflow-wrap: anywhere; }
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .customer-shell .customer-product-card:hover .customer-product-image > img { transform: scale(1.02); }
+}
+@media (min-width: 640px) {
+  .customer-shell .customer-product-card h3 { font-size: 1rem; }
+  .customer-shell .customer-product-price { font-size: 1.125rem; }
+  .customer-shell .customer-catalog-search { top: 68px; }
+  .customer-shell .customer-checkout-summary :is(h2, p) { font-size: 1rem; }
+  .customer-shell .customer-checkout-contact :is(label, h2) { font-size: 1rem; }
+}
+@media (min-width: 768px) { .customer-shell .customer-catalog-search { top: 76px; } }
+@media (min-width: 1024px) { .customer-shell .customer-cart-summary { position: sticky; } }
+@media (max-width: 639px) {
+  .customer-shell .customer-cart-row { display: grid; grid-template-columns: 64px minmax(0, 1fr); align-items: start; gap: 12px; padding: 14px; }
+  .customer-shell .customer-cart-thumb img { width: 64px; height: 64px; }
+  .customer-shell .customer-cart-info h3 { font-size: 0.875rem; line-height: 1.5; }
+  .customer-shell .customer-cart-controls { grid-column: 1 / -1; flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; padding-top: 12px; border-top: 1px solid #f3e6ed; }
+  .customer-shell .customer-cart-controls :is(span, .customer-product-price) { font-size: 0.875rem; }
+  .customer-shell .customer-saved-actions { grid-column: 1 / -1; flex-direction: row; gap: 12px; }
+  .customer-shell .customer-saved-actions > button { flex: 1; white-space: normal; }
+  .customer-shell .customer-quick-image { max-width: 260px; margin-inline: auto; }
+  .customer-shell .customer-filter-drawer { padding-bottom: env(safe-area-inset-bottom); }
+}
+@media (max-width: 359px) {
+  .customer-shell .customer-product-grid { grid-template-columns: minmax(0, 1fr); }
+}
 .customer-shell footer :is(.text-gray-300, .text-gray-400, .text-gray-500, .text-gray-600) { color: #cbd5e1; }
 .customer-shell footer :is(.text-red-500, .text-red-600) { color: #fca5a5; }
-.customer-shell [data-product-shop] h3 { font-size: 0.875rem; line-height: 1.45; }
 .customer-shell .customer-card {
   border: 1px solid var(--brand-border);
   border-radius: 1rem;

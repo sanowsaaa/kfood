@@ -61,10 +61,10 @@ export default function FeaturedProducts() {
     return (
       <section className="py-10 md:py-16 lg:py-24 bg-white">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-10 lg:px-16">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5">
+          <div className="customer-product-grid grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-5">
             {[...Array(4)].map((_, i) => (
               <div key={i} className="animate-shimmer rounded-lg">
-                <div className="aspect-square sm:aspect-[3/4] bg-gray-100 rounded-lg"></div>
+                <div className="aspect-square bg-gray-100 rounded-lg"></div>
                 <div className="p-3 md:p-4 space-y-2">
                   <div className="h-3.5 md:h-4 bg-gray-100 rounded w-3/4"></div>
                   <div className="h-3 bg-gray-100 rounded w-1/2"></div>
@@ -100,27 +100,27 @@ export default function FeaturedProducts() {
         </div>
 
         {/* Grid - better mobile: 2 cols with larger cards, bigger gap on desktop */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-5" data-product-shop>
+        <div className="customer-product-grid grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 md:gap-5" data-product-shop>
           {featured.map((product, idx) => (
             <div
               key={product.id}
-              className="bg-white group cursor-pointer contain-layout rounded-xl border border-gray-100 hover:border-brand-border transition-all duration-300 overflow-hidden"
+              className="customer-product-card bg-white group cursor-pointer rounded-xl border border-gray-100 hover:border-brand-border transition-all duration-300 overflow-hidden"
             >
-              {/* Image - square on mobile for bigger touch area, 3/4 on desktop */}
-              <Link to={`/product/${product.slug || product.id}`} className="block relative overflow-hidden bg-white flex items-center justify-center" style={{ aspectRatio: '3 / 4' }}>
+              {/* A square frame keeps every package visible without stretching. */}
+              <Link to={`/product/${product.slug || product.id}`} className="customer-product-image">
                 <img
                   src={product.image}
                   alt={product.name}
                   loading={idx < 4 ? 'eager' : 'lazy'}
-                  className="w-full h-full object-contain object-center group-hover:scale-[1.04] transition-transform duration-500"
+                  className="transition-transform duration-300"
                 />
                 {product.badge && (
-                  <span className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-brand-primary text-white text-[9px] sm:text-[10px] font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md uppercase tracking-wider shadow-sm whitespace-nowrap">
+                  <span className="customer-product-badge absolute top-2 left-2 sm:top-3 sm:left-3 bg-brand-primary text-white text-xs font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md shadow-sm">
                     {product.badge}
                   </span>
                 )}
                 {!product.in_stock && (
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                  <div className="customer-product-unavailable absolute inset-0 flex items-center justify-center">
                     <span className="bg-white text-gray-900 px-3 py-1 sm:px-4 sm:py-1.5 text-[10px] sm:text-xs font-semibold uppercase tracking-wider rounded-md whitespace-nowrap">
                       Изчерпан
                     </span>
@@ -129,9 +129,9 @@ export default function FeaturedProducts() {
               </Link>
 
               {/* Content - tighter on mobile */}
-              <div className="p-3 sm:p-4 md:p-5">
+              <div className="customer-product-body p-3 sm:p-4 md:p-5">
                 <Link to={`/product/${product.slug || product.id}`}>
-                  <h3 className="text-xs sm:text-sm md:text-[15px] font-semibold text-gray-900 mb-1 sm:mb-1.5 line-clamp-2 leading-snug group-hover:text-brand-primary transition-colors">
+                  <h3 className="customer-product-name font-semibold text-gray-900 mb-2 group-hover:text-brand-primary transition-colors">
                     {product.name}
                   </h3>
                 </Link>
@@ -142,9 +142,9 @@ export default function FeaturedProducts() {
                   <span className="text-[10px] text-gray-400">({product.reviews})</span>
                 </div>
 
-                <div className="flex items-center justify-between gap-2">
+                <div className="customer-product-actions flex items-center justify-between gap-2">
                   <div>
-                    <div className="text-sm sm:text-base font-bold text-gray-900">
+                    <div className="customer-product-price font-bold text-brand-hover">
                       €{product.price.toFixed(2)}
                     </div>
                   </div>

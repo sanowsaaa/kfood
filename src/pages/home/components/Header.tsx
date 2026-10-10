@@ -137,7 +137,7 @@ export default function Header() {
 
         {/* Mobile Dropdown */}
         {isMenuOpen && (
-          <div className="lg:hidden border-t border-gray-100 bg-white animate-fade-up">
+          <div className="customer-mobile-menu lg:hidden border-t border-gray-100 bg-white animate-fade-up">
             <nav id="customer-menu" aria-label="Мобилно меню" className="px-4 py-3 sm:py-4 grid grid-cols-2 gap-1.5">
               {navLinks.map(link => (
                 <Link

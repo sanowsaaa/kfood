@@ -150,14 +150,14 @@ export default function Checkout() {
         )}
 
         {/* Order Summary - compact on mobile */}
-        <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-gray-100 mb-3 sm:mb-4">
+        <div className="customer-checkout-summary bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-gray-100 mb-4">
           <h2 className="text-sm sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Вашата поръчка</h2>
-          <div className="space-y-2 sm:space-y-3 mb-3 sm:mb-4 max-h-48 sm:max-h-64 overflow-y-auto">
+          <div className="space-y-3 mb-4">
             {items.map(item => (
               <div key={item.id} className="flex items-center gap-2 sm:gap-3 py-1.5 sm:py-2 border-b border-gray-50 last:border-0">
-                <img src={item.image} alt={item.name} className="w-10 h-10 sm:w-12 sm:h-12 object-cover rounded-lg flex-shrink-0" />
+                <img src={item.image} alt={item.name} className="object-contain rounded-lg flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs sm:text-sm font-semibold text-gray-900 break-words">{item.name}</p>
+                  <p className="customer-product-name font-semibold text-gray-900">{item.name}</p>
                   <p className="text-[10px] sm:text-xs text-gray-400">x{item.quantity}</p>
                 </div>
                 <div className="text-right flex-shrink-0">
@@ -200,7 +200,7 @@ export default function Checkout() {
         </div>
 
         {/* Contact Details Form */}
-        <div className="bg-white rounded-xl sm:rounded-2xl p-3 sm:p-5 border border-gray-100 mb-3 sm:mb-4">
+        <div className="customer-checkout-contact bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 border border-gray-100 mb-4">
           <h2 className="text-sm sm:text-lg font-bold text-gray-900 mb-3 sm:mb-4">Данни за връзка</h2>
           <div className="space-y-3 sm:space-y-4">
             <div>
@@ -279,12 +279,12 @@ export default function Checkout() {
         </button>
 
         {/* Mobile Sticky Pay Button */}
-        <button onClick={handlePayNow} disabled={isProcessing || checkingCart || !!cartError || isBelowMinimum || !!promoCode} className="lg:hidden fixed left-3 right-3 sm:left-4 sm:right-4 p-3 sm:p-4 bg-brand-primary text-white rounded-xl hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-95 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] touch-target" style={{ bottom: 'calc(60px + env(safe-area-inset-bottom))', zIndex: 60 }}>
+        <button onClick={handlePayNow} disabled={isProcessing || checkingCart || !!cartError || isBelowMinimum || !!promoCode} className="customer-mobile-actions lg:hidden fixed left-3 right-3 sm:left-4 sm:right-4 min-h-16 p-3 sm:p-4 bg-brand-primary text-white rounded-xl hover:bg-brand-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer active:scale-95 shadow-[0_-4px_20px_rgba(0,0,0,0.15)] touch-target">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <i aria-hidden="true" className="ri-bank-card-line text-lg sm:text-xl"></i>
               <div>
-                <div className="font-bold text-xs sm:text-sm whitespace-nowrap">Към плащане</div>
+                <div className="font-bold text-sm whitespace-nowrap">Към плащане</div>
                 <div className="text-[10px] text-white">Карта / Apple Pay</div>
               </div>
             </div>

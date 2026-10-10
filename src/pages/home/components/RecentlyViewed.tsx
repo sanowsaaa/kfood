@@ -47,39 +47,41 @@ export default function RecentlyViewed() {
           </Link>
         </div>
 
-        <div className="flex gap-3 overflow-x-auto pb-2 -mx-6 px-6 snap-x snap-mandatory md:grid md:grid-cols-4 lg:grid-cols-6 md:overflow-visible md:pb-0 md:mx-0 md:px-0 scrollbar-hide">
+        <div className="flex gap-3 overflow-x-auto pb-2 -mx-6 px-6 snap-x snap-mandatory md:grid md:grid-cols-4 lg:grid-cols-6 md:overflow-visible md:pb-0 md:mx-0 md:px-0 scrollbar-hide" data-product-shop>
           {recentProducts.slice(0, 6).map(product => (
-            <div key={product.id} className="flex-shrink-0 w-36 sm:w-44 md:w-auto snap-start group">
-              <Link to={`/product/${product.slug || product.id}`} className="block relative overflow-hidden bg-white rounded-lg mb-3 flex items-center justify-center" style={{ aspectRatio: '3 / 4' }}>
+            <div key={product.id} className="customer-product-card flex-shrink-0 w-44 sm:w-48 md:w-auto snap-start group rounded-xl overflow-hidden">
+              <Link to={`/product/${product.slug || product.id}`} className="customer-product-image">
                 <img
                   src={product.image}
                   alt={product.name}
                   loading="lazy"
-                  className="w-full h-full object-contain object-center group-hover:scale-[1.04] transition-transform duration-500"
+                  className="transition-transform duration-300"
                 />
                 {!product.in_stock && (
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                  <div className="customer-product-unavailable absolute inset-0 flex items-center justify-center">
                     <span className="bg-white text-gray-900 text-[10px] font-semibold px-2 py-0.5 rounded uppercase">Изчерпан</span>
                   </div>
                 )}
               </Link>
-              <Link to={`/product/${product.slug || product.id}`}>
-                <h3 className="text-xs font-semibold text-gray-900 line-clamp-2 leading-snug mb-1.5 group-hover:text-brand-primary transition-colors">
-                  {product.name}
-                </h3>
-              </Link>
-              <div className="flex items-center justify-between">
-                <div className="text-xs font-bold text-gray-900">€{product.price.toFixed(2)}</div>
-                <button
-                  onClick={(e) => handleAddToCart(e, product)}
-                  disabled={!product.in_stock}
-                  className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all flex-shrink-0 ${
-                    product.in_stock ? 'bg-brand-primary text-white hover:bg-brand-hover active:scale-90 shadow-sm cursor-pointer' : 'bg-gray-100 text-gray-300 cursor-not-allowed'
-                  }`}
-                  aria-label="Добави в количката"
-                >
-                  {addedIds.has(product.id) ? <i aria-hidden="true" className="ri-check-line text-[11px]"></i> : <i aria-hidden="true" className="ri-add-line text-[11px]"></i>}
-                </button>
+              <div className="customer-product-body p-3">
+                <Link to={`/product/${product.slug || product.id}`}>
+                  <h3 className="customer-product-name font-semibold text-gray-900 mb-2 group-hover:text-brand-primary transition-colors">
+                    {product.name}
+                  </h3>
+                </Link>
+                <div className="customer-product-actions flex items-center justify-between gap-2">
+                  <div className="customer-product-price font-bold text-brand-hover">€{product.price.toFixed(2)}</div>
+                  <button
+                    onClick={(e) => handleAddToCart(e, product)}
+                    disabled={!product.in_stock}
+                    className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all flex-shrink-0 ${
+                      product.in_stock ? 'bg-brand-primary text-white hover:bg-brand-hover active:scale-90 shadow-sm cursor-pointer' : 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                    }`}
+                    aria-label="Добави в количката"
+                  >
+                    {addedIds.has(product.id) ? <i aria-hidden="true" className="ri-check-line text-[11px]"></i> : <i aria-hidden="true" className="ri-add-line text-[11px]"></i>}
+                  </button>
+                </div>
               </div>
             </div>
           ))}

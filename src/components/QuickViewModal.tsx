@@ -170,10 +170,10 @@ export default function QuickViewModal({ product, onClose }: QuickViewModalProps
         {/* Close button */}
         <button
           onClick={handleClose}
-          className="absolute top-3 right-3 z-10 w-8 h-8 bg-white/90 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors border border-gray-200"
+          className="sticky top-3 z-10 ml-auto mr-3 mt-3 -mb-14 w-11 h-11 bg-white/90 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-100 transition-colors border border-gray-200"
           aria-label="Затвори"
         >
-          <i className="ri-close-line text-lg text-gray-600"></i>
+          <i aria-hidden="true" className="ri-close-line text-lg text-gray-600"></i>
         </button>
 
         {/* Drag handle - mobile only */}
@@ -184,7 +184,7 @@ export default function QuickViewModal({ product, onClose }: QuickViewModalProps
         <div className="flex flex-col sm:flex-row">
           {/* Image - left side on desktop */}
           <div className="sm:w-[45%] flex-shrink-0 bg-white relative flex items-center justify-center">
-            <div className="w-full" style={{ aspectRatio: '3 / 4' }}>
+            <div className="customer-product-image customer-quick-image">
               <img
                 src={product.image}
                 alt={product.name}
@@ -211,14 +211,14 @@ export default function QuickViewModal({ product, onClose }: QuickViewModalProps
             </span>
 
             {/* Title */}
-            <h2 id="quick-view-title" className="text-lg sm:text-xl font-bold text-gray-900 mb-2 leading-snug">
+            <h2 id="quick-view-title" className="customer-product-name text-lg sm:text-xl font-bold text-gray-900 mb-2 leading-snug">
               {product.name}
             </h2>
 
             {/* Rating */}
             <div className="flex items-center gap-1.5 mb-3">
               {[...Array(5)].map((_, i) => (
-                <i
+                <i aria-hidden="true"
                   key={i}
                   className={
                     i < Math.round(product.rating)
@@ -249,7 +249,7 @@ export default function QuickViewModal({ product, onClose }: QuickViewModalProps
             {/* Stock indicator */}
             {product.in_stock && product.stock > 0 && product.stock < 15 && (
               <div className="mb-3 flex items-center gap-2 text-xs text-amber-700 bg-amber-50 px-3 py-2 rounded-lg">
-                <i className="ri-fire-line"></i>
+                <i aria-hidden="true" className="ri-fire-line"></i>
                 <span>Само {product.stock} бр. в наличност!</span>
               </div>
             )}
@@ -257,7 +257,7 @@ export default function QuickViewModal({ product, onClose }: QuickViewModalProps
             {/* Quantity + Add to cart */}
             {product.in_stock && (
               <div className="mt-auto">
-                <div className="flex items-center gap-3 mb-3">
+                <div className="flex flex-wrap items-center gap-3 mb-3">
                   {/* Quantity selector */}
                   <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
                     <button
@@ -265,7 +265,7 @@ export default function QuickViewModal({ product, onClose }: QuickViewModalProps
                       className="w-9 h-9 flex items-center justify-center bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors"
                       aria-label="Намали количество"
                     >
-                      <i className="ri-subtract-line text-sm text-gray-600"></i>
+                      <i aria-hidden="true" className="ri-subtract-line text-sm text-gray-600"></i>
                     </button>
                     <span className="w-10 text-center font-semibold text-sm text-gray-900">
                       {quantity}
@@ -275,14 +275,14 @@ export default function QuickViewModal({ product, onClose }: QuickViewModalProps
                       className="w-9 h-9 flex items-center justify-center bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors"
                       aria-label="Увеличи количество"
                     >
-                      <i className="ri-add-line text-sm text-gray-600"></i>
+                      <i aria-hidden="true" className="ri-add-line text-sm text-gray-600"></i>
                     </button>
                   </div>
 
                   {/* Add button */}
                   <button
                     onClick={handleAddToCart}
-                    className={`flex-1 h-9 rounded-lg font-semibold text-sm transition-all cursor-pointer flex items-center justify-center gap-2 ${
+                    className={`flex-1 min-w-[140px] min-h-12 px-3 py-2 rounded-lg font-semibold text-sm transition-all cursor-pointer flex items-center justify-center gap-2 ${
                       added
                         ? 'bg-green-100 text-green-700'
                         : 'bg-brand-primary text-white hover:bg-brand-hover'
@@ -290,12 +290,12 @@ export default function QuickViewModal({ product, onClose }: QuickViewModalProps
                   >
                     {added ? (
                       <>
-                        <i className="ri-check-line"></i>
+                        <i aria-hidden="true" className="ri-check-line"></i>
                         Добавено
                       </>
                     ) : (
                       <>
-                        <i className="ri-shopping-cart-line"></i>
+                        <i aria-hidden="true" className="ri-shopping-cart-line"></i>
                         Добави в количката
                       </>
                     )}
@@ -311,7 +311,7 @@ export default function QuickViewModal({ product, onClose }: QuickViewModalProps
               className="text-center text-sm text-brand-primary font-medium hover:text-brand-hover flex items-center justify-center gap-1 cursor-pointer py-2 border-t border-gray-100 mt-2"
             >
               Виж пълната страница
-              <i className="ri-arrow-right-line"></i>
+              <i aria-hidden="true" className="ri-arrow-right-line"></i>
             </Link>
           </div>
         </div>

@@ -152,13 +152,13 @@ export default function Products() {
       {/* Mobile Filter Drawer Overlay */}
       {showFilterDrawer && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/50 z-[65] md:hidden"
           onClick={() => setShowFilterDrawer(false)}
         />
       )}
 
       {/* Mobile Filter Drawer */}
-      {showFilterDrawer && <div ref={drawerRef} role="dialog" aria-modal="true" aria-labelledby="product-filter-title" tabIndex={-1} className="fixed bottom-0 left-0 right-0 z-[70] bg-white rounded-t-2xl md:hidden max-h-[85dvh] overflow-y-auto">
+      {showFilterDrawer && <div ref={drawerRef} role="dialog" aria-modal="true" aria-labelledby="product-filter-title" tabIndex={-1} className="customer-filter-drawer fixed bottom-0 left-0 right-0 z-[70] bg-white rounded-t-2xl md:hidden max-h-[85dvh] overflow-y-auto overscroll-contain">
         <div className="p-4">
           <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-4"></div>
           <div className="flex items-center justify-between mb-4">
@@ -241,24 +241,24 @@ export default function Products() {
       </div>
 
       {/* Sticky Search Bar - ultra compact, categories NOT sticky */}
-      <div className="sticky top-14 sm:top-16 md:top-20 z-30 bg-white border-b border-gray-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <div className="customer-catalog-search sticky z-30 bg-white border-b border-gray-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2 sm:py-2.5">
           <div className="flex gap-2 items-center">
-            <div className="relative flex-1">
+            <div className="relative min-w-0 flex-1">
               <input
                 type="text"
                 aria-label="Търси продукт"
                 placeholder="Търси продукт..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-9 py-2.5 sm:py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-primary text-sm bg-gray-50"
+                className="w-full pl-9 pr-12 py-2.5 sm:py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand-primary text-sm bg-gray-50"
               />
               <i aria-hidden="true" className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-base"></i>
               {searchQuery && (
                 <button
                   aria-label="Изчисти търсенето"
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer p-1"
+                  className="absolute right-0.5 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer p-1"
                 >
                   <i aria-hidden="true" className="ri-close-line"></i>
                 </button>
@@ -359,58 +359,58 @@ export default function Products() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-4 md:gap-6" data-product-shop>
+          <div className="customer-product-grid grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6" data-product-shop>
             {filteredProducts.map(product => (
               <div
                 key={product.id}
-                className="bg-white rounded-xl md:rounded-2xl overflow-hidden border border-gray-100 group"
+                className="customer-product-card bg-white rounded-xl md:rounded-2xl overflow-hidden border border-gray-100 group"
               >
-                <button type="button" aria-label={`Бърз преглед на ${product.name}`} className="w-full relative overflow-hidden bg-white flex items-center justify-center cursor-pointer" style={{ aspectRatio: '3 / 4' }} onClick={(e) => handleQuickView(e, product)}>
+                <button type="button" aria-label={`Бърз преглед на ${product.name}`} className="customer-product-image cursor-pointer" onClick={(e) => handleQuickView(e, product)}>
                     <img
                       src={product.image}
                       alt={product.name}
                       loading="lazy"
-                      className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-300"
+                      className="transition-transform duration-300"
                     />
                     {product.badge && (
-                      <div className="absolute top-2 left-2 bg-brand-primary text-white px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-bold whitespace-nowrap">
+                      <div className="customer-product-badge absolute top-2 left-2 bg-brand-primary text-white px-2 py-0.5 rounded-full text-xs font-bold">
                         {product.badge}
                       </div>
                     )}
                     {!product.in_stock && (
-                      <div className="absolute inset-0 bg-black/55 flex items-center justify-center">
+                      <div className="customer-product-unavailable absolute inset-0 flex items-center justify-center">
                         <span className="bg-white text-gray-900 px-3 py-1 rounded-lg text-xs font-bold whitespace-nowrap">
                           Изчерпан
                         </span>
                       </div>
                     )}
                     {product.in_stock && product.stock > 0 && product.stock < 10 && (
-                      <div className="absolute top-2 right-2 bg-orange-500 text-white px-2 py-0.5 rounded-full text-[10px] font-bold whitespace-nowrap flex items-center gap-1">
+                      <div className="customer-product-badge absolute bottom-2 left-2 bg-orange-500 text-white px-2 py-0.5 rounded-full text-xs font-bold flex items-center gap-1">
                         <i aria-hidden="true" className="ri-fire-fill text-[8px]"></i> Само {product.stock}
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-end justify-center pb-3 opacity-0 group-hover:opacity-100 hidden sm:flex">
-                      <span className="bg-white text-gray-900 text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1">
+                    <div className="absolute inset-0 flex items-end justify-center pb-3 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity hidden sm:flex">
+                      <span className="bg-white text-gray-900 border border-gray-200 shadow-sm text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1">
                         <i aria-hidden="true" className="ri-eye-line"></i> Бърз преглед
                       </span>
                     </div>
                   </button>
 
-                <div className="p-2.5 sm:p-3 md:p-5">
+                <div className="customer-product-body p-3 sm:p-4 md:p-5">
                   <div className="flex items-center gap-1 mb-1">
                     <i aria-hidden="true" className="ri-star-fill text-amber-400 text-[10px] sm:text-xs"></i>
                     <span className="text-[10px] sm:text-xs text-gray-500">{product.rating} ({product.reviews})</span>
                   </div>
 
                   <Link to={`/product/${product.slug || product.id}`}>
-                    <h3 className="text-xs sm:text-sm md:text-base font-bold text-gray-900 mb-1.5 sm:mb-2 line-clamp-2 leading-tight group-hover:text-brand-primary transition-colors" style={{ minHeight: '2.2rem' }}>
+                    <h3 className="customer-product-name font-bold text-gray-900 mb-2 group-hover:text-brand-primary transition-colors">
                       {product.name}
                     </h3>
                   </Link>
 
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="customer-product-actions flex items-center justify-between gap-2">
                     <div>
-                      <div className="text-sm sm:text-base md:text-lg font-bold text-brand-hover">
+                      <div className="customer-product-price font-bold text-brand-hover">
                         €{product.price.toFixed(2)}
                       </div>
                     </div>
