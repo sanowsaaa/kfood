@@ -61,6 +61,7 @@ export default function B2BProductsPage() {
           <div className="relative flex-1">
             <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
             <input
+              aria-label="Търси продукт"
               type="text"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
@@ -69,6 +70,7 @@ export default function B2BProductsPage() {
             />
           </div>
           <select
+            aria-label="Категория"
             value={categoryFilter}
             onChange={e => setCategoryFilter(e.target.value)}
             className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 cursor-pointer"
@@ -77,6 +79,7 @@ export default function B2BProductsPage() {
             {categories.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
           <select
+            aria-label="Подреждане"
             value={sortBy}
             onChange={e => setSortBy(e.target.value as any)}
             className="px-4 py-2.5 border border-gray-300 rounded-xl text-sm bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 cursor-pointer"
@@ -89,7 +92,7 @@ export default function B2BProductsPage() {
           <div className="text-center py-20">
             <i className="ri-loader-4-line text-3xl text-gray-400 animate-spin"></i>
           </div>
-        ) : sorted.length === 0 ? (
+        ) : readError ? null : sorted.length === 0 ? (
           <div className="text-center py-20">
             {products.length === 0 ? (
               <>
@@ -115,9 +118,9 @@ export default function B2BProductsPage() {
           </div>
         )}
 
-        <div className="text-center text-xs text-gray-400 mt-6">
+        {!readError && !productsLoading && <div className="text-center text-xs text-gray-500 mt-6">
           Показани {sorted.length} от {products.length} продукта
-        </div>
+        </div>}
       </main>
 
       <B2BFooter />
@@ -136,7 +139,7 @@ function B2BProductCard({ product }: { product: B2BProduct }) {
   const handleAdd = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    addCarton(product, 1);
+    if (!addCarton(product, 1)) return;
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
   };
@@ -158,7 +161,7 @@ function B2BProductCard({ product }: { product: B2BProduct }) {
         )}
         {product.in_stock ? (
           <span className="absolute bottom-2 right-2 bg-white/90 text-gray-500 text-[10px] font-semibold px-2 py-0.5 rounded-full border border-gray-200">
-            {product.stock > 0 ? `${Math.floor(product.stock / (product.pieces_per_carton || 1))} каш.` : 'В наличност'}
+            {product.stock > 0 ? `${Math.floor(product.stock / (product.pieces_per_carton || 1))} ${isCarton ? 'каш.' : 'бр.'}` : 'В наличност'}
           </span>
         ) : (
           <span className="absolute bottom-2 right-2 bg-amber-50 text-amber-700 text-[10px] font-bold px-2 py-0.5 rounded-full border border-amber-200 flex items-center gap-1">

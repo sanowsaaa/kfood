@@ -1,0 +1,15 @@
+/* Only the partner workspace; storefront and admin styles remain independent. */
+.b2b-shell { font-family: Inter, ui-sans-serif, system-ui, sans-serif; line-height: 1.5; }
+.b2b-shell :is(h1, h2, h3) { overflow-wrap: anywhere; }
+.b2b-shell :is(input, textarea, select) { min-width: 0; }
+.b2b-shell :is(button, a, input, textarea, select):focus-visible { outline: 3px solid #047857; outline-offset: 3px; }
+.b2b-shell button { min-height: 44px; min-width: 44px; }
+.b2b-shell button:disabled { cursor: not-allowed; }
+.b2b-shell :is(.text-\[9px\], .text-\[10px\], .text-\[11px\]) { font-size: 0.75rem; line-height: 1.5; }
+.b2b-shell .text-gray-400 { color: #64748b; }
+@media (max-width: 767px) {
+  .b2b-shell :is(input:not([type='checkbox']):not([type='radio']), textarea, select) { font-size: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .b2b-shell *, .b2b-shell *::before, .b2b-shell *::after { animation-duration: 0.01ms !important; animation-delay: 0ms !important; transition-duration: 0.01ms !important; }
+}

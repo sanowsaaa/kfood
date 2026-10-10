@@ -4,6 +4,7 @@ import Header from '../../home/components/Header';
 import Footer from '../../home/components/Footer';
 import { supabase } from '@/utils/supabase';
 import { sanitizeHtml } from '@/utils/security';
+import { withBlogCover } from '@/utils/blogImages';
 
 interface BlogPost {
   id: number;
@@ -62,7 +63,8 @@ export default function BlogDetailPage() {
     setMeta('og:description', post.excerpt, true);
     setMeta('og:type', 'article', true);
     setMeta('og:url', `${SITE_URL}/blog/${post.slug}`, true);
-    setMeta('og:image', post.cover_image, true);
+    const coverUrl = new URL(post.cover_image, SITE_URL).href;
+    setMeta('og:image', coverUrl, true);
     setMeta('article:published_time', post.created_at, true);
     setMeta('article:section', post.category, true);
 
@@ -85,9 +87,7 @@ export default function BlogDetailPage() {
       description: post.excerpt,
       image: {
         '@type': 'ImageObject',
-        url: post.cover_image,
-        width: 1200,
-        height: 630,
+        url: coverUrl,
       },
       author: {
         '@type': 'Person',
@@ -204,7 +204,7 @@ export default function BlogDetailPage() {
 
       if (error) throw error;
       if (data) {
-        setPost(data);
+        setPost(withBlogCover(data));
         // Increment views — skip bots and repeated views in same session
         const ua = navigator.userAgent.toLowerCase();
         const isBot = /bot|crawler|spider|crawling|googlebot|bingbot|slurp|duckduckbot|facebot|ia_archiver|facebookexternalhit|linkedinbot|twitterbot|rogerbot|embedly|quora|outbrain|showyoubot|outbrain|pinterest|developers\.google/i.test(ua);
@@ -230,7 +230,7 @@ export default function BlogDetailPage() {
           .eq('category', data.category)
           .neq('id', data.id)
           .limit(3);
-        setRelatedPosts(related || []);
+        setRelatedPosts((related || []).map(withBlogCover));
       }
     } catch {
       // Silently handle error — don't leak details
