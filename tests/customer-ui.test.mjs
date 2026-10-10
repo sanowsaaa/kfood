@@ -107,7 +107,7 @@ for (const path of ['/product/ramen-buldak', '/product/17']) {
       const metadata = await qa.page.evaluate(() => ({
         canonical: [...document.querySelectorAll('link[rel="canonical"]')].map(element => element.href),
         og: document.querySelector('meta[property="og:url"]')?.content,
-        graph: [...document.querySelectorAll('script[type="application/ld+json"]')].map(element => JSON.parse(element.textContent || '{}')).find(value => value['@graph'])?.['@graph'],
+        graph: [...document.querySelectorAll('script[type="application/ld+json"]')].flatMap(element => { const value = JSON.parse(element.textContent || '{}'); return value['@graph'] || [value]; }),
       }));
       assert.deepEqual(metadata.canonical, [expected]);
       assert.equal(metadata.og, expected);
