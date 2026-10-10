@@ -38,17 +38,17 @@ export default function Newsletter() {
   };
 
   return (
-    <section className="py-16 md:py-24 bg-gradient-to-br from-red-600 via-red-700 to-rose-800 section-below-fold">
+    <section className="brand-dark-section py-16 md:py-24 bg-gradient-to-br from-brand-primary via-brand-hover to-rose-800 section-below-fold">
       <div className="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-16">
         <div className="max-w-2xl mx-auto text-center">
           <p className="text-xs md:text-sm font-medium tracking-[0.2em] uppercase text-white/90 mb-3">
             Бюлетин
           </p>
           <h2 className="font-heading text-2xl md:text-4xl font-light text-white tracking-tight mb-4">
-            Абонирайте се
+            Още вкусни открития
           </h2>
           <p className="text-sm md:text-base text-white/90 mb-9 font-light leading-relaxed max-w-lg mx-auto">
-            Получавайте ексклузивни оферти, нови продукти и корейски рецепти директно във вашата поща
+            Нови продукти, идеи за рецепти и предложения от K-FOOD — направо в пощата ти.
           </p>
 
           <form id="newsletter-form" data-readdy-form onSubmit={handleSubmit} className="max-w-md mx-auto">
@@ -61,7 +61,7 @@ export default function Newsletter() {
                 name="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="Вашият имейл адрес"
+                placeholder="Твоят имейл адрес"
                 required
                 className="flex-1 px-5 py-3.5 bg-white/10 border-2 border-white/20 text-white placeholder-white/80 text-sm rounded-lg focus:outline-none focus:border-white/50 transition-all font-light"
               />
@@ -77,22 +77,22 @@ export default function Newsletter() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-8 py-3.5 bg-white text-red-600 text-sm font-bold uppercase tracking-wider hover:bg-red-50 transition-colors whitespace-nowrap cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed rounded-lg"
+                className="px-8 py-3.5 bg-white text-brand-primary text-sm font-bold uppercase tracking-wider hover:bg-brand-blush transition-colors whitespace-nowrap cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed rounded-lg"
               >
                 {isSubmitting ? '...' : 'Абонирай се'}
               </button>
             </div>
 
             {submitStatus === 'success' && (
-              <p role="status" className="mt-4 text-sm text-white font-medium">Успешно се абонирахте! Благодарим ви.</p>
+              <p role="status" className="mt-4 text-sm text-white font-medium">Вече си част от K-FOOD. Очаквай следващите ни вкусни открития.</p>
             )}
             {submitStatus === 'error' && (
-              <p role="alert" className="mt-4 text-sm text-white font-medium">Възникна грешка. Моля, опитайте отново.</p>
+              <p role="alert" className="mt-4 text-sm text-white font-medium">Не успяхме да запишем имейла. Опитай отново.</p>
             )}
           </form>
 
           <p className="text-white/90 text-xs mt-6 font-light">
-            Можете да се отпишете по всяко време.
+            Можеш да се отпишеш по всяко време.
           </p>
         </div>
       </div>

@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useLayoutEffect } from 'react';
 import { BrowserRouter, Link, useLocation } from 'react-router-dom';
 import { AppRoutes } from './router';
 import { CartProvider } from './contexts/CartContext';
@@ -9,6 +9,7 @@ import CartToast from './components/CartToast';
 import { trackPageView } from './utils/metaPixel';
 import { B2BProvider, useB2B } from './contexts/B2BContext';
 import CustomerReadError from './components/CustomerReadError';
+import { getRouteSEO, updateSEO } from './utils/seo';
 import './customer.css';
 import './b2b.css';
 
@@ -35,6 +36,13 @@ function CartToastWrapper() {
   return <CartToast product={toastProduct} onClose={clearToast} />;
 }
 
+function RouteSEO() {
+  const location = useLocation();
+  // Reset the previous page before lazy pages and their SEO effects load.
+  useLayoutEffect(() => { updateSEO(getRouteSEO(location.pathname)); }, [location.pathname]);
+  return null;
+}
+
 function MetaPixelPageTracker() {
   const location = useLocation();
   useEffect(() => {
@@ -49,6 +57,7 @@ function App() {
     <BrowserRouter basename={__BASE_PATH__}>
       <CartProvider>
         <B2BProvider>
+        <RouteSEO />
         <MetaPixelPageTracker />
         <ScrollToTop />
         <SiteFrame />

@@ -5,7 +5,7 @@ export default function PartnersSection() {
     <section className="py-16 md:py-24 bg-gray-50/80 section-below-fold" id="partners">
       <div className="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-16">
         <div className="mb-10 md:mb-14">
-          <p className="text-xs md:text-sm font-medium tracking-[0.2em] uppercase text-red-500 mb-3">Партньори</p>
+          <p className="text-xs md:text-sm font-medium tracking-[0.2em] uppercase text-brand-primary mb-3">Партньори</p>
           <h2 className="font-heading text-2xl md:text-4xl font-light text-gray-900 tracking-tight">Работим с Най-Добрите</h2>
         </div>
 
@@ -24,46 +24,46 @@ export default function PartnersSection() {
             {/* Content */}
             <div className="lg:col-span-3 p-8 md:p-12 lg:p-14 flex flex-col justify-center">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-11 h-11 rounded-xl bg-red-50 flex items-center justify-center">
-                  <i aria-hidden="true" className="ri-plant-line text-red-600 text-xl"></i>
+                <div className="w-11 h-11 rounded-xl bg-brand-blush flex items-center justify-center">
+                  <i aria-hidden="true" className="ri-plant-line text-brand-primary text-xl"></i>
                 </div>
                 <div>
                   <h3 className="font-heading text-xl font-medium text-gray-900 tracking-tight">
-                    <a href="https://sunrisefood.eu/" target="_blank" rel="noopener noreferrer" className="hover:text-red-600 transition-colors">Sunrise Food</a>
+                    <a href="https://sunrisefood.eu/" target="_blank" rel="noopener noreferrer" className="hover:text-brand-primary transition-colors">Sunrise Food</a>
                   </h3>
                   <p className="text-xs text-gray-400 font-light">с. Гложене, обл. Ловеч — Ферма за Прясни Гъби</p>
                 </div>
               </div>
 
-              <div className="w-14 h-[3px] bg-gradient-to-r from-red-500 to-red-600 rounded-full mb-5" />
+              <div className="w-14 h-[3px] bg-gradient-to-r from-brand-primary to-brand-primary rounded-full mb-5" />
 
               <p className="text-sm text-gray-600 leading-relaxed mb-5 font-light">
                 K-FOOD си сътрудничи пряко с{' '}
-                <a href="https://sunrisefood.eu/" target="_blank" rel="noopener noreferrer" className="text-red-600 font-semibold hover:text-red-700 transition-colors">Sunrise Food</a>
+                <a href="https://sunrisefood.eu/" target="_blank" rel="noopener noreferrer" className="text-brand-primary font-semibold hover:text-brand-hover transition-colors">Sunrise Food</a>
                 {' '}за доставка на прясна <strong className="font-semibold text-gray-900">гъба кладница</strong> и <strong className="font-semibold text-gray-900">шийтаке</strong> — отглеждани без химикали, с доставка до 24 часа от фермата.
               </p>
 
               <div className="flex flex-wrap gap-2 mb-5">
                 {['Гъба Кладница', 'Шийтаке', 'Без Пестициди', 'Доставка 24ч'].map(tag => (
-                  <span key={tag} className="text-[10px] font-semibold text-red-600 uppercase tracking-wider px-3 py-1.5 bg-red-50 rounded-lg whitespace-nowrap">
+                  <span key={tag} className="text-[10px] font-semibold text-brand-primary uppercase tracking-wider px-3 py-1.5 bg-brand-blush rounded-lg whitespace-nowrap">
                     {tag}
                   </span>
                 ))}
               </div>
 
-              <div className="border border-red-100 bg-red-50/50 rounded-lg p-4 mb-5">
+              <div className="border border-brand-border bg-brand-blush/50 rounded-lg p-4 mb-5">
                 <p className="text-xs text-gray-600 font-light">
                   <strong className="font-semibold text-gray-900">Наличност при запитване</strong> — за прясна гъба кладница и шийтаке се обадете на{' '}
-                  <a href="tel:+359899897566" className="font-semibold text-red-600 hover:text-red-700 transition-colors">0899 897 566</a>
+                  <a href="tel:+359899897566" className="font-semibold text-brand-primary hover:text-brand-hover transition-colors">0899 897 566</a>
                 </p>
               </div>
 
               <div className="flex flex-wrap gap-3">
-                <a href="tel:+359899897566" className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 text-white text-xs font-bold uppercase tracking-wider hover:bg-red-700 transition-colors whitespace-nowrap cursor-pointer rounded-lg">
+                <a href="tel:+359899897566" className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-primary text-white text-xs font-bold uppercase tracking-wider hover:bg-brand-hover transition-colors whitespace-nowrap cursor-pointer rounded-lg">
                   <i aria-hidden="true" className="ri-phone-line"></i>
                   Обади се
                 </a>
-                <a href="https://sunrisefood.eu/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 border-2 border-gray-200 text-gray-700 text-xs font-semibold uppercase tracking-wider hover:border-red-600 hover:text-red-600 hover:bg-red-50 transition-all whitespace-nowrap cursor-pointer rounded-lg">
+                <a href="https://sunrisefood.eu/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 px-5 py-2.5 border-2 border-gray-200 text-gray-700 text-xs font-semibold uppercase tracking-wider hover:border-brand-primary hover:text-brand-primary hover:bg-brand-blush transition-all whitespace-nowrap cursor-pointer rounded-lg">
                   <i aria-hidden="true" className="ri-external-link-line"></i>
                   sunrisefood.eu
                 </a>

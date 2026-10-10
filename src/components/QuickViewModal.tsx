@@ -192,7 +192,7 @@ export default function QuickViewModal({ product, onClose }: QuickViewModalProps
               />
             </div>
             {product.badge && (
-              <span className="absolute top-3 left-3 bg-red-600 text-white px-2.5 py-1 rounded-full text-xs font-bold">
+              <span className="absolute top-3 left-3 bg-brand-primary text-white px-2.5 py-1 rounded-full text-xs font-bold">
                 {product.badge}
               </span>
             )}
@@ -206,7 +206,7 @@ export default function QuickViewModal({ product, onClose }: QuickViewModalProps
           {/* Content - right side on desktop */}
           <div className="sm:w-[55%] p-5 sm:p-6 flex flex-col">
             {/* Category tag */}
-            <span className="text-xs font-semibold text-red-600 uppercase tracking-wider mb-2">
+            <span className="text-xs font-semibold text-brand-primary uppercase tracking-wider mb-2">
               {product.category}
             </span>
 
@@ -235,7 +235,7 @@ export default function QuickViewModal({ product, onClose }: QuickViewModalProps
             {/* Price */}
             <div className="mb-3 pb-3 border-b border-gray-100">
               <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold text-red-600">
+                <span className="text-2xl font-bold text-brand-primary">
                   €{product.price.toFixed(2)}
                 </span>
               </div>
@@ -285,7 +285,7 @@ export default function QuickViewModal({ product, onClose }: QuickViewModalProps
                     className={`flex-1 h-9 rounded-lg font-semibold text-sm transition-all cursor-pointer flex items-center justify-center gap-2 ${
                       added
                         ? 'bg-green-100 text-green-700'
-                        : 'bg-red-600 text-white hover:bg-red-700'
+                        : 'bg-brand-primary text-white hover:bg-brand-hover'
                     }`}
                   >
                     {added ? (
@@ -308,7 +308,7 @@ export default function QuickViewModal({ product, onClose }: QuickViewModalProps
             <Link
               to={`/product/${product.slug || product.id}`}
               onClick={handleClose}
-              className="text-center text-sm text-red-600 font-medium hover:text-red-700 flex items-center justify-center gap-1 cursor-pointer py-2 border-t border-gray-100 mt-2"
+              className="text-center text-sm text-brand-primary font-medium hover:text-brand-hover flex items-center justify-center gap-1 cursor-pointer py-2 border-t border-gray-100 mt-2"
             >
               Виж пълната страница
               <i className="ri-arrow-right-line"></i>

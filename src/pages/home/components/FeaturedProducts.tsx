@@ -83,7 +83,7 @@ export default function FeaturedProducts() {
         {/* Header */}
         <div className="flex items-end justify-between mb-6 md:mb-10 lg:mb-14">
           <div>
-            <p className="text-[11px] sm:text-xs md:text-sm font-medium tracking-[0.2em] uppercase text-red-500 mb-2 md:mb-3">
+            <p className="text-[11px] sm:text-xs md:text-sm font-medium tracking-[0.2em] uppercase text-brand-primary mb-2 md:mb-3">
               Селекция
             </p>
             <h2 className="font-heading text-xl sm:text-2xl md:text-4xl font-light text-gray-900 tracking-tight">
@@ -92,7 +92,7 @@ export default function FeaturedProducts() {
           </div>
           <Link
             to="/products"
-            className="text-xs sm:text-[13px] font-medium text-gray-500 hover:text-red-600 transition-colors whitespace-nowrap flex items-center gap-1.5 tracking-wide uppercase"
+            className="text-xs sm:text-[13px] font-medium text-gray-500 hover:text-brand-primary transition-colors whitespace-nowrap flex items-center gap-1.5 tracking-wide uppercase"
           >
             Виж всички
             <i aria-hidden="true" className="ri-arrow-right-line"></i>
@@ -104,7 +104,7 @@ export default function FeaturedProducts() {
           {featured.map((product, idx) => (
             <div
               key={product.id}
-              className="bg-white group cursor-pointer contain-layout rounded-xl border border-gray-100 hover:border-red-200 transition-all duration-300 overflow-hidden"
+              className="bg-white group cursor-pointer contain-layout rounded-xl border border-gray-100 hover:border-brand-border transition-all duration-300 overflow-hidden"
             >
               {/* Image - square on mobile for bigger touch area, 3/4 on desktop */}
               <Link to={`/product/${product.slug || product.id}`} className="block relative overflow-hidden bg-white flex items-center justify-center" style={{ aspectRatio: '3 / 4' }}>
@@ -115,7 +115,7 @@ export default function FeaturedProducts() {
                   className="w-full h-full object-contain object-center group-hover:scale-[1.04] transition-transform duration-500"
                 />
                 {product.badge && (
-                  <span className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-red-600 text-white text-[9px] sm:text-[10px] font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md uppercase tracking-wider shadow-sm whitespace-nowrap">
+                  <span className="absolute top-2 left-2 sm:top-3 sm:left-3 bg-brand-primary text-white text-[9px] sm:text-[10px] font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-md uppercase tracking-wider shadow-sm whitespace-nowrap">
                     {product.badge}
                   </span>
                 )}
@@ -131,7 +131,7 @@ export default function FeaturedProducts() {
               {/* Content - tighter on mobile */}
               <div className="p-3 sm:p-4 md:p-5">
                 <Link to={`/product/${product.slug || product.id}`}>
-                  <h3 className="text-xs sm:text-sm md:text-[15px] font-semibold text-gray-900 mb-1 sm:mb-1.5 line-clamp-2 leading-snug group-hover:text-red-600 transition-colors">
+                  <h3 className="text-xs sm:text-sm md:text-[15px] font-semibold text-gray-900 mb-1 sm:mb-1.5 line-clamp-2 leading-snug group-hover:text-brand-primary transition-colors">
                     {product.name}
                   </h3>
                 </Link>
@@ -155,7 +155,7 @@ export default function FeaturedProducts() {
                     disabled={!product.in_stock}
                     className={`w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-lg transition-all flex-shrink-0 touch-target-sm ${
                       product.in_stock
-                        ? 'bg-red-600 text-white hover:bg-red-700 active:scale-95 shadow-sm shadow-red-200 cursor-pointer'
+                        ? 'bg-brand-primary text-white hover:bg-brand-hover active:scale-95 shadow-sm shadow-red-200 cursor-pointer'
                         : 'bg-gray-100 text-gray-300 cursor-not-allowed'
                     }`}
                     aria-label="Добави в количката"
@@ -175,7 +175,7 @@ export default function FeaturedProducts() {
         <div className="text-center mt-8 md:mt-12">
           <Link
             to="/products"
-            className="inline-flex items-center gap-2 px-8 sm:px-10 py-3.5 sm:py-4 border-2 border-red-600 text-red-600 text-sm font-bold tracking-wide uppercase hover:bg-red-600 hover:text-white transition-all whitespace-nowrap cursor-pointer rounded-xl touch-target"
+            className="inline-flex items-center gap-2 px-8 sm:px-10 py-3.5 sm:py-4 border-2 border-brand-primary text-brand-primary text-sm font-bold tracking-wide uppercase hover:bg-brand-primary hover:text-white transition-all whitespace-nowrap cursor-pointer rounded-xl touch-target"
           >
             Виж всички продукти
             <i aria-hidden="true" className="ri-arrow-right-line text-lg"></i>

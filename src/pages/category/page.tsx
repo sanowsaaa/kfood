@@ -122,6 +122,7 @@ export default function Category() {
     description: currentCategory?.seoDescription ?? (currentCategory ? `${currentCategory.description}. Разгледайте нашата селекция от ${currentCategory.name.toLowerCase()} в K-FOOD Велико Търново.` : 'Категория корейски продукти'),
     keywords: currentCategory?.seoKeywords ?? (currentCategory ? `${currentCategory.name}, корейски продукти, K-FOOD` : 'корейски продукти'),
     canonical: `/category/${id}`,
+    robots: !currentCategory ? 'noindex, follow' : undefined,
     ogType: 'website',
     schema: currentCategory ? {
       '@context': 'https://schema.org',
@@ -178,7 +179,7 @@ export default function Category() {
         <Header />
         <div className="min-h-screen flex items-center justify-center px-4">
           <div className="text-center">
-            <div className="w-12 h-12 sm:w-16 sm:h-16 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <div className="w-12 h-12 sm:w-16 sm:h-16 border-4 border-brand-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600 font-medium text-sm">Зареждане на продуктите...</p>
           </div>
         </div>
@@ -194,7 +195,7 @@ export default function Category() {
         <div className="min-h-screen flex items-center justify-center px-4">
           <div className="text-center">
             <h1 id="main-content" tabIndex={-1} className="text-2xl sm:text-4xl font-bold text-gray-900 mb-4">Категорията не е намерена</h1>
-            <Link to="/products" className="text-red-600 hover:text-red-700 font-semibold whitespace-nowrap text-sm">
+            <Link to="/products" className="text-brand-primary hover:text-brand-hover font-semibold whitespace-nowrap text-sm">
               Виж всички продукти
             </Link>
           </div>
@@ -209,14 +210,14 @@ export default function Category() {
       <Header />
 
       {/* Category Hero - MOBILE OPTIMIZED: smaller padding, smaller text */}
-      <section className="bg-gradient-to-r from-red-600 to-red-700 text-white py-10 sm:py-14 md:py-20">
+      <section className="bg-gradient-to-r from-brand-primary to-brand-hover text-white py-10 sm:py-14 md:py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h1 id="main-content" tabIndex={-1} className="text-2xl sm:text-3xl md:text-5xl font-bold mb-2 sm:mb-4">{currentCategory.name}</h1>
-            <p className="text-sm sm:text-base md:text-xl text-red-100 max-w-2xl mx-auto">
+            <p className="text-sm sm:text-base md:text-xl text-brand-petal max-w-2xl mx-auto">
               {currentCategory.description}
             </p>
-            <div className="mt-4 sm:mt-6 flex items-center justify-center gap-2 text-red-100 text-xs sm:text-sm">
+            <div className="mt-4 sm:mt-6 flex items-center justify-center gap-2 text-brand-petal text-xs sm:text-sm">
               <Link to="/" className="hover:text-white transition-colors cursor-pointer">Начало</Link>
               <i aria-hidden="true" className="ri-arrow-right-s-line"></i>
               <span>{currentCategory.name}</span>
@@ -243,7 +244,7 @@ export default function Category() {
                   aria-label="Сортиране на продуктите"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="px-3 sm:px-4 py-2 pr-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent cursor-pointer text-sm"
+                  className="px-3 sm:px-4 py-2 pr-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent cursor-pointer text-sm"
                 >
                   <option value="featured">Препоръчани</option>
                   <option value="price-low">Цена: Ниска → Висока</option>
@@ -264,12 +265,14 @@ export default function Category() {
                 >
                   <Link to={`/product/${product.slug || product.id}`} className="block relative overflow-hidden cursor-pointer bg-white flex items-center justify-center" style={{ aspectRatio: '3 / 4' }}>
                     <img
+                        loading="lazy"
+                        decoding="async"
                       src={product.image}
                       alt={product.name}
                       className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-500"
                     />
                     {product.badge && (
-                      <span className="absolute top-2 sm:top-4 left-2 sm:left-4 bg-red-600 text-white px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-sm font-semibold whitespace-nowrap">
+                      <span className="absolute top-2 sm:top-4 left-2 sm:left-4 bg-brand-primary text-white px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-sm font-semibold whitespace-nowrap">
                         {product.badge}
                       </span>
                     )}
@@ -284,7 +287,7 @@ export default function Category() {
 
                   <div className="p-3 sm:p-6">
                     <Link to={`/product/${product.slug || product.id}`} className="cursor-pointer">
-                      <h3 className="text-sm sm:text-lg font-bold text-gray-900 mb-1 sm:mb-2 group-hover:text-red-600 transition-colors line-clamp-2">
+                      <h3 className="text-sm sm:text-lg font-bold text-gray-900 mb-1 sm:mb-2 group-hover:text-brand-primary transition-colors line-clamp-2">
                         {product.name}
                       </h3>
                     </Link>
@@ -308,7 +311,7 @@ export default function Category() {
                     <div className="flex items-center justify-between">
                       <div>
                         <div className="flex flex-col">
-                          <span className="text-lg sm:text-2xl font-bold text-red-600">
+                          <span className="text-lg sm:text-2xl font-bold text-brand-primary">
                             €{product.price.toFixed(2)}
                           </span>
                         </div>
@@ -317,7 +320,7 @@ export default function Category() {
                       <button
                         onClick={() => handleAddToCart(product)}
                         disabled={!product.in_stock}
-                        className={`${product.in_stock ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'} w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl whitespace-nowrap touch-target-sm`}
+                        className={`${product.in_stock ? 'bg-brand-primary hover:bg-brand-hover text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'} w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl whitespace-nowrap touch-target-sm`}
                       >
                         {addedProducts.has(product.id) ? (
                           <i aria-hidden="true" className="ri-check-line text-base sm:text-xl"></i>
@@ -344,7 +347,7 @@ export default function Category() {
               <p className="text-gray-600 text-sm mb-6">Опитайте да разгледате други категории</p>
               <Link
                 to="/products"
-                className="inline-block bg-red-600 text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-full font-semibold hover:bg-red-700 transition-colors whitespace-nowrap cursor-pointer text-sm"
+                className="inline-block bg-brand-primary text-white px-6 sm:px-8 py-2.5 sm:py-3 rounded-full font-semibold hover:bg-brand-hover transition-colors whitespace-nowrap cursor-pointer text-sm"
               >
                 Виж всички продукти
               </Link>

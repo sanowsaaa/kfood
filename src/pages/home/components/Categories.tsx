@@ -15,7 +15,7 @@ const categories = [
     description: 'Традиционно корейско кимчи и ферментирали продукти',
     image: 'https://readdy.ai/api/search-image?query=Traditional%20Korean%20kimchi%20in%20glass%20jar%20with%20napa%20cabbage%20radish%20cucumber%20fermented%20vegetables%20on%20clean%20white%20marble%20surface%20natural%20lighting%20professional%20food%20photography%20minimalist%20composition%20authentic%20Korean%20side%20dishes&width=600&height=600&seq=cat-kimchi-001&orientation=squarish',
     icon: 'ri-leaf-line',
-    color: 'from-red-500 to-red-600',
+    color: 'from-brand-primary to-brand-primary',
   },
   {
     id: 2,
@@ -31,7 +31,7 @@ const categories = [
     description: 'Автентични корейски сосове и подправки',
     image: 'https://readdy.ai/api/search-image?query=Korean%20sauces%20and%20condiments%20gochujang%20doenjang%20soy%20sauce%20sesame%20oil%20in%20traditional%20bottles%20and%20jars%20arranged%20on%20white%20marble%20surface%20clean%20background%20professional%20product%20photography%20authentic%20Korean%20cooking%20ingredients&width=600&height=600&seq=cat-sauces-003&orientation=squarish',
     icon: 'ri-drop-line',
-    color: 'from-red-600 to-rose-700',
+    color: 'from-brand-primary to-rose-700',
   },
   {
     id: 4,
@@ -39,7 +39,7 @@ const categories = [
     description: 'Популярни корейски снакове и десерти',
     image: 'https://readdy.ai/api/search-image?query=Korean%20snacks%20and%20sweets%20colorful%20packaging%20rice%20cakes%20tteok%20Korean%20candies%20chips%20arranged%20beautifully%20on%20clean%20white%20surface%20professional%20product%20photography%20minimalist%20composition%20authentic%20Korean%20treats&width=600&height=600&seq=cat-snacks-004&orientation=squarish',
     icon: 'ri-cake-3-line',
-    color: 'from-pink-400 to-red-500',
+    color: 'from-pink-400 to-brand-primary',
   },
   {
     id: 5,
@@ -65,7 +65,7 @@ export default function Categories() {
       <div className="max-w-[1440px] mx-auto px-6 md:px-10 lg:px-16">
         {/* Header */}
         <div className="mb-10 md:mb-14">
-          <p className="text-xs md:text-sm font-medium tracking-[0.2em] uppercase text-red-500 mb-3">
+          <p className="text-xs md:text-sm font-medium tracking-[0.2em] uppercase text-brand-primary mb-3">
             Разгледай
           </p>
           <h2 className="font-heading text-2xl md:text-4xl font-light text-gray-900 tracking-tight">
@@ -78,7 +78,7 @@ export default function Categories() {
             <Link
               key={category.id}
               to={`/category/${category.id}`}
-              className="group bg-white cursor-pointer contain-layout rounded-xl border border-gray-100 overflow-hidden hover:border-red-200 transition-all duration-300 hover:shadow-[0_4px_20px_rgba(220,38,38,0.08)]"
+              className="group bg-white cursor-pointer contain-layout rounded-xl border border-gray-100 overflow-hidden hover:border-brand-border transition-all duration-300 hover:shadow-[0_4px_20px_rgba(220,38,38,0.08)]"
             >
               <div className="relative overflow-hidden aspect-[16/10] bg-gray-50">
                 <img
@@ -92,11 +92,11 @@ export default function Categories() {
                 </div>
               </div>
               <div className="p-5 md:p-6">
-                <h3 className="font-heading text-lg md:text-xl font-medium text-gray-900 group-hover:text-red-600 transition-colors tracking-tight mb-2">
+                <h3 className="font-heading text-lg md:text-xl font-medium text-gray-900 group-hover:text-brand-primary transition-colors tracking-tight mb-2">
                   {category.name}
                 </h3>
                 <p className="text-sm text-gray-500 font-light mb-4 leading-relaxed">{category.description}</p>
-                <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-red-600 uppercase tracking-wider">
+                <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-brand-primary uppercase tracking-wider">
                   Разгледай
                   <i className="ri-arrow-right-line group-hover:translate-x-1 transition-transform duration-300"></i>
                 </span>

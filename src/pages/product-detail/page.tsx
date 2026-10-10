@@ -85,12 +85,13 @@ export default function ProductDetail() {
       ? `${product.name} | Купи Онлайн - K-FOOD Велико Търново`
       : 'Продукт - K-FOOD',
     description: product
-      ? `${product.name} — автентичен корейски продукт. ${(product.description || '').slice(0, 100)}. Цена: €${(product.price).toFixed(2)}. ${product.in_stock ? 'В наличност. Бърза доставка в цяла България.' : 'Временно изчерпан.'}`
+      ? `${product.name}. ${product.description ? `${product.description.slice(0, 100)} ` : ''}Цена: €${product.price.toFixed(2)}. ${product.in_stock ? 'В наличност. Доставка в България.' : 'Временно изчерпан.'}`
       : 'Детайли за корейски продукт от K-FOOD',
     keywords: product
       ? `${product.name}, купи ${product.name}, ${product.category} онлайн, корейски продукти, K-FOOD`
       : 'корейски продукти онлайн',
     canonical: productUrl,
+    robots: !loading && !readError && !product ? 'noindex, follow' : undefined,
     ogType: 'product',
     ogImage: product?.image,
     schema: product
@@ -146,7 +147,7 @@ export default function ProductDetail() {
       <>
         <Header />
         <div className="min-h-screen flex items-center justify-center px-4">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin"></div>
+          <div className="w-10 h-10 sm:w-12 sm:h-12 border-4 border-brand-primary border-t-transparent rounded-full animate-spin"></div>
         </div>
         <Footer />
       </>
@@ -162,7 +163,7 @@ export default function ProductDetail() {
         <div className="min-h-screen flex items-center justify-center px-4">
           <div className="text-center">
             <h1 id="main-content" tabIndex={-1} className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Продуктът не е намерен</h1>
-            <Link to="/products" className="text-red-600 font-semibold text-sm">← Виж всички продукти</Link>
+            <Link to="/products" className="text-brand-primary font-semibold text-sm">← Виж всички продукти</Link>
           </div>
         </div>
         <Footer />
@@ -182,7 +183,7 @@ export default function ProductDetail() {
       {/* Toast notification */}
       {showNotification && (
         <div
-          className="fixed top-16 sm:top-20 left-1/2 -translate-x-1/2 z-50 bg-red-600 text-white px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl flex items-center gap-2 text-sm font-semibold shadow-xl whitespace-nowrap"
+          className="fixed top-16 sm:top-20 left-1/2 -translate-x-1/2 z-50 bg-brand-primary text-white px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl flex items-center gap-2 text-sm font-semibold shadow-xl whitespace-nowrap"
           style={{
             animation: 'slideUpFade 0.3s ease-out, slideDownFade 0.3s ease-in 2.2s forwards',
           }}
@@ -196,9 +197,9 @@ export default function ProductDetail() {
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3">
           <div className="flex items-center gap-1.5 text-xs sm:text-sm text-gray-500 flex-wrap">
-            <Link to="/" className="hover:text-red-600 transition-colors">Начало</Link>
+            <Link to="/" className="hover:text-brand-primary transition-colors">Начало</Link>
             <i aria-hidden="true" className="ri-arrow-right-s-line text-gray-300"></i>
-            <Link to="/products" className="hover:text-red-600 transition-colors">Продукти</Link>
+            <Link to="/products" className="hover:text-brand-primary transition-colors">Продукти</Link>
             <i aria-hidden="true" className="ri-arrow-right-s-line text-gray-300"></i>
             <span className="text-gray-800 font-medium line-clamp-1">{product.name}</span>
           </div>
@@ -230,7 +231,7 @@ export default function ProductDetail() {
           {/* Product Info - compact on mobile */}
           <div className="space-y-3 sm:space-y-4 md:space-y-6">
             {product.badge && (
-              <span className="inline-block bg-red-600 text-white px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold">
+              <span className="inline-block bg-brand-primary text-white px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-xs font-bold">
                 <i aria-hidden="true" className="ri-fire-fill mr-1"></i>{product.badge}
               </span>
             )}
@@ -249,7 +250,7 @@ export default function ProductDetail() {
 
             {/* Price */}
             <div className="flex items-baseline gap-2 sm:gap-3">
-              <span className="text-2xl sm:text-3xl md:text-4xl font-bold text-red-600">
+              <span className="text-2xl sm:text-3xl md:text-4xl font-bold text-brand-primary">
                 €{(product.price).toFixed(2)}
               </span>
             </div>
@@ -258,7 +259,7 @@ export default function ProductDetail() {
             <div className="flex flex-wrap items-center gap-2 mb-3 sm:mb-4">
               {product.in_stock ? (
                 <>
-                  <div className="flex items-center gap-2 text-red-600">
+                  <div className="flex items-center gap-2 text-brand-primary">
                     <i aria-hidden="true" className="ri-checkbox-circle-fill text-lg sm:text-xl"></i>
                     <span className="font-semibold text-sm sm:text-base">В наличност ({product.stock} бр.)</span>
                   </div>
@@ -272,7 +273,7 @@ export default function ProductDetail() {
                   </span>
                 </>
               ) : (
-                <div className="flex items-center gap-2 text-red-500">
+                <div className="flex items-center gap-2 text-brand-primary">
                   <i aria-hidden="true" className="ri-close-circle-fill text-lg sm:text-xl"></i>
                   <span className="font-semibold text-sm sm:text-base">Изчерпан</span>
                 </div>
@@ -339,7 +340,7 @@ export default function ProductDetail() {
                 disabled={!product.in_stock}
                 className={`flex-1 py-4 rounded-xl font-bold text-base transition-all flex items-center justify-center gap-2 whitespace-nowrap touch-target ${
                   product.in_stock
-                    ? 'bg-red-600 text-white hover:bg-red-700 cursor-pointer active:scale-95'
+                    ? 'bg-brand-primary text-white hover:bg-brand-hover cursor-pointer active:scale-95'
                     : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                 }`}
               >
@@ -368,7 +369,7 @@ export default function ProductDetail() {
                 { icon: 'ri-customer-service-2-line', text: 'Поддръжка 24/7' },
               ].map(b => (
                 <div key={b.text} className="text-center p-2 sm:p-3 bg-white rounded-xl border border-gray-100">
-                  <i aria-hidden="true" className={`${b.icon} text-lg sm:text-2xl text-red-600 mb-1 block`}></i>
+                  <i aria-hidden="true" className={`${b.icon} text-lg sm:text-2xl text-brand-primary mb-1 block`}></i>
                   <p className="text-[10px] sm:text-xs text-gray-600 font-medium">{b.text}</p>
                 </div>
               ))}
@@ -401,8 +402,8 @@ export default function ProductDetail() {
                     )}
                   </div>
                   <div className="p-2.5 sm:p-3">
-                    <h3 className="text-xs sm:text-sm font-bold text-gray-900 line-clamp-2 mb-1 group-hover:text-red-600 transition-colors">{rp.name}</h3>
-                    <span className="text-xs sm:text-sm font-bold text-red-600">€{(rp.price).toFixed(2)}</span>
+                    <h3 className="text-xs sm:text-sm font-bold text-gray-900 line-clamp-2 mb-1 group-hover:text-brand-primary transition-colors">{rp.name}</h3>
+                    <span className="text-xs sm:text-sm font-bold text-brand-primary">€{(rp.price).toFixed(2)}</span>
                   </div>
                 </Link>
               ))}
@@ -443,7 +444,7 @@ export default function ProductDetail() {
             <button
               aria-label="Добави в количката"
               onClick={handleAddToCart}
-              className="flex-1 py-2.5 sm:py-3 bg-red-600 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-transform whitespace-nowrap touch-target"
+              className="flex-1 py-2.5 sm:py-3 bg-brand-primary text-white rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-transform whitespace-nowrap touch-target"
             >
               {addedToCart ? (
                 <><i aria-hidden="true" className="ri-check-line text-sm"></i> Добавено!</>

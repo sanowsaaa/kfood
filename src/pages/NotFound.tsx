@@ -9,12 +9,12 @@ export default function NotFound() {
       title: 'Страницата не е намерена | K-FOOD Корейска храна',
       description: 'Търсената от вас страница не съществува. Разгледайте нашите корейски продукти и специалитети.',
       keywords: 'корейска храна, корейски продукти, 404 страница, K-FOOD Велико Търново',
-      canonical: '/404'
+      robots: 'noindex, follow'
     });
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-50">
+    <div className="min-h-screen bg-gradient-to-br from-brand-blush to-brand-blush">
       {/* Header */}
       <div className="bg-white shadow-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -27,13 +27,13 @@ export default function NotFound() {
               />
             </Link>
             <nav className="hidden md:flex items-center space-x-8">
-              <Link to="/" className="text-gray-700 hover:text-emerald-600 font-semibold transition-colors cursor-pointer whitespace-nowrap">
+              <Link to="/" className="text-gray-700 hover:text-brand-primary font-semibold transition-colors cursor-pointer whitespace-nowrap">
                 Начало
               </Link>
-              <Link to="/products" className="text-gray-700 hover:text-emerald-600 font-semibold transition-colors cursor-pointer whitespace-nowrap">
+              <Link to="/products" className="text-gray-700 hover:text-brand-primary font-semibold transition-colors cursor-pointer whitespace-nowrap">
                 Продукти
               </Link>
-              <Link to="/categories" className="text-gray-700 hover:text-emerald-600 font-semibold transition-colors cursor-pointer whitespace-nowrap">
+              <Link to="/categories" className="text-gray-700 hover:text-brand-primary font-semibold transition-colors cursor-pointer whitespace-nowrap">
                 Категории
               </Link>
             </nav>
@@ -54,7 +54,7 @@ export default function NotFound() {
 
         {/* 404 Text */}
         <div className="text-center max-w-2xl">
-          <h1 className="text-6xl md:text-8xl font-bold text-emerald-600 mb-4">
+          <h1 className="text-6xl md:text-8xl font-bold text-brand-primary mb-4">
             404
           </h1>
           <h2 className="text-2xl md:text-3xl font-bold text-gray-800 mb-4">
@@ -69,7 +69,7 @@ export default function NotFound() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <Link
               to="/"
-              className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white px-8 py-4 rounded-xl font-semibold text-lg hover:from-emerald-700 hover:to-teal-700 transform hover:scale-105 transition-all duration-200 shadow-lg flex items-center space-x-2 cursor-pointer whitespace-nowrap"
+              className="bg-gradient-to-r from-brand-primary to-brand-primary text-white px-8 py-4 rounded-xl font-semibold text-lg hover:from-brand-hover hover:to-brand-hover transform hover:scale-105 transition-all duration-200 shadow-lg flex items-center space-x-2 cursor-pointer whitespace-nowrap"
             >
               <i className="ri-home-line text-xl"></i>
               <span>Към началото</span>
@@ -77,7 +77,7 @@ export default function NotFound() {
 
             <Link
               to="/products"
-              className="bg-white text-emerald-600 border-2 border-emerald-600 px-8 py-4 rounded-xl font-semibold text-lg hover:bg-emerald-50 transform hover:scale-105 transition-all duration-200 shadow-lg flex items-center space-x-2 cursor-pointer whitespace-nowrap"
+              className="bg-white text-brand-primary border-2 border-brand-primary px-8 py-4 rounded-xl font-semibold text-lg hover:bg-brand-blush transform hover:scale-105 transition-all duration-200 shadow-lg flex items-center space-x-2 cursor-pointer whitespace-nowrap"
             >
               <i className="ri-shopping-bag-line text-xl"></i>
               <span>Всички продукти</span>
@@ -97,7 +97,7 @@ export default function NotFound() {
               className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 cursor-pointer"
             >
               <div className="flex items-center space-x-4">
-                <div className="w-12 h-12 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-lg flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-r from-brand-primary to-brand-primary rounded-lg flex items-center justify-center">
                   <i className="ri-grid-line text-2xl text-white"></i>
                 </div>
                 <div>

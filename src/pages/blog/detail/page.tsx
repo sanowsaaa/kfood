@@ -5,6 +5,8 @@ import Footer from '../../home/components/Footer';
 import { supabase } from '@/utils/supabase';
 import { sanitizeHtml } from '@/utils/security';
 import { withBlogCover } from '@/utils/blogImages';
+import { useSEO } from '@/utils/seo';
+import { getArticleSEO } from '@/utils/articleSeo';
 
 interface BlogPost {
   id: number;
@@ -20,17 +22,7 @@ interface BlogPost {
   views: number;
   read_time: number;
   created_at: string;
-}
-
-const SITE_URL = import.meta.env.VITE_SITE_URL || 'https://k-foodvelikotarnovo.com';
-
-function injectSchema(schema: object) {
-  // Remove all existing JSON-LD scripts
-  document.querySelectorAll('script[type="application/ld+json"]').forEach((el) => el.remove());
-  const script = document.createElement('script');
-  script.type = 'application/ld+json';
-  script.textContent = JSON.stringify(schema);
-  document.head.appendChild(script);
+  updated_at?: string;
 }
 
 export default function BlogDetailPage() {
@@ -39,146 +31,13 @@ export default function BlogDetailPage() {
   const [relatedPosts, setRelatedPosts] = useState<Pick<BlogPost, 'id' | 'title' | 'slug' | 'excerpt' | 'cover_image' | 'category' | 'read_time' | 'created_at' | 'views'>[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Inject schema + SEO when post loads
-  useEffect(() => {
-    if (!post) return;
-
-    // Title & meta
-    document.title = `${post.title} | K-FOOD Блог`;
-
-    const setMeta = (name: string, content: string, prop = false) => {
-      const attr = prop ? 'property' : 'name';
-      let el = document.querySelector(`meta[${attr}="${name}"]`);
-      if (!el) {
-        el = document.createElement('meta');
-        el.setAttribute(attr, name);
-        document.head.appendChild(el);
-      }
-      el.setAttribute('content', content);
-    };
-
-    setMeta('description', post.excerpt);
-    setMeta('keywords', post.tags.join(', '));
-    setMeta('og:title', `${post.title} | K-FOOD Блог`, true);
-    setMeta('og:description', post.excerpt, true);
-    setMeta('og:type', 'article', true);
-    setMeta('og:url', `${SITE_URL}/blog/${post.slug}`, true);
-    const coverUrl = new URL(post.cover_image, SITE_URL).href;
-    setMeta('og:image', coverUrl, true);
-    setMeta('article:published_time', post.created_at, true);
-    setMeta('article:section', post.category, true);
-
-    // Canonical
-    let canonical = document.querySelector('link[rel="canonical"]');
-    if (!canonical) {
-      canonical = document.createElement('link');
-      canonical.setAttribute('rel', 'canonical');
-      document.head.appendChild(canonical);
-    }
-    canonical.setAttribute('href', `${SITE_URL}/blog/${post.slug}`);
-
-    // Schema.org
-    const wordCount = post.content.replace(/<[^>]+>/g, '').split(/\s+/).length;
-
-    const baseArticle: Record<string, unknown> = {
-      '@type': 'Article',
-      '@id': `${SITE_URL}/blog/${post.slug}#article`,
-      headline: post.title,
-      description: post.excerpt,
-      image: {
-        '@type': 'ImageObject',
-        url: coverUrl,
-      },
-      author: {
-        '@type': 'Person',
-        name: post.author,
-      },
-      publisher: {
-        '@type': 'Organization',
-        name: 'K-FOOD Велико Търново',
-        url: SITE_URL,
-        logo: {
-          '@type': 'ImageObject',
-          url: `${SITE_URL}/og-image.jpg`,
-          width: 600,
-          height: 60,
-        },
-      },
-      datePublished: new Date(post.created_at).toISOString(),
-      dateModified: new Date(post.created_at).toISOString(),
-      mainEntityOfPage: {
-        '@type': 'WebPage',
-        '@id': `${SITE_URL}/blog/${post.slug}`,
-      },
-      keywords: post.tags.join(', '),
-      articleSection: post.category,
-      inLanguage: 'bg-BG',
-      url: `${SITE_URL}/blog/${post.slug}`,
-      wordCount,
-      timeRequired: `PT${post.read_time}M`,
-      isPartOf: {
-        '@type': 'Blog',
-        '@id': `${SITE_URL}/blog`,
-        name: 'K-FOOD Блог',
-        url: `${SITE_URL}/blog`,
-      },
-    };
-
-    if (post.slug === 'kak-digitalen-marketing-udvoi-klienti-k-food') {
-      baseArticle.mentions = {
-        '@type': 'Organization',
-        name: 'ТАВОРА ЕООД',
-        alternateName: 'Tavora Digital Agency',
-        url: 'https://imashnujnoto.com',
-        sameAs: ['https://imashnujnoto.com/za-tavora'],
-      };
-    }
-
-    if (post.slug === 'zashto-vseki-biznes-investira-digitalen-marketing-2026') {
-      baseArticle.mentions = {
-        '@type': 'Organization',
-        name: 'ТАВОРА ЕООД',
-        alternateName: 'Tavora Digital Agency',
-        url: 'https://imashnujnoto.com',
-        sameAs: ['https://imashnujnoto.com/za-tavora'],
-      };
-    }
-
-    injectSchema({
-      '@context': 'https://schema.org',
-      '@graph': [
-        baseArticle,
-        {
-          '@type': 'BreadcrumbList',
-          '@id': `${SITE_URL}/blog/${post.slug}#breadcrumb`,
-          itemListElement: [
-            {
-              '@type': 'ListItem',
-              position: 1,
-              name: 'Начало',
-              item: SITE_URL,
-            },
-            {
-              '@type': 'ListItem',
-              position: 2,
-              name: 'Блог',
-              item: `${SITE_URL}/blog`,
-            },
-            {
-              '@type': 'ListItem',
-              position: 3,
-              name: post.title,
-              item: `${SITE_URL}/blog/${post.slug}`,
-            },
-          ],
-        },
-      ],
-    });
-
-    return () => {
-      document.querySelectorAll('script[type="application/ld+json"]').forEach((el) => el.remove());
-    };
-  }, [post]);
+  const seoPost = post?.slug === slug ? post : null;
+  useSEO(seoPost ? getArticleSEO(seoPost) : {
+    title: loading ? 'Зареждане на статия | K-FOOD' : 'Статията не е намерена | K-FOOD',
+    description: 'Истории, рецепти и нови вкусове от K-FOOD.',
+    canonical: `/blog/${slug}`,
+    robots: !loading && !seoPost ? 'noindex, follow' : undefined,
+  });
 
   useLayoutEffect(() => {
     window.scrollTo(0, 0);
@@ -252,7 +111,7 @@ export default function BlogDetailPage() {
         <Header />
         <div className="min-h-screen flex items-center justify-center">
           <div className="text-center">
-            <div className="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <div className="w-12 h-12 border-4 border-brand-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-500">Зареждане...</p>
           </div>
         </div>
@@ -269,7 +128,7 @@ export default function BlogDetailPage() {
           <div className="text-center">
             <i className="ri-article-line text-6xl text-gray-300 mb-4"></i>
             <h1 className="text-2xl font-bold text-gray-700 mb-2">Статията не е намерена</h1>
-            <Link to="/blog" className="text-emerald-600 hover:underline font-medium">
+            <Link to="/blog" className="text-brand-primary hover:underline font-medium">
               Обратно към блога
             </Link>
           </div>
@@ -295,7 +154,7 @@ export default function BlogDetailPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
         <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12 max-w-4xl mx-auto">
-          <span className="inline-block bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-full mb-3 whitespace-nowrap">
+          <span className="inline-block bg-brand-primary text-white text-xs font-bold px-3 py-1.5 rounded-full mb-3 whitespace-nowrap">
             {post.category}
           </span>
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
@@ -307,9 +166,9 @@ export default function BlogDetailPage() {
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-gray-500 mb-8">
-          <Link to="/" className="hover:text-emerald-600 transition-colors">Начало</Link>
+          <Link to="/" className="hover:text-brand-primary transition-colors">Начало</Link>
           <i className="ri-arrow-right-s-line"></i>
-          <Link to="/blog" className="hover:text-emerald-600 transition-colors">Блог</Link>
+          <Link to="/blog" className="hover:text-brand-primary transition-colors">Блог</Link>
           <i className="ri-arrow-right-s-line"></i>
           <span className="text-gray-700 font-medium line-clamp-1">{post.title}</span>
         </div>
@@ -317,8 +176,8 @@ export default function BlogDetailPage() {
         {/* Meta */}
         <div className="flex flex-wrap items-center gap-4 mb-8 pb-8 border-b border-gray-200">
           <div className="flex items-center gap-2 text-gray-500 text-sm">
-            <div className="w-8 h-8 flex items-center justify-center bg-emerald-100 rounded-full">
-              <i className="ri-user-line text-emerald-600"></i>
+            <div className="w-8 h-8 flex items-center justify-center bg-brand-petal rounded-full">
+              <i className="ri-user-line text-brand-primary"></i>
             </div>
             <span className="whitespace-nowrap">{post.author}</span>
           </div>
@@ -337,7 +196,7 @@ export default function BlogDetailPage() {
         </div>
 
         {/* Excerpt */}
-        <p className="text-xl text-gray-600 leading-relaxed mb-8 font-medium border-l-4 border-emerald-500 pl-5">
+        <p className="text-xl text-gray-600 leading-relaxed mb-8 font-medium border-l-4 border-brand-primary pl-5">
           {post.excerpt}
         </p>
 
@@ -355,7 +214,7 @@ export default function BlogDetailPage() {
               {post.tags.map((tag) => (
                 <span
                   key={tag}
-                  className="bg-emerald-50 text-emerald-700 text-sm px-3 py-1.5 rounded-full font-medium"
+                  className="bg-brand-blush text-brand-hover text-sm px-3 py-1.5 rounded-full font-medium"
                 >
                   #{tag}
                 </span>
@@ -365,19 +224,19 @@ export default function BlogDetailPage() {
         )}
 
         {/* CTA */}
-        <div className="mt-12 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-2xl p-8 text-white text-center">
-          <h3 className="text-2xl font-bold mb-2">Намери всичко в K-FOOD Велико Търново</h3>
-          <p className="text-emerald-100 mb-6">Над 200 автентични корейски и азиатски продукта с бърза доставка</p>
+        <div className="mt-12 bg-gradient-to-br from-brand-primary to-brand-primary rounded-2xl p-8 text-white text-center">
+          <h3 className="text-2xl font-bold mb-2">От историята към твоята маса</h3>
+          <p className="text-brand-petal mb-6">Открий корейски и азиатски вкусове в K-FOOD, с доставка в България.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               to="/products"
-              className="bg-white text-emerald-700 font-bold px-6 py-3 rounded-xl hover:bg-emerald-50 transition-colors whitespace-nowrap"
+              className="bg-white text-brand-hover font-bold px-6 py-3 rounded-xl hover:bg-brand-blush transition-colors whitespace-nowrap"
             >
               Разгледай продуктите
             </Link>
             <Link
               to="/categories"
-              className="bg-emerald-500 text-white font-bold px-6 py-3 rounded-xl hover:bg-emerald-400 transition-colors whitespace-nowrap"
+              className="border border-brand-petal/60 text-white font-bold px-6 py-3 rounded-xl hover:bg-white/10 transition-colors whitespace-nowrap"
             >
               Виж категориите
             </Link>
@@ -393,7 +252,7 @@ export default function BlogDetailPage() {
                 <Link
                   key={related.id}
                   to={`/blog/${related.slug}`}
-                  className="group bg-white rounded-xl overflow-hidden border border-gray-100 hover:border-emerald-200 transition-all cursor-pointer"
+                  className="group bg-white rounded-xl overflow-hidden border border-gray-100 hover:border-brand-border transition-all cursor-pointer"
                 >
                   <div className="h-40 overflow-hidden">
                     <img
@@ -403,8 +262,8 @@ export default function BlogDetailPage() {
                     />
                   </div>
                   <div className="p-4">
-                    <span className="text-xs text-emerald-600 font-semibold">{related.category}</span>
-                    <h4 className="text-sm font-bold text-gray-900 mt-1 group-hover:text-emerald-700 transition-colors line-clamp-2">
+                    <span className="text-xs text-brand-primary font-semibold">{related.category}</span>
+                    <h4 className="text-sm font-bold text-gray-900 mt-1 group-hover:text-brand-hover transition-colors line-clamp-2">
                       {related.title}
                     </h4>
                     <p className="text-xs text-gray-400 mt-2 whitespace-nowrap">{related.read_time} мин четене</p>
@@ -419,7 +278,7 @@ export default function BlogDetailPage() {
         <div className="mt-10 text-center">
           <Link
             to="/blog"
-            className="inline-flex items-center gap-2 text-emerald-600 font-semibold hover:underline cursor-pointer"
+            className="inline-flex items-center gap-2 text-brand-primary font-semibold hover:underline cursor-pointer"
           >
             <i className="ri-arrow-left-line"></i>
             Обратно към блога

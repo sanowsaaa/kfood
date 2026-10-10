@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 export default function Hero() {
   return (
     <section
-      className="relative flex items-end justify-center overflow-hidden"
+      className="brand-hero relative flex items-end justify-center overflow-hidden"
       style={{ minHeight: 'clamp(360px, 50vh, 560px)' }}
       aria-label="K-FOOD — Корейска Храна Онлайн с Доставка до Цяла България"
     >
@@ -18,36 +18,36 @@ export default function Hero() {
       />
 
       {/* Stronger overlay for mobile readability */}
-      <div className="absolute inset-0 bg-gradient-to-t from-red-950/90 via-red-950/45 to-red-950/55" />
+      <div className="brand-hero-overlay absolute inset-0" />
 
       {/* Content */}
       <div className="relative z-10 w-full px-4 sm:px-6 md:px-10 lg:px-16 pb-10 sm:pb-14 md:pb-20">
         <div className="max-w-[1440px] mx-auto">
           <div className="max-w-2xl">
             {/* Label */}
-            <p className="text-xs sm:text-xs md:text-sm font-medium tracking-[0.2em] uppercase text-red-500 mb-3 md:mb-4 animate-fade-up opacity-0">
-              Корейска храна · Козметика · Култура с доставка
+            <p className="text-xs md:text-sm font-medium tracking-[0.16em] uppercase text-brand-petal mb-3 md:mb-4 animate-fade-up opacity-0">
+              Taste Everyday · Вкус за всеки ден
             </p>
 
             {/* H1 - mobile optimized sizing */}
-            <h1 className="font-heading text-2xl sm:text-3xl md:text-4xl lg:text-[3.25rem] font-light text-white leading-[1.1] sm:leading-[1.08] mb-3 md:mb-5 animate-fade-up delay-100 opacity-0 text-balance tracking-tight">
-              Корейска Храна
+            <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl lg:text-[3.25rem] text-white leading-[1.15] mb-4 md:mb-5 animate-fade-up delay-100 opacity-0 text-balance tracking-tight">
+              Корейска храна.
               <br />
-              <span className="font-normal italic text-lg sm:text-xl md:text-3xl lg:text-[3.25rem]">Доставка до Цяла България</span>
+              <span className="font-normal italic text-brand-petal">Твоят нов любим вкус.</span>
             </h1>
 
             {/* Description - tighter on mobile */}
-            <p className="text-xs sm:text-sm md:text-base text-white/70 leading-relaxed mb-5 md:mb-7 max-w-xl animate-fade-up delay-200 opacity-0 font-light">
-              Над 200 автентични корейски продукта — рамен Samyang и Buldak, кимчи, токбоки, корейски сосове гочуджанг, снакове, напитки и K-beauty корейска козметика. Поръчай корейска храна онлайн с бърза доставка 1-2 дни.
+            <p className="text-base md:text-lg text-white/90 leading-relaxed mb-6 md:mb-7 max-w-xl animate-fade-up delay-200 opacity-0">
+              Люто, сладко или нещо съвсем ново? Открий рамен Samyang и Buldak, кимчи, сосове и снакове. Избери своя вкус — доставяме в цяла България.
             </p>
 
             {/* CTAs - full width on very small screens */}
             <div className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 animate-fade-up delay-300 opacity-0">
               <Link
                 to="/products"
-                className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 bg-red-600 text-white text-sm font-semibold tracking-wide uppercase hover:bg-red-700 transition-colors whitespace-nowrap cursor-pointer rounded-lg shadow-[0_4px_14px_rgba(220,38,38,0.35)] touch-target"
+                className="inline-flex items-center justify-center gap-2 px-6 sm:px-8 py-3.5 sm:py-4 bg-brand-petal text-brand-ink text-base font-semibold hover:bg-white transition-colors whitespace-nowrap cursor-pointer rounded-xl shadow-lg touch-target"
               >
-                Разгледай Продуктите
+                Разгледай продуктите
                 <i aria-hidden="true" className="ri-arrow-right-line text-lg"></i>
               </Link>
               <Link
@@ -62,12 +62,12 @@ export default function Hero() {
             {/* Trust indicators - horizontal scroll on very small screens */}
             <div className="mt-5 sm:mt-8 flex flex-wrap gap-x-6 sm:gap-x-8 gap-y-2 sm:gap-y-3">
               {[
-                { icon: 'ri-shield-check-line', text: '100% Оригинални от Корея' },
-                { icon: 'ri-truck-line', text: 'Доставка 1-2 дни' },
-                { icon: 'ri-star-fill', text: '4.9★ от 2,847+ клиенти' },
+                { icon: 'ri-truck-line', text: 'Доставка в България' },
+                { icon: 'ri-shopping-bag-line', text: 'Поръчка без регистрация' },
+                { icon: 'ri-map-pin-line', text: 'Магазин във Велико Търново' },
               ].map(item => (
                 <div key={item.text} className="flex items-center gap-2 text-white/80 animate-fade-up delay-400 opacity-0">
-                  <i aria-hidden="true" className={`${item.icon} text-red-400 text-xs sm:text-sm`}></i>
+                  <i aria-hidden="true" className={`${item.icon} text-brand-petal text-sm`}></i>
                   <span className="text-[11px] sm:text-xs md:text-sm font-medium">{item.text}</span>
                 </div>
               ))}

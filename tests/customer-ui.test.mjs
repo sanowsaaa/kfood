@@ -7,6 +7,7 @@ import { pathToFileURL } from 'node:url';
 const { chromium } = await import(process.env.CUSTOMER_PLAYWRIGHT_MODULE_PATH ? pathToFileURL(process.env.CUSTOMER_PLAYWRIGHT_MODULE_PATH).href : 'playwright');
 const base = 'http://127.0.0.1:4317';
 const artifacts = process.env.CUSTOMER_TEST_ARTIFACTS;
+const assetMap = process.env.CUSTOMER_TEST_ASSET_MAP ? JSON.parse(await readFile(process.env.CUSTOMER_TEST_ASSET_MAP, 'utf8')) : {};
 const orderNumber = 'ORD-20261008-0123456789abcdef0123456789abcdef';
 const token = 'a'.repeat(64);
 const image = 'https://static.readdy.ai/offline-customer-product.svg';
@@ -16,6 +17,7 @@ const products = [
   { id: 19, name: 'Изчерпан десерт', slug: 'dessert', description: '', price: 2.5, image, category: 'Десерти', in_stock: true, stock: 0, badge: '', rating: 4.5, reviews: 5 },
   { id: 20, name: 'Корейско соджу', slug: 'soju', description: 'Алкохолна напитка.', price: 7.5, image, category: 'Алкохол', in_stock: true, stock: 20, badge: '', rating: 5, reviews: 1 },
 ];
+const blogPosts = [{ id: 1, title: 'Корейски вкусове за споделяне', slug: 'top-10-koreiska-hrana', excerpt: 'Идеи за нови вкусове от K-FOOD.', content: '<h2>Опитай нещо ново</h2><p>Рамен, кимчи и сосове за споделяне.</p>', cover_image: 'https://readdy.ai/api/search-image?query=old-cover', author: 'Екип K-FOOD', category: 'Кухня', tags: ['рамен'], published: true, views: 0, read_time: 1, created_at: '2026-01-01T12:00:00Z', updated_at: '2026-10-10T06:00:00Z' }];
 const cart = (quantity = 3) => [{ ...products[0], quantity }];
 const proof = { [`order-proof:${orderNumber}`]: token, [`order-cart:${orderNumber}`]: JSON.stringify([{ id: 17, quantity: 3 }]) };
 const order = { order_number: orderNumber, status: 'processing', total_amount: 14.7, currency: 'EUR', customer_phone: '0899000000', created_at: '2026-10-08T09:00:00Z', payment_method: 'stripe', shipping_address: { full_name: 'Тест Клиент', address: 'Тестов адрес', city: 'Велико Търново', postal_code: '5000' }, items: [{ name: products[0].name, quantity: 3, price: 4.9 }], tracking_notes: 'Поръчката се подготвя за изпращане.' };
@@ -53,7 +55,7 @@ async function setup(options = {}) {
     if (url.origin === base) {
       const file = url.pathname.startsWith('/assets/') ? url.pathname.slice(1) : 'index.html';
       if (file.includes('..')) return route.abort();
-      return route.fulfill({ contentType: file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : 'text/html', body: await readFile(new URL(`../dist/${file}`, import.meta.url)) });
+      return route.fulfill({ contentType: file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : file.endsWith('.webp') ? 'image/webp' : 'text/html', body: await readFile(new URL(`../dist/${file}`, import.meta.url)) });
     }
     if (url.hostname === 'checkout.stripe.com') return route.fulfill({ contentType: 'text/html', body: '<h1>Offline Stripe destination</h1>' });
     if (url.pathname.includes('/functions/v1/')) {
@@ -72,7 +74,7 @@ async function setup(options = {}) {
       if (options.delay && method !== 'GET') await new Promise(resolve => setTimeout(resolve, options.delay));
       if (readFailure && table === 'products') return reply({ code: '42501', message: 'denied' }, 403);
       if (method !== 'GET') return options.writeFailure ? reply({ code: '42501', message: 'denied' }, 403) : reply(null, 201);
-      let data = table === 'products' ? rows : [];
+      let data = table === 'products' ? rows : table === 'blog_posts' ? structuredClone(blogPosts) : [];
       for (const field of ['id', 'slug', 'category']) {
         const filter = url.searchParams.get(field);
         if (filter?.startsWith('eq.')) data = data.filter(row => String(row[field]) === filter.slice(3));
@@ -89,6 +91,7 @@ async function setup(options = {}) {
       return reply({}, options.writeFailure ? 503 : 200);
     }
     requests.push({ asset: url.href, method: req.method() });
+    if (assetMap[url.href]) return route.fulfill({ body: await readFile(assetMap[url.href].path), contentType: assetMap[url.href].type });
     if (req.resourceType() === 'image') return route.fulfill({ contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="500"><rect width="400" height="500" fill="#fff7ed"/><rect x="95" y="75" width="210" height="350" rx="20" fill="#b91c1c"/><text x="200" y="240" text-anchor="middle" fill="white" font-size="28">K-FOOD</text></svg>' });
     if (url.pathname.endsWith('remixicon.css') && process.env.CUSTOMER_TEST_FONT_CSS) return route.fulfill({ contentType: 'text/css', body: await readFile(process.env.CUSTOMER_TEST_FONT_CSS, 'utf8') });
     return route.fulfill({ body: '', contentType: req.resourceType() === 'stylesheet' ? 'text/css' : 'text/plain' });
@@ -171,6 +174,144 @@ test('home/category/search: existing links resolve and URL search survives a rel
     await shot(page, 'catalog-desktop');
   } finally { await qa.close(); }
 });
+
+async function spaNavigate(page, path) {
+  await page.evaluate(path => { window.history.pushState({}, '', path); window.dispatchEvent(new PopStateEvent('popstate')); }, path);
+}
+async function metadata(page) {
+  return page.evaluate(() => ({
+    title: document.title, description: document.querySelector('meta[name="description"]')?.content,
+    canonical: [...document.querySelectorAll('link[rel="canonical"]')].map(element => element.href),
+    ogImage: document.querySelector('meta[property="og:image"]')?.content,
+    twitterImage: document.querySelector('meta[name="twitter:image"]')?.content,
+    twitterTitle: document.querySelector('meta[name="twitter:title"]')?.content,
+    robots: ['robots', 'googlebot', 'bingbot'].map(name => document.querySelector(`meta[name="${name}"]`)?.content),
+    articleMeta: document.querySelectorAll('meta[property^="article:"]').length,
+    graph: [...document.querySelectorAll('script[type="application/ld+json"]')].flatMap(element => { const data = JSON.parse(element.textContent || '{}'); return data['@graph'] || [data]; }),
+  }));
+}
+
+test('SEO SPA: article → about → cart → B2B login → product resets social cards, robots and page schema', async () => {
+  const qa = await setup({ cart: cart() });
+  try {
+    await ready(qa.page, '/blog/top-10-koreiska-hrana', blogPosts[0].title);
+    let meta = await metadata(qa.page);
+    const article = meta.graph.find(item => item['@type'] === 'Article');
+    assert.equal(article.author['@type'], 'Organization');
+    assert.equal(article.dateModified, new Date(blogPosts[0].updated_at).toISOString());
+    assert.equal(article.publisher.logo.url.endsWith('/og-image.jpg'), false);
+    assert.equal(meta.ogImage, meta.twitterImage);
+    assert.match(meta.ogImage, /\/assets\/webp\/k-food-04-/);
+    assert.equal(meta.twitterTitle, meta.title);
+    assert.ok(meta.graph.some(item => item['@id']?.endsWith('/#organization')));
+    await spaNavigate(qa.page, '/about');
+    await qa.page.getByRole('heading', { name: 'Добре дошли в K-FOOD', exact: true }).waitFor();
+    meta = await metadata(qa.page);
+    assert.equal(meta.graph.some(item => item['@type'] === 'Article'), false);
+    assert.equal(meta.articleMeta, 0);
+    assert.equal(meta.ogImage, meta.twitterImage);
+    assert.match(meta.ogImage, /5f528752b53eacb04e7b1d8959de8155/);
+    await spaNavigate(qa.page, '/cart');
+    await qa.page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'noindex, follow');
+    meta = await metadata(qa.page);
+    assert.deepEqual(meta.robots, ['noindex, follow', 'noindex, follow', 'noindex, follow']);
+    assert.equal(meta.graph.some(item => item['@type'] === 'Product' || item['@type'] === 'AboutPage'), false);
+    await spaNavigate(qa.page, '/b2b/login?email=private@example.invalid&code=private');
+    await qa.page.waitForFunction(() => document.title === 'B2B портал | K-FOOD');
+    meta = await metadata(qa.page);
+    assert.deepEqual(meta.canonical, ['https://k-foodvelikotarnovo.com/b2b/login']);
+    assert.equal(JSON.stringify(meta).includes('private@example.invalid'), false);
+    assert.equal(meta.twitterTitle, meta.title);
+    await spaNavigate(qa.page, '/product/ramen-buldak');
+    await qa.page.getByRole('heading', { name: products[0].name, exact: true }).waitFor();
+    meta = await metadata(qa.page);
+    assert.ok(meta.robots.every(value => value.startsWith('index,')));
+    assert.equal(meta.twitterTitle, meta.title);
+    assert.equal(meta.graph.some(item => item['@type'] === 'Article'), false);
+    assert.deepEqual(qa.errors, []);
+  } finally { await qa.close(); }
+});
+
+test('SEO product data keeps real price/stock and seller without inventing manufacturer, rating or expiry', async () => {
+  const qa = await setup();
+  try {
+    qa.rows[0].name = 'MAMA нудъли'; qa.rows[0].description = '';
+    await ready(qa.page, '/product/ramen-buldak', 'MAMA нудъли');
+    const meta = await metadata(qa.page), product = meta.graph.find(item => item['@type'] === 'Product');
+    assert.equal(product.offers.price, '4.90');
+    assert.equal(product.offers.priceCurrency, 'EUR');
+    assert.equal(product.offers.availability, 'https://schema.org/InStock');
+    assert.ok(product.offers.seller['@id'].endsWith('/#organization'));
+    assert.equal('brand' in product || 'aggregateRating' in product || 'priceValidUntil' in product.offers, false);
+    assert.doesNotMatch(meta.description, /автентичен корейски продукт/);
+    assert.ok(meta.description.includes('MAMA нудъли'));
+    for (const item of meta.graph.filter(item => Array.isArray(item['@type']) && item['@type'].includes('LocalBusiness'))) assert.equal('aggregateRating' in item, false);
+    assert.deepEqual(qa.errors, []);
+  } finally { await qa.close(); }
+});
+
+test('SEO missing pages/resources are noindex and recover to indexable public pages without stale schema', async () => {
+  const qa = await setup();
+  try {
+    await ready(qa.page, '/products', 'Корейска Храна Онлайн');
+    for (const path of ['/missing-page', '/product/unknown-product', '/category/unknown-category', '/blog/unknown-post']) {
+      await spaNavigate(qa.page, path);
+      if (path === '/missing-page') await qa.page.getByRole('heading', { name: 'Страницата не е намерена', exact: true }).waitFor();
+      await qa.page.waitForFunction(path => document.querySelector('meta[name="robots"]')?.content === 'noindex, follow'
+        && document.querySelector('link[rel="canonical"]')?.href === `https://k-foodvelikotarnovo.com${path}`, path);
+      const meta = await metadata(qa.page);
+      assert.deepEqual(meta.canonical, [`https://k-foodvelikotarnovo.com${path}`]);
+      assert.equal(meta.graph.some(item => item['@type'] === 'Product' || item['@type'] === 'Article'), false);
+    }
+    await spaNavigate(qa.page, '/b2b');
+    await qa.page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content?.startsWith('index,'));
+    assert.equal((await metadata(qa.page)).canonical[0], 'https://k-foodvelikotarnovo.com/b2b');
+    assert.deepEqual(qa.errors, []);
+  } finally { await qa.close(); }
+});
+
+for (const width of [360, 1440]) {
+  test(`${width}px brand: public pages keep readable main actions, usable navigation and no horizontal overflow`, async () => {
+    const qa = await setup({ width });
+    const contrast = (first, second) => {
+      const luminance = rgb => {
+        const [r, g, b] = rgb.match(/[\d.]+/g).slice(0, 3).map(Number).map(v => v / 255).map(v => v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4);
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+      };
+      const a = luminance(first), b = luminance(second);
+      return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+    };
+    try {
+      await ready(qa.page, '/');
+      const action = qa.page.locator('.brand-hero a[href="/products"]');
+      await action.waitFor();
+      const colors = await action.evaluate(element => { const style = getComputedStyle(element); return { fg: style.color, bg: style.backgroundColor }; });
+      assert.ok(contrast(colors.fg, colors.bg) >= 4.5, 'hero action text needs readable contrast');
+      await action.focus();
+      assert.ok(await action.evaluate(element => getComputedStyle(element).outlineWidth !== '0px'));
+      await shot(qa.page, `brand-home-${width}`);
+      if (artifacts) await qa.page.locator('.brand-hero').screenshot({ path: `${artifacts}/brand-hero-${width}.png` });
+      await qa.page.getByRole('heading', { name: 'Корейска Култура', exact: true }).scrollIntoViewIfNeeded();
+      await qa.page.getByRole('button', { name: 'Традиции', exact: true }).click();
+      await qa.page.getByRole('heading', { name: 'Корейски Традиции — Богато Наследство', exact: true }).waitFor();
+      const newsletter = qa.page.getByRole('textbox', { name: 'Имейл за бюлетина', exact: true });
+      await newsletter.scrollIntoViewIfNeeded();
+      assert.equal(await newsletter.isVisible(), true);
+      if (artifacts) await qa.page.locator('section').filter({ has: newsletter }).screenshot({ path: `${artifacts}/brand-newsletter-${width}.png` });
+      for (const path of ['/products', '/product/ramen-buldak', '/blog/top-10-koreiska-hrana', '/about']) {
+        await spaNavigate(qa.page, path);
+        const heading = { '/products': 'Корейска Храна Онлайн', '/product/ramen-buldak': products[0].name,
+          '/blog/top-10-koreiska-hrana': blogPosts[0].title, '/about': 'Добре дошли в K-FOOD' }[path];
+        await qa.page.getByRole('heading', { name: heading, exact: true }).waitFor();
+        await qa.page.waitForFunction(path => document.querySelector('link[rel="canonical"]')?.href === `https://k-foodvelikotarnovo.com${path}`, path);
+        const sizes = await qa.page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }));
+        assert.ok(sizes.scroll <= sizes.client + 1, `${path} overflows horizontally`);
+        await shot(qa.page, `brand-${path.split('/')[1]}-${width}`);
+      }
+      assert.deepEqual(qa.errors, []);
+    } finally { await qa.close(); }
+  });
+}
 
 test('catalog: denied reads show a retry instead of a false empty store and recover', async () => {
   const qa = await setup({ readFailure: true });

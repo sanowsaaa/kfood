@@ -73,12 +73,12 @@ export default function ReviewsSection() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 md:mb-14 gap-6">
           <div>
-            <p className="text-xs md:text-sm font-medium tracking-[0.2em] uppercase text-red-500 mb-3">Отзиви</p>
+            <p className="text-xs md:text-sm font-medium tracking-[0.2em] uppercase text-brand-primary mb-3">Отзиви</p>
             <h2 className="font-heading text-2xl md:text-4xl font-light text-gray-900 tracking-tight">Какво казват клиентите</h2>
           </div>
           <div className="flex items-center gap-4">
             <div className="text-right">
-              <div className="text-3xl font-heading font-bold text-red-600">{avgRating}</div>
+              <div className="text-3xl font-heading font-bold text-brand-primary">{avgRating}</div>
               <div className="flex gap-0.5 justify-end mb-0.5">
                 {[1,2,3,4,5].map(s => <i aria-hidden="true" key={s} className="ri-star-fill text-amber-500 text-[10px]"></i>)}
               </div>
@@ -86,7 +86,7 @@ export default function ReviewsSection() {
             </div>
             <Link
               to="/leave-review"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-red-600 text-white text-xs font-semibold uppercase tracking-wider hover:bg-red-700 transition-all whitespace-nowrap cursor-pointer rounded-lg"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-primary text-white text-xs font-semibold uppercase tracking-wider hover:bg-brand-hover transition-all whitespace-nowrap cursor-pointer rounded-lg"
             >
               <i aria-hidden="true" className="ri-star-line text-sm" />
               Остави ревю
@@ -97,9 +97,9 @@ export default function ReviewsSection() {
         {/* Reviews */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-5 mb-8">
           {visible.map((review) => (
-            <article key={review.id} className="bg-white rounded-xl border border-gray-100 p-6 md:p-7 flex flex-col gap-4 hover:border-red-100 transition-all">
+            <article key={review.id} className="bg-white rounded-xl border border-gray-100 p-6 md:p-7 flex flex-col gap-4 hover:border-brand-border transition-all">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+                <div className="w-10 h-10 bg-brand-primary rounded-lg flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
                   {getInitials(review.name)}
                 </div>
                 <div>
@@ -122,7 +122,7 @@ export default function ReviewsSection() {
                 key={i}
                 onClick={() => setActiveIndex(i)}
                 className={`h-[3px] rounded-full transition-all cursor-pointer ${
-                  activeIndex === i ? 'bg-red-600 w-8' : 'bg-gray-300 w-3 hover:bg-gray-400'
+                  activeIndex === i ? 'bg-brand-primary w-8' : 'bg-gray-300 w-3 hover:bg-gray-400'
                 }`}
                 aria-label={`Страница ${i + 1}`}
               />
@@ -135,7 +135,7 @@ export default function ReviewsSection() {
             href="https://www.google.com/search?q=K-FOOD+Велико+Търново+отзиви"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-[13px] font-medium text-gray-500 hover:text-red-600 transition-colors cursor-pointer tracking-wide uppercase"
+            className="inline-flex items-center gap-2 text-[13px] font-medium text-gray-500 hover:text-brand-primary transition-colors cursor-pointer tracking-wide uppercase"
           >
             <i aria-hidden="true" className="ri-google-line text-sm" />
             Виж всички отзиви в Google
