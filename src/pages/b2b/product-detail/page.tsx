@@ -1,43 +1,35 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useB2B, type B2BProduct } from '@/contexts/B2BContext';
 import { supabase } from '@/utils/supabase';
 import B2BHeader from '@/pages/b2b/components/B2BHeader';
 import B2BFooter from '@/pages/b2b/components/B2BFooter';
+import { useCustomerRead } from '@/hooks/useCustomerRead';
+import CustomerReadError from '@/components/CustomerReadError';
+import { maxPacks } from '@/utils/b2bCart';
 
 export default function B2BProductDetailPage() {
   const { id: slugOrId } = useParams();
   const navigate = useNavigate();
   const { addToB2BCart, calculateB2BPrice, calculateCartonPrice, loading: b2bLoading, sessionLoading } = useB2B();
-  const [product, setProduct] = useState<B2BProduct | null>(null);
-  const [loading, setLoading] = useState(true);
   const [cartons, setCartons] = useState(1);
   const [added, setAdded] = useState(false);
 
-  useEffect(() => {
-    if (!slugOrId) return;
-    setLoading(true);
-    const numericId = parseInt(slugOrId);
-    const query = supabase
+  const load = useCallback(async (signal: AbortSignal): Promise<B2BProduct | null> => {
+    if (!slugOrId) return null;
+    const query = () => supabase
       .from('products')
       .select('id, name, description, price, wholesale_price, carton_price, image, category, badge, rating, reviews, in_stock, stock, weight, volume, sku, slug, moq, moq_unit, pieces_per_carton');
-
-    const doQuery = async () => {
-      // Try by slug first (most common case)
-      let { data } = await query.eq('slug', slugOrId).single();
-      // Fallback to ID if slug fails and it's a valid number
-      if (!data && !isNaN(numericId)) {
-        const { data: idData } = await query.eq('id', numericId).single();
-        data = idData;
-      }
-      if (data) {
-        setProduct(data);
-        setCartons(1);
-      }
-      setLoading(false);
-    };
-    doQuery();
+    const bySlug = await query().eq('slug', slugOrId).abortSignal(signal).maybeSingle();
+    if (bySlug.error) throw bySlug.error;
+    if (bySlug.data) return bySlug.data;
+    if (!/^[1-9]\d*$/.test(slugOrId) || !Number.isSafeInteger(Number(slugOrId))) return null;
+    const byId = await query().eq('id', Number(slugOrId)).abortSignal(signal).maybeSingle();
+    if (byId.error) throw byId.error;
+    return byId.data;
   }, [slugOrId]);
+  const { data: product, loading, error, retry } = useCustomerRead<B2BProduct | null>(load, null);
+  useEffect(() => { setCartons(1); setAdded(false); }, [slugOrId]);
 
   if (sessionLoading || b2bLoading || loading) {
     return (
@@ -46,6 +38,8 @@ export default function B2BProductDetailPage() {
       </div>
     );
   }
+
+  if (error) return <div className="min-h-screen bg-gray-50"><B2BHeader /><CustomerReadError message={error} onRetry={retry} /><B2BFooter /></div>;
 
   if (!product) {
     return (
@@ -65,7 +59,7 @@ export default function B2BProductDetailPage() {
   const isCarton = product.pieces_per_carton > 0;
   const cartonPrice = calculateCartonPrice(product);
   const unitPrice = calculateB2BPrice(product);
-  const maxCartons = 9999;
+  const maxCartons = maxPacks(product);
   const minCartons = 1;
   const totalPieces = isCarton ? cartons * product.pieces_per_carton : cartons;
   const stockCartons = isCarton
@@ -74,15 +68,14 @@ export default function B2BProductDetailPage() {
 
   const handleAddToInquiry = () => {
     const piecesQty = isCarton ? cartons * product.pieces_per_carton : cartons;
-    addToB2BCart(product, piecesQty);
+    if (!addToB2BCart(product, piecesQty)) return;
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
   };
 
   const handleGoToInquiry = () => {
     const piecesQty = isCarton ? cartons * product.pieces_per_carton : cartons;
-    addToB2BCart(product, piecesQty);
-    navigate('/b2b/cart');
+    if (addToB2BCart(product, piecesQty)) navigate('/b2b/cart');
   };
 
   return (
@@ -205,11 +198,13 @@ export default function B2BProductDetailPage() {
                   </span>
                   <div className="flex items-center border border-gray-300 rounded-xl overflow-hidden bg-white">
                     <button
+                      aria-label="Намали количество"
                       onClick={() => setCartons(Math.max(minCartons, cartons - 1))}
                       disabled={cartons <= minCartons}
                       className="px-3 md:px-4 py-2.5 bg-gray-50 hover:bg-gray-100 disabled:opacity-30 cursor-pointer transition-colors text-gray-700 active:scale-95"
                     ><i className="ri-subtract-line text-base md:text-lg"></i></button>
                     <input
+                      aria-label={isCarton ? 'Брой кашони' : 'Количество'}
                       type="number"
                       value={cartons}
                       onChange={e => setCartons(Math.max(minCartons, Math.min(maxCartons, parseInt(e.target.value) || minCartons)))}
@@ -218,6 +213,8 @@ export default function B2BProductDetailPage() {
                       max={maxCartons}
                     />
                     <button
+                      aria-label="Увеличи количество"
+                      disabled={cartons >= maxCartons}
                       onClick={() => setCartons(Math.min(maxCartons, cartons + 1))}
                       className="px-3 md:px-4 py-2.5 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors text-gray-700 active:scale-95"
                     ><i className="ri-add-line text-base md:text-lg"></i></button>
@@ -262,9 +259,9 @@ export default function B2BProductDetailPage() {
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex justify-between">
-      <span className="text-gray-400">{label}</span>
-      <span className="text-gray-700 font-medium">{value}</span>
+    <div className="flex justify-between gap-4">
+      <span className="text-gray-500 shrink-0">{label}</span>
+      <span className="text-gray-700 font-medium text-right min-w-0 break-words">{value}</span>
     </div>
   );
 }

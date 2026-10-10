@@ -18,14 +18,14 @@ export default function B2BFooter() {
             </div>
           </div>
 
-          <div className="flex items-center gap-4 text-xs">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-xs min-w-0">
             <Link to="/b2b/dashboard" className="hover:text-emerald-600 transition-colors">Табло</Link>
             <Link to="/b2b/products" className="hover:text-emerald-600 transition-colors">Продукти</Link>
             {company && (
               <span className="text-gray-300">|</span>
             )}
             {company && (
-              <span className="text-gray-400">{company.company_name}</span>
+              <span className="text-gray-500 break-words max-w-full">{company.company_name}</span>
             )}
           </div>
         </div>

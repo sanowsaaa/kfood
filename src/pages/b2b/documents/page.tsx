@@ -1,15 +1,17 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '@/utils/supabase';
 import { useB2B } from '@/contexts/B2BContext';
 import B2BHeader from '@/pages/b2b/components/B2BHeader';
 import B2BFooter from '@/pages/b2b/components/B2BFooter';
+import { downloadB2BDocument } from '@/utils/b2bDocuments';
 
 interface Document {
   id: string;
   title: string;
   description: string;
   file_url: string;
+  storage_path?: string | null;
   file_type: string;
   category: string;
   created_at: string;
@@ -20,14 +22,21 @@ export default function B2BDocumentsPage() {
   const [loading, setLoading] = useState(true);
   const { companyId, company, sessionLoading } = useB2B();
   const [activeCategory, setActiveCategory] = useState('');
+  const [error, setError] = useState('');
+  const [downloading, setDownloading] = useState<string | null>(null);
+  const readVersion = useRef(0);
 
   useEffect(() => {
+    setDocuments([]); setError(''); setActiveCategory('');
     if (!companyId) { setLoading(false); return; }
-    fetchDocs();
-  }, [companyId]);
+    void fetchDocs();
+    return () => { readVersion.current++; };
+  }, [companyId, company?.pricing_tier_id]);
 
   const fetchDocs = async () => {
     setLoading(true);
+    setError('');
+    const version = ++readVersion.current;
     try {
       let query = supabase.from('b2b_documents').select('*').order('created_at', { ascending: false });
 
@@ -37,9 +46,19 @@ export default function B2BDocumentsPage() {
         query = query.or(`visibility.eq.all,and(visibility.eq.company,company_id.eq.${companyId})`);
       }
 
-      const { data } = await query;
-      setDocuments(data || []);
-    } catch { /* silently handle */ } finally { setLoading(false); }
+      const { data, error: readError } = await query;
+      if (readError) throw readError;
+      if (version === readVersion.current) setDocuments(data || []);
+    } catch {
+      if (version === readVersion.current) setError('Документите не са заредени. Опитайте отново.');
+    } finally { if (version === readVersion.current) setLoading(false); }
+  };
+  const download = async (doc: Document) => {
+    if (downloading) return;
+    setDownloading(doc.id); setError('');
+    try { await downloadB2BDocument(doc); }
+    catch { setError('Документът не може да се изтегли. Опитайте отново.'); }
+    finally { setDownloading(null); }
   };
 
   const categoryLabels: Record<string, string> = {
@@ -65,7 +84,7 @@ export default function B2BDocumentsPage() {
         <div className="max-w-md mx-auto px-4 py-20 text-center">
           <i className="ri-lock-line text-4xl text-gray-300 mb-4"></i>
           <h2 className="text-xl font-bold text-gray-900 mb-2">Не сте влезли в портала</h2>
-          <Link to="/login" className="text-emerald-600 hover:underline font-medium text-sm">Вход в портала</Link>
+          <Link to="/b2b/login" className="text-emerald-600 hover:underline font-medium text-sm">Вход в портала</Link>
         </div>
         <B2BFooter />
       </div>
@@ -86,6 +105,9 @@ export default function B2BDocumentsPage() {
       </section>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {error && <div role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-red-800">
+          <p>{error}</p><button type="button" className="mt-2 underline" onClick={fetchDocs}>Опитай отново</button>
+        </div>}
         {loading ? (
           <div className="text-center py-16"><i className="ri-loader-4-line text-3xl text-emerald-600 animate-spin"></i></div>
         ) : (
@@ -105,7 +127,7 @@ export default function B2BDocumentsPage() {
               </div>
             )}
 
-            {filteredDocs.length === 0 ? (
+            {filteredDocs.length === 0 && !error ? (
               <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
                 <i className="ri-folder-open-line text-4xl text-gray-300 mb-4"></i>
                 <p className="text-gray-500">Няма налични документи</p>
@@ -113,8 +135,9 @@ export default function B2BDocumentsPage() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredDocs.map(doc => (
-                  <a key={doc.id} href={doc.file_url} target="_blank" rel="noopener noreferrer"
-                    className="bg-white border border-gray-200 rounded-xl p-5 hover:border-emerald-300 transition-all group cursor-pointer">
+                  <button type="button" key={doc.id} onClick={() => download(doc)} disabled={!!downloading}
+                    aria-busy={downloading === doc.id}
+                    className="bg-white border border-gray-200 rounded-xl p-5 hover:border-emerald-300 transition-all group cursor-pointer text-left disabled:opacity-60">
                     <div className="flex items-start gap-3">
                       <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-emerald-600 transition-colors">
                         <i className={`${doc.file_type === 'pdf' ? 'ri-file-pdf-line' : doc.file_type.includes('xls') ? 'ri-file-excel-2-line' : 'ri-file-line'} text-emerald-600 text-xl group-hover:text-white transition-colors`}></i>
@@ -131,7 +154,7 @@ export default function B2BDocumentsPage() {
                         <i className="ri-download-line"></i>
                       </div>
                     </div>
-                  </a>
+                  </button>
                 ))}
               </div>
             )}

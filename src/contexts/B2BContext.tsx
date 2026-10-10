@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import type { ReactNode } from 'react';
 import { supabase } from '@/utils/supabase';
+import { lineTotal, MAX_B2B_LINES, maxPacks, packPrice, packSize, restoreB2BCart, validQuantity } from '@/utils/b2bCart';
 
 async function callB2BAuth(body: Record<string, unknown>) {
   const { data, error } = await supabase.functions.invoke('b2b-auth', { body });
@@ -63,9 +64,14 @@ interface B2BContextType {
   companyId: string;
   loading: boolean;
   sessionLoading: boolean;
+  profileError: string;
   cart: B2BCartItem[];
   cartTotal: number;
   cartItemsCount: number;
+  cartError: string;
+  storageWarning: string;
+  orderNotes: string;
+  setOrderNotes: (notes: string) => void;
   requestB2BActivation: (companyId: string, email: string) => Promise<{ success: boolean; error?: string; alreadyRegistered?: boolean }>;
   registerB2B: (companyId: string, email: string, password: string, code: string) => Promise<{ success: boolean; error?: string; alreadyRegistered?: boolean }>;
   loginB2B: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
@@ -75,9 +81,9 @@ interface B2BContextType {
   getFinalB2BPrice: (product: B2BProduct) => number;
   getDisplayPrice: (product: B2BProduct) => number;
   getDisplayLabel: (product: B2BProduct) => string;
-  addToB2BCart: (product: B2BProduct, quantity?: number) => void;
-  addCarton: (product: B2BProduct, cartons?: number) => void;
-  updateB2BCartQty: (productId: number, qty: number) => void;
+  addToB2BCart: (product: B2BProduct, quantity?: number) => boolean;
+  addCarton: (product: B2BProduct, cartons?: number) => boolean;
+  updateB2BCartQty: (productId: number, qty: number | ((current: number) => number)) => void;
   removeFromB2BCart: (productId: number) => void;
   clearB2BCart: () => void;
   refreshData: () => Promise<void>;
@@ -90,13 +96,19 @@ export function B2BProvider({ children }: { children: ReactNode }) {
   const [companyId, setCompanyIdState] = useState('');
   const [loading, setLoading] = useState(false);
   const [sessionLoading, setSessionLoading] = useState(true);
+  const [profileError, setProfileError] = useState('');
   const [cart, setCart] = useState<B2BCartItem[]>([]);
+  const cartRef = useRef<B2BCartItem[]>([]);
+  const [cartError, setCartError] = useState('');
+  const [storageWarning, setStorageWarning] = useState('');
+  const [orderNotes, setOrderNotes] = useState('');
+  const replaceCart = (items: B2BCartItem[]) => { cartRef.current = items; setCart(items); };
   const verifiedCompany = useRef('');
   const generation = useRef(0);
 
   const refreshData = useCallback(async () => {
     const request = ++generation.current;
-    setLoading(true);
+    setLoading(true); setProfileError('');
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const result = session ? await callB2BAuth({ mode: 'profile' }) : null;
@@ -105,28 +117,32 @@ export function B2BProvider({ children }: { children: ReactNode }) {
       const profile = result?.company as B2BCompany | undefined;
       const nextId = profile?.id || '';
       if (verifiedCompany.current !== nextId) {
-        const owner = localStorage.getItem('b2b_cart_owner') || localStorage.getItem('b2b_company_id');
         let restored: B2BCartItem[] = [];
-        if (nextId && owner === nextId) {
-          try {
-            const parsed = JSON.parse(localStorage.getItem('b2b_cart') || '[]');
-            if (Array.isArray(parsed)) restored = parsed.filter(item => item?.product && Number.isSafeInteger(item.product.id) &&
-              Number.isSafeInteger(item.quantity) && item.quantity > 0 && item.quantity <= 10000).slice(0, 50).map(item => ({
-                ...item, product: Object.fromEntries(Object.entries(item.product).filter(([key]) => key !== 'cost_price')),
-              })) as B2BCartItem[];
-          } catch { /* an invalid saved cart starts empty */ }
-        }
-        setCart(restored);
+        let notes = '';
+        try {
+          const owner = localStorage.getItem('b2b_cart_owner') || localStorage.getItem('b2b_company_id');
+          if (nextId && owner === nextId) restored = restoreB2BCart(localStorage.getItem('b2b_cart'));
+          if (nextId) {
+            notes = sessionStorage.getItem(`b2b_order_notes:${nextId}`) || '';
+            if (!notes && owner === nextId) notes = sessionStorage.getItem('b2b_order_notes') || '';
+          }
+        } catch { /* storage failure must not sign out a valid partner */ }
+        replaceCart(restored);
+        setOrderNotes(notes.slice(0, 500));
+        setCartError('');
       }
       verifiedCompany.current = nextId;
       setCompany(profile || null);
       setCompanyIdState(nextId);
-      if (nextId) localStorage.setItem('b2b_company_id', nextId);
-      else localStorage.removeItem('b2b_company_id');
+      try {
+        if (nextId) localStorage.setItem('b2b_company_id', nextId);
+        else localStorage.removeItem('b2b_company_id');
+      } catch { /* the verified profile remains available in memory */ }
     } catch {
       if (request === generation.current) {
         verifiedCompany.current = '';
-        setCompany(null); setCompanyIdState(''); setCart([]);
+        setProfileError('Не успяхме да заредим фирмения профил. Проверете връзката и опитайте отново.');
+        setCompany(null); setCompanyIdState(''); replaceCart([]); setOrderNotes('');
       }
     } finally {
       if (request === generation.current) { setLoading(false); setSessionLoading(false); }
@@ -145,9 +161,16 @@ export function B2BProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!companyId) return;
-    localStorage.setItem('b2b_cart', JSON.stringify(cart));
-    localStorage.setItem('b2b_cart_owner', companyId);
-  }, [cart, companyId]);
+    try {
+      // Write the owner first so a failed write cannot expose another firm's draft.
+      if (localStorage.getItem('b2b_cart_owner') !== companyId) localStorage.removeItem('b2b_cart');
+      localStorage.setItem('b2b_cart_owner', companyId);
+      localStorage.setItem('b2b_cart', JSON.stringify(cart));
+      sessionStorage.setItem(`b2b_order_notes:${companyId}`, orderNotes);
+      sessionStorage.removeItem('b2b_order_notes');
+      setStorageWarning('');
+    } catch { setStorageWarning('Браузърът не запазва черновата. Количката е налична в този екран; не презареждайте страницата.'); }
+  }, [cart, companyId, orderNotes]);
 
   const requestB2BActivation = useCallback(async (id: string, email: string) => {
     try {
@@ -179,15 +202,11 @@ export function B2BProvider({ children }: { children: ReactNode }) {
   }, [refreshData]);
 
   const calculateB2BPrice = useCallback((product: B2BProduct): number => {
-    const cartonBase = product.carton_price || product.wholesale_price || product.price || 0;
-    if (product.pieces_per_carton && product.pieces_per_carton > 0) {
-      return cartonBase / product.pieces_per_carton;
-    }
-    return product.wholesale_price || product.price || 0;
+    return packPrice(product) / packSize(product);
   }, []);
 
   const calculateCartonPrice = useCallback((product: B2BProduct): number => {
-    return product.carton_price || product.wholesale_price || product.price || 0;
+    return packPrice(product);
   }, []);
 
   const getDisplayPrice = useCallback((product: B2BProduct): number => {
@@ -209,53 +228,55 @@ export function B2BProvider({ children }: { children: ReactNode }) {
     await supabase.auth.signOut();
     setCompanyIdState('');
     setCompany(null);
-    setCart([]);
-    localStorage.removeItem('b2b_company_id');
-    localStorage.removeItem('b2b_cart');
-    localStorage.removeItem('b2b_cart_owner');
+    replaceCart([]); setOrderNotes(''); setCartError(''); setStorageWarning('');
+    try {
+      sessionStorage.removeItem(`b2b_order_notes:${verifiedCompany.current}`);
+      localStorage.removeItem('b2b_company_id');
+      localStorage.removeItem('b2b_cart');
+      localStorage.removeItem('b2b_cart_owner');
+    } catch { /* local UI is already cleared */ }
   }, []);
 
   const addToB2BCart = (product: B2BProduct, quantity: number = 1) => {
-    const qty = Math.max(1, Math.floor(quantity));
-    setCart(prev => {
-      const existing = prev.find(item => item.product.id === product.id);
-      if (existing) {
-        return prev.map(item =>
-          item.product.id === product.id
-            ? { ...item, quantity: item.quantity + qty }
-            : item
-        );
-      }
-      return [...prev, { product, quantity: qty }];
-    });
+    const previous = cartRef.current;
+    const existing = previous.find(item => item.product.id === product.id);
+    const total = (existing?.quantity || 0) + quantity;
+    if (!validQuantity(product, quantity) || !validQuantity(product, total)) {
+      setCartError(`За „${product.name}“ въведете цели количества до ${maxPacks(product)} ${product.pieces_per_carton > 0 ? 'кашона' : 'бр.'} общо.`);
+      return false;
+    }
+    if (!existing && previous.length >= MAX_B2B_LINES) {
+      setCartError('Една поръчка може да съдържа до 50 различни продукта.'); return false;
+    }
+    setCartError('');
+    replaceCart(existing ? previous.map(item => item.product.id === product.id ? { product, quantity: total } : item) : [...previous, { product, quantity }]);
+    return true;
   };
 
   // Add whole cartons (MOQ = 1 carton). For carton-based products this adds
   // cartons × pieces_per_carton pieces; for piece-based products it adds pieces.
   const addCarton = (product: B2BProduct, cartons: number = 1) => {
-    const piecesPerUnit = product.pieces_per_carton > 0 ? product.pieces_per_carton : 1;
-    addToB2BCart(product, Math.max(1, Math.floor(cartons)) * piecesPerUnit);
+    return addToB2BCart(product, cartons * packSize(product));
   };
 
-  const updateB2BCartQty = (productId: number, qty: number) => {
-    if (qty <= 0) {
-      setCart(prev => prev.filter(item => item.product.id !== productId));
-      return;
+  const updateB2BCartQty = (productId: number, value: number | ((current: number) => number)) => {
+    const item = cartRef.current.find(item => item.product.id === productId);
+    if (!item) return;
+    const qty = typeof value === 'function' ? value(item.quantity) : value;
+    if (!validQuantity(item.product, qty)) {
+      setCartError(`Въведете цяло количество от 1 до ${maxPacks(item.product)} ${item.product.pieces_per_carton > 0 ? 'кашона' : 'бр.'}.`); return;
     }
-    setCart(prev => prev.map(item =>
-      item.product.id === productId
-        ? { ...item, quantity: qty }
-        : item
-    ));
+    setCartError('');
+    replaceCart(cartRef.current.map(item => item.product.id === productId ? { ...item, quantity: qty } : item));
   };
 
   const removeFromB2BCart = (productId: number) => {
-    setCart(prev => prev.filter(item => item.product.id !== productId));
+    setCartError(''); replaceCart(cartRef.current.filter(item => item.product.id !== productId));
   };
 
-  const clearB2BCart = () => setCart([]);
+  const clearB2BCart = () => { setCartError(''); replaceCart([]); };
 
-  const cartTotal = cart.reduce((sum, item) => sum + calculateB2BPrice(item.product) * item.quantity, 0);
+  const cartTotal = cart.reduce((sum, item) => sum + Math.round(lineTotal(item.product, item.quantity) * 100), 0) / 100;
   const cartItemsCount = cart.reduce((sum, item) => {
     const piecesPerUnit = item.product.pieces_per_carton > 0 ? item.product.pieces_per_carton : 1;
     return sum + Math.round(item.quantity / piecesPerUnit);
@@ -263,7 +284,7 @@ export function B2BProvider({ children }: { children: ReactNode }) {
 
   return (
     <B2BContext.Provider value={{
-      company, companyId, loading, sessionLoading, cart, cartTotal, cartItemsCount,
+      company, companyId, loading, sessionLoading, profileError, cart, cartTotal, cartItemsCount, cartError, storageWarning, orderNotes, setOrderNotes,
       requestB2BActivation, registerB2B, loginB2B, disconnect,
       calculateB2BPrice, calculateCartonPrice, getFinalB2BPrice,
       getDisplayPrice, getDisplayLabel,

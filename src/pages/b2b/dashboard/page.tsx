@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { useB2B } from '@/contexts/B2BContext';
+import { useB2B, type B2BProduct } from '@/contexts/B2BContext';
 import { supabase } from '@/utils/supabase';
 import B2BHeader from '@/pages/b2b/components/B2BHeader';
+import { useCustomerRead } from '@/hooks/useCustomerRead';
+import CustomerReadError from '@/components/CustomerReadError';
 
 const businessTypeLabels: Record<string, string> = {
   restaurant: 'Ресторант', asian_store: 'Азиатски магазин', supermarket: 'Супермаркет',
@@ -49,25 +51,18 @@ function B2BNotLoggedIn() {
 // ===== Dashboard Content =====
 export default function B2BDashboardPage() {
   const { company, companyId, loading, sessionLoading, disconnect } = useB2B();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [products, setProducts] = useState<any[]>([]);
-  const [ordersLoading, setOrdersLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-
-  useEffect(() => {
-    if (!companyId) return;
-    setOrdersLoading(true);
-    Promise.all([
-      supabase.from('orders').select('id, order_number, total_amount, status, created_at').eq('b2b_company_id', companyId).order('created_at', { ascending: false }).limit(10),
-      supabase.from('products').select('id, name, price, wholesale_price, carton_price, image, category, sku, stock, in_stock, moq, moq_unit, pieces_per_carton, slug').order('category').order('name'),
-    ]).then(([ordersRes, productsRes]) => {
-      if (ordersRes.data) {
-        setOrders(ordersRes.data);
-      }
-      if (productsRes.data) setProducts(productsRes.data);
-      setOrdersLoading(false);
-    }).catch(() => setOrdersLoading(false));
+  const load = useCallback(async (signal: AbortSignal) => {
+    if (!companyId) return { orders: [] as Order[], products: [] as B2BProduct[], orderCount: 0 };
+    const [ordersRes, productsRes] = await Promise.all([
+      supabase.from('orders').select('id, order_number, total_amount, status, created_at', { count: 'exact' }).eq('b2b_company_id', companyId).order('created_at', { ascending: false }).limit(10).abortSignal(signal),
+      supabase.from('products').select('id, name, price, wholesale_price, carton_price, image, category, sku, stock, in_stock, moq, moq_unit, pieces_per_carton, slug').order('category').order('name').abortSignal(signal),
+    ]);
+    if (ordersRes.error) throw ordersRes.error;
+    if (productsRes.error) throw productsRes.error;
+    return { orders: (ordersRes.data || []) as Order[], products: (productsRes.data || []) as B2BProduct[], orderCount: ordersRes.count ?? ordersRes.data?.length ?? 0 };
   }, [companyId]);
+  const { data: { orders, products, orderCount }, loading: ordersLoading, error: readError, retry } = useCustomerRead(load, { orders: [], products: [], orderCount: 0 });
 
   const filteredProducts = products.filter(p =>
     !searchQuery || p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -75,7 +70,7 @@ export default function B2BDashboardPage() {
   );
 
   const getOrderStatusLabel = (status: string) => {
-    const labels: Record<string, string> = { pending: 'Изчаква', pending_review: 'За преглед', approved: 'Одобрена', processing: 'Обработва се', shipped: 'Изпратена', delivered: 'Доставена', cancelled: 'Отказана' };
+    const labels: Record<string, string> = { pending: 'Изчаква', pending_review: 'За преглед', approved: 'Одобрена', confirmed: 'Потвърдена', processing: 'Обработва се', shipped: 'Изпратена', delivered: 'Доставена', cancelled: 'Отказана' };
     return labels[status] || status;
   };
 
@@ -159,7 +154,7 @@ export default function B2BDashboardPage() {
             <div>
               <p className="text-emerald-600 text-[10px] font-bold uppercase tracking-[0.2em] mb-2">B2B Dashboard</p>
               <h1 className="text-xl md:text-2xl font-extrabold text-gray-900 font-heading">
-                Добре {company.company_name}!
+                Добре дошли, {company.company_name}!
               </h1>
               <p className="text-gray-500 text-sm mt-1">
                 {businessTypeLabels[company.business_type] || company.business_type} · {company.city}
@@ -171,7 +166,7 @@ export default function B2BDashboardPage() {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6">
             <StatCard icon="ri-price-tag-3-line" label="Тип цени" value="Цени на едро" />
             <StatCard icon="ri-building-2-line" label="Тип бизнес" value={businessTypeLabels[company.business_type] || company.business_type} />
-            <StatCard icon="ri-shopping-cart-2-line" label="Поръчки" value={`${orders.length}`} />
+            <StatCard icon="ri-shopping-cart-2-line" label="Поръчки" value={ordersLoading || readError ? '—' : `${orderCount}`} />
           </div>
         </div>
       </section>
@@ -186,6 +181,7 @@ export default function B2BDashboardPage() {
 
           {/* Main */}
           <div className="lg:col-span-2 space-y-6">
+            {readError && <CustomerReadError message={readError} onRetry={retry} />}
             {/* Orders */}
             <div className="bg-white border border-gray-200 rounded-xl">
               <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
@@ -196,7 +192,7 @@ export default function B2BDashboardPage() {
               </div>
               {ordersLoading ? (
                 <div className="p-8 text-center"><i className="ri-loader-4-line text-2xl text-gray-300 animate-spin"></i></div>
-              ) : orders.length === 0 ? (
+              ) : readError ? null : orders.length === 0 ? (
                 <div className="p-8 text-center">
                   <i className="ri-inbox-line text-3xl text-gray-300 mb-3"></i>
                   <p className="text-gray-500 text-sm">Все още нямате поръчки</p>
@@ -208,12 +204,12 @@ export default function B2BDashboardPage() {
                 <div className="divide-y divide-gray-100">
                   {orders.slice(0, 5).map(order => {
                     return (
-                    <div key={order.id} className="px-5 py-3 flex items-center justify-between hover:bg-gray-50">
-                      <div>
-                        <p className="font-semibold text-gray-900 text-sm">#{order.order_number || order.id.slice(0, 8)}</p>
+                    <div key={order.id} className="px-5 py-3 flex items-center justify-between gap-3 hover:bg-gray-50">
+                      <div className="min-w-0">
+                        <p className="font-semibold text-gray-900 text-sm break-all">#{order.order_number || order.id.slice(0, 8)}</p>
                         <p className="text-xs text-gray-400">{new Date(order.created_at).toLocaleDateString('bg-BG')}</p>
                       </div>
-                      <div className="text-right flex items-center gap-3">
+                      <div className="text-right flex items-center gap-3 shrink-0">
                         <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${getOrderStatusColor(order.status)}`}>{getOrderStatusLabel(order.status)}</span>
                       </div>
                     </div>
@@ -229,6 +225,7 @@ export default function B2BDashboardPage() {
                 <div className="relative">
                   <i className="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
                   <input
+                    aria-label="Търси продукт в таблото"
                     type="text"
                     value={searchQuery}
                     onChange={e => setSearchQuery(e.target.value)}
@@ -238,7 +235,7 @@ export default function B2BDashboardPage() {
                 </div>
               </div>
               <div className="p-4">
-                {filteredProducts.length === 0 ? (
+                {ordersLoading ? <p role="status" className="p-4 text-center text-sm text-gray-500">Зареждане на продуктите…</p> : readError ? null : filteredProducts.length === 0 ? (
                   <div className="text-center py-8">
                     <i className="ri-price-tag-3-line text-3xl text-gray-300 mb-3"></i>
                     <p className="text-gray-500 text-sm">Няма налични продукти</p>
@@ -257,7 +254,7 @@ export default function B2BDashboardPage() {
                           <img src={p.image} alt={p.name} className="w-14 h-14 sm:w-12 sm:h-12 rounded-lg object-contain bg-gray-50 flex-shrink-0" />
                           <div className="min-w-0 flex-1">
                             <p className="text-xs font-semibold text-gray-900 truncate">{p.name}</p>
-                            <div className="flex items-center gap-2 mt-0.5">
+                            <div className="flex flex-wrap items-center gap-2 mt-0.5">
                               {p.sku && <span className="text-[10px] text-gray-400 font-mono">{p.sku}</span>}
                               {isCarton && (
                                 <span className="text-[10px] text-emerald-600">
@@ -273,7 +270,7 @@ export default function B2BDashboardPage() {
                     })}
                   </div>
                 )}
-                {filteredProducts.length > 10 && (
+                {!readError && !ordersLoading && filteredProducts.length > 10 && (
                   <p className="text-center text-xs text-gray-400 mt-3">
                     Показани 10 от {filteredProducts.length}.{' '}
                     <Link to="/b2b/products" className="text-emerald-600 hover:underline font-medium">Виж всички</Link>
@@ -348,9 +345,9 @@ function CompanyInfoCard({ company }: { company: any }) {
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between">
-      <span className="text-gray-400 text-xs">{label}</span>
-      <span className="text-gray-700 text-xs font-medium text-right">{value}</span>
+    <div className="flex items-start justify-between gap-4">
+      <span className="text-gray-500 text-xs shrink-0">{label}</span>
+      <span className="text-gray-700 text-xs font-medium text-right min-w-0 break-words">{value}</span>
     </div>
   );
 }

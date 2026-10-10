@@ -8,7 +8,7 @@ import { b2bRequestAttempt, finishB2BAttempt } from '@/utils/b2bAttempt';
 
 export default function B2BCheckoutPage() {
   const navigate = useNavigate();
-  const { cart, cartItemsCount, cartTotal, company, clearB2BCart, companyId, sessionLoading } = useB2B();
+  const { cart, cartItemsCount, cartTotal, company, clearB2BCart, companyId, sessionLoading, orderNotes: deliveryNotes, setOrderNotes: setDeliveryNotes } = useB2B();
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -19,7 +19,6 @@ export default function B2BCheckoutPage() {
   const [address, setAddress] = useState('');
   const [city, setCity] = useState(company?.city || '');
   const [postalCode, setPostalCode] = useState('');
-  const [deliveryNotes, setDeliveryNotes] = useState('');
   const [emailError, setEmailError] = useState('');
   const [phoneError, setPhoneError] = useState('');
   const [nameError, setNameError] = useState('');
@@ -36,11 +35,6 @@ export default function B2BCheckoutPage() {
     setPostalCode(value => value || company.postal_code || '');
   }, [company]);
 
-  useEffect(() => {
-    const savedNotes = sessionStorage.getItem('b2b_order_notes');
-    if (savedNotes) setDeliveryNotes(savedNotes);
-  }, []);
-
   const validateEmail = (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
   const validatePhone = (v: string) => /^(\+359\d{8,9}|0\d{9})$/.test(v.replace(/\s/g, ''));
 
@@ -53,7 +47,11 @@ export default function B2BCheckoutPage() {
     if (!validatePhone(phone)) { setPhoneError('Валиден телефон'); valid = false; }
     if (!fullName.trim()) { setNameError('Име'); valid = false; }
     if (!address.trim() || !city.trim()) { setAddressError('Адрес и град'); valid = false; }
-    if (!valid) return;
+    if (!valid) {
+      const field = !fullName.trim() ? 'b2b-name' : !validateEmail(email) ? 'b2b-email' : !validatePhone(phone) ? 'b2b-phone' : !address.trim() ? 'b2b-address' : 'b2b-city';
+      document.getElementById(field)?.focus();
+      return;
+    }
     if (!companyId || !cart.length) { setError('Влезте в B2B акаунта и добавете продукти.'); return; }
     processing.current = true;
 
@@ -103,7 +101,7 @@ export default function B2BCheckoutPage() {
         throw new Error(fnError.message || 'Грешка при изпращане на запитване');
       }
 
-      if (!data?.success) {
+      if (!data?.success || typeof data.order_number !== 'string' || !data.order_number.trim()) {
         throw new Error(data?.error || 'Грешка при изпращане на запитване');
       }
 
@@ -111,7 +109,7 @@ export default function B2BCheckoutPage() {
       setEmailWarning(data.email_sent === false);
       finishB2BAttempt(attemptId);
       clearB2BCart();
-      sessionStorage.removeItem('b2b_order_notes');
+      setDeliveryNotes('');
       setSuccess(true);
     } catch (err: any) {
       setError(err.message || 'Грешка при запитването. Опитайте отново.');
@@ -139,7 +137,7 @@ export default function B2BCheckoutPage() {
           </div>
           <h2 className="text-2xl font-extrabold text-gray-900 mb-3">Поръчката е изпратена!</h2>
           <p className="text-gray-500 text-sm mb-2">
-            Вашата поръчка <strong className="text-emerald-600 font-mono">#{orderNumber}</strong> е получена успешно.
+            Вашата поръчка <strong className="text-emerald-600 font-mono break-all">#{orderNumber}</strong> е получена успешно.
           </p>
           <p className="text-gray-400 text-xs mb-8">
             Нашият екип ще я прегледа и ще ви изпрати оферта на посочения имейл.
@@ -201,7 +199,7 @@ export default function B2BCheckoutPage() {
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {error && (
-          <div className="mb-4 bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2">
+          <div role="alert" className="mb-4 bg-red-50 border border-red-200 rounded-xl p-3 flex items-start gap-2">
             <i className="ri-error-warning-line text-red-500 mt-0.5"></i>
             <p className="text-sm text-red-600">{error}</p>
           </div>
@@ -214,18 +212,18 @@ export default function B2BCheckoutPage() {
               <h2 className="font-bold text-gray-900 text-sm mb-4">Контактна информация</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Име и фамилия <span className="text-red-500">*</span></label>
-                  <input type="text" value={fullName} onChange={e => { setFullName(e.target.value); setNameError(''); }} placeholder="Иван Иванов" className={`w-full px-4 py-2.5 bg-white border rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 ${nameError ? 'border-red-400 focus:ring-red-500/30' : 'border-gray-300 focus:ring-emerald-500/50'}`} />
+                  <label htmlFor="b2b-name" className="block text-xs font-medium text-gray-600 mb-1">Име и фамилия <span className="text-red-500">*</span></label>
+                  <input type="text" id="b2b-name" maxLength={150} autoComplete="name" aria-invalid={!!nameError} value={fullName} onChange={e => { setFullName(e.target.value); setNameError(''); }} placeholder="Иван Иванов" className={`w-full px-4 py-2.5 bg-white border rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 ${nameError ? 'border-red-400 focus:ring-red-500/30' : 'border-gray-300 focus:ring-emerald-500/50'}`} />
                   {nameError && <p className="text-xs text-red-500 mt-1">{nameError}</p>}
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Имейл <span className="text-red-500">*</span></label>
-                  <input type="email" value={email} onChange={e => { setEmail(e.target.value); setEmailError(''); }} placeholder="company@example.com" className={`w-full px-4 py-2.5 bg-white border rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 ${emailError ? 'border-red-400 focus:ring-red-500/30' : 'border-gray-300 focus:ring-emerald-500/50'}`} />
+                  <label htmlFor="b2b-email" className="block text-xs font-medium text-gray-600 mb-1">Имейл <span className="text-red-500">*</span></label>
+                  <input type="email" id="b2b-email" maxLength={200} autoComplete="email" aria-invalid={!!emailError} value={email} onChange={e => { setEmail(e.target.value); setEmailError(''); }} placeholder="company@example.com" className={`w-full px-4 py-2.5 bg-white border rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 ${emailError ? 'border-red-400 focus:ring-red-500/30' : 'border-gray-300 focus:ring-emerald-500/50'}`} />
                   {emailError && <p className="text-xs text-red-500 mt-1">{emailError}</p>}
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Телефон <span className="text-red-500">*</span></label>
-                  <input type="tel" value={phone} onChange={e => { setPhone(e.target.value); setPhoneError(''); }} placeholder="0899 123 456" className={`w-full px-4 py-2.5 bg-white border rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 ${phoneError ? 'border-red-400 focus:ring-red-500/30' : 'border-gray-300 focus:ring-emerald-500/50'}`} />
+                  <label htmlFor="b2b-phone" className="block text-xs font-medium text-gray-600 mb-1">Телефон <span className="text-red-500">*</span></label>
+                  <input type="tel" id="b2b-phone" maxLength={30} autoComplete="tel" aria-invalid={!!phoneError} value={phone} onChange={e => { setPhone(e.target.value); setPhoneError(''); }} placeholder="0899 123 456" className={`w-full px-4 py-2.5 bg-white border rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 ${phoneError ? 'border-red-400 focus:ring-red-500/30' : 'border-gray-300 focus:ring-emerald-500/50'}`} />
                   {phoneError && <p className="text-xs text-red-500 mt-1">{phoneError}</p>}
                 </div>
               </div>
@@ -235,21 +233,21 @@ export default function B2BCheckoutPage() {
               <h2 className="font-bold text-gray-900 text-sm mb-4">Адрес за доставка</h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Адрес <span className="text-red-500">*</span></label>
-                  <input type="text" value={address} onChange={e => { setAddress(e.target.value); setAddressError(''); }} placeholder="ул. Примерна 12" className={`w-full px-4 py-2.5 bg-white border rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 ${addressError ? 'border-red-400 focus:ring-red-500/30' : 'border-gray-300 focus:ring-emerald-500/50'}`} />
+                  <label htmlFor="b2b-address" className="block text-xs font-medium text-gray-600 mb-1">Адрес <span className="text-red-500">*</span></label>
+                  <input type="text" id="b2b-address" maxLength={300} autoComplete="street-address" aria-invalid={!!addressError} value={address} onChange={e => { setAddress(e.target.value); setAddressError(''); }} placeholder="ул. Примерна 12" className={`w-full px-4 py-2.5 bg-white border rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 ${addressError ? 'border-red-400 focus:ring-red-500/30' : 'border-gray-300 focus:ring-emerald-500/50'}`} />
                   {addressError && <p className="text-xs text-red-500 mt-1">{addressError}</p>}
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Град <span className="text-red-500">*</span></label>
-                  <input type="text" value={city} onChange={e => { setCity(e.target.value); setAddressError(''); }} placeholder="София" className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50" />
+                  <label htmlFor="b2b-city" className="block text-xs font-medium text-gray-600 mb-1">Град <span className="text-red-500">*</span></label>
+                  <input type="text" id="b2b-city" maxLength={100} autoComplete="address-level2" aria-invalid={!!addressError} value={city} onChange={e => { setCity(e.target.value); setAddressError(''); }} placeholder="София" className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50" />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Пощенски код</label>
-                  <input type="text" value={postalCode} onChange={e => setPostalCode(e.target.value)} placeholder="1000" className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50" />
+                  <label htmlFor="b2b-postal" className="block text-xs font-medium text-gray-600 mb-1">Пощенски код</label>
+                  <input type="text" id="b2b-postal" maxLength={20} autoComplete="postal-code" value={postalCode} onChange={e => setPostalCode(e.target.value)} placeholder="1000" className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/50" />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Бележки</label>
-                  <textarea value={deliveryNotes} onChange={e => setDeliveryNotes(e.target.value)} rows={3} placeholder="Допълнителни инструкции, срокове, специални изисквания..." className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500/50" />
+                  <label htmlFor="b2b-notes" className="block text-xs font-medium text-gray-600 mb-1">Бележки</label>
+                  <textarea id="b2b-notes" maxLength={500} value={deliveryNotes} onChange={e => setDeliveryNotes(e.target.value)} rows={3} placeholder="Допълнителни инструкции, срокове, специални изисквания..." className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500/50" />
                 </div>
               </div>
             </div>

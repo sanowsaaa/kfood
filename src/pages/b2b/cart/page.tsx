@@ -1,13 +1,12 @@
-import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useB2B } from '@/contexts/B2BContext';
 import B2BHeader from '@/pages/b2b/components/B2BHeader';
 import B2BFooter from '@/pages/b2b/components/B2BFooter';
+import { lineTotal, maxPacks } from '@/utils/b2bCart';
 
 export default function B2BCartPage() {
   const navigate = useNavigate();
-  const { cart, cartItemsCount, cartTotal, updateB2BCartQty, removeFromB2BCart, clearB2BCart, calculateB2BPrice, calculateCartonPrice, company, sessionLoading } = useB2B();
-  const [notes, setNotes] = useState('');
+  const { cart, cartItemsCount, cartTotal, updateB2BCartQty, removeFromB2BCart, clearB2BCart, calculateB2BPrice, calculateCartonPrice, company, sessionLoading, orderNotes: notes, setOrderNotes: setNotes } = useB2B();
 
   if (sessionLoading) {
     return (
@@ -86,7 +85,7 @@ export default function B2BCartPage() {
                     )}
                   </div>
                   <div className="flex items-baseline gap-2 mt-1.5">
-                    <span className="text-emerald-600 font-bold text-sm">€{(calculateB2BPrice(item.product) * item.quantity).toFixed(2)}</span>
+                    <span className="text-emerald-600 font-bold text-sm">€{lineTotal(item.product, item.quantity).toFixed(2)}</span>
                     {isCarton ? (
                       <span className="text-gray-400 text-[10px]">€{cartonPrice.toFixed(2)} / кашон</span>
                     ) : (
@@ -98,25 +97,31 @@ export default function B2BCartPage() {
                 <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-start mt-1 sm:mt-0">
                   <div className="flex items-center gap-2">
                     <button
-                      onClick={() => updateB2BCartQty(item.product.id, item.quantity - step)}
+                      aria-label={`Намали ${item.product.name}`}
+                      onClick={() => updateB2BCartQty(item.product.id, quantity => quantity - step)}
                       disabled={item.quantity <= step}
                       className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed text-gray-700 flex items-center justify-center text-sm cursor-pointer transition-colors active:scale-95">−</button>
                     <div className="text-center">
                       <input
+                        aria-label={`Количество за ${item.product.name}`}
                         type="number"
                         value={isCarton ? cartons : item.quantity}
-                        onChange={e => updateB2BCartQty(item.product.id, (parseInt(e.target.value) || 1) * step)}
+                        onChange={e => updateB2BCartQty(item.product.id, Number(e.target.value) * step)}
                         className="w-16 sm:w-14 text-center bg-white text-gray-900 font-bold text-sm border border-gray-300 rounded-lg py-2 sm:py-1.5 focus:outline-none focus:border-emerald-500/60"
                         min={1}
+                        max={maxPacks(item.product)}
                       />
                       <p className="text-[9px] text-gray-400 mt-0.5">{isCarton ? 'кашони' : 'бр.'}</p>
                     </div>
                     <button
-                      onClick={() => updateB2BCartQty(item.product.id, item.quantity + step)}
+                      aria-label={`Увеличи ${item.product.name}`}
+                      disabled={cartons >= maxPacks(item.product)}
+                      onClick={() => updateB2BCartQty(item.product.id, quantity => quantity + step)}
                       className="w-10 h-10 sm:w-8 sm:h-8 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center text-sm cursor-pointer transition-colors active:scale-95">+</button>
                   </div>
 
                   <button
+                    aria-label={`Премахни ${item.product.name}`}
                     onClick={() => removeFromB2BCart(item.product.id)}
                     className="text-gray-400 hover:text-red-500 text-base sm:text-sm cursor-pointer transition-colors flex-shrink-0 ml-0 sm:ml-2"
                   >
@@ -139,6 +144,8 @@ export default function B2BCartPage() {
             Допълнителна информация
           </h3>
           <textarea
+            aria-label="Бележки към поръчката"
+            maxLength={500}
             value={notes}
             onChange={e => setNotes(e.target.value)}
             rows={4}
@@ -159,10 +166,7 @@ export default function B2BCartPage() {
               Добави още продукти
             </Link>
             <button
-              onClick={() => {
-                sessionStorage.setItem('b2b_order_notes', notes);
-                navigate('/b2b/checkout');
-              }}
+              onClick={() => navigate('/b2b/checkout')}
               className="flex-1 py-3.5 sm:py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-sm transition-all cursor-pointer whitespace-nowrap flex items-center justify-center gap-2 active:scale-[0.98]"
             >
               <i className="ri-check-line"></i>

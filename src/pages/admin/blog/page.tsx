@@ -9,6 +9,7 @@ import AdminAccess from '@/pages/admin/components/AdminAccess';
 import { supabase } from '@/utils/supabase';
 import AdminHeader from '../components/AdminHeader';
 import BlogPostModal, { type BlogPost as EditableBlogPost } from './components/BlogPostModal';
+import { withBlogCover } from '@/utils/blogImages';
 
 interface BlogPost extends EditableBlogPost { id: number; views: number; created_at: string; }
 
@@ -30,7 +31,7 @@ export default function AdminBlogPage() {
 
   const fetchPosts = () => load(async () => checkedData(await supabase.from('blog_posts')
     .select('id, title, slug, excerpt, content, cover_image, author, category, tags, published, views, read_time, created_at')
-    .order('created_at', { ascending: false })) as BlogPost[], setPosts);
+    .order('created_at', { ascending: false })) as BlogPost[], rows => setPosts(rows.map(withBlogCover)));
 
   const showNotification = (type: 'success' | 'error', text: string) => action.setMessage({ type, text });
   const handleTogglePublish = (post: BlogPost) => action.run(`publish:${post.id}`, async () => {

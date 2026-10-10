@@ -6,8 +6,9 @@ export default function B2BHeader() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
-  const { company, cartItemsCount, disconnect } = useB2B();
+  const { company, cartItemsCount, disconnect, cartError, storageWarning } = useB2B();
   const menuRef = useRef<HTMLDivElement>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 40);
@@ -17,12 +18,15 @@ export default function B2BHeader() {
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node) && !menuButtonRef.current?.contains(e.target as Node)) {
         setMobileMenuOpen(false);
       }
     };
-    if (mobileMenuOpen) document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { setMobileMenuOpen(false); menuButtonRef.current?.focus(); }
+    };
+    if (mobileMenuOpen) { document.addEventListener('mousedown', handleClickOutside); document.addEventListener('keydown', handleEscape); }
+    return () => { document.removeEventListener('mousedown', handleClickOutside); document.removeEventListener('keydown', handleEscape); };
   }, [mobileMenuOpen]);
 
   useEffect(() => {
@@ -37,7 +41,7 @@ export default function B2BHeader() {
     { to: '/b2b/cart', label: 'Количка', icon: 'ri-shopping-cart-line' },
   ];
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => location.pathname === path || (path === '/b2b/products' && location.pathname.startsWith('/b2b/product/'));
 
   return (
     <>
@@ -59,17 +63,18 @@ export default function B2BHeader() {
               <div>
                 <span className="text-gray-900 font-bold text-sm sm:text-base tracking-tight">B2B Портал</span>
                 {company && (
-                  <span className="hidden sm:block text-emerald-600 text-[10px] leading-tight">{company.company_name}</span>
+                  <span className="hidden sm:block text-emerald-700 text-xs leading-tight max-w-44 truncate">{company.company_name}</span>
                 )}
               </div>
             </Link>
 
             {/* Desktop Nav */}
-            <nav className="hidden md:flex items-center gap-1">
+            <nav aria-label="B2B навигация" className="hidden lg:flex items-center gap-1">
               {navLinks.map(link => (
                 <Link
                   key={link.to}
                   to={link.to}
+                  aria-current={isActive(link.to) ? 'page' : undefined}
                   className={`relative px-3.5 py-2 text-[13px] font-medium transition-colors whitespace-nowrap rounded-lg ${
                     isActive(link.to)
                       ? 'text-emerald-700 bg-emerald-50'
@@ -86,6 +91,7 @@ export default function B2BHeader() {
             <div className="flex items-center gap-2">
               <Link
                 to="/b2b/cart"
+                aria-label={`Количка (${cartItemsCount})`}
                 className="relative p-2 text-gray-600 hover:text-gray-900 transition-colors rounded-lg hover:bg-gray-50"
               >
                 <i className="ri-shopping-cart-line text-xl"></i>
@@ -103,8 +109,12 @@ export default function B2BHeader() {
                 Изход
               </button>
               <button
+                ref={menuButtonRef}
+                aria-label="Меню"
+                aria-expanded={mobileMenuOpen}
+                aria-controls="b2b-mobile-menu"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 text-gray-600 hover:text-gray-900 transition-colors rounded-lg"
+                className="lg:hidden p-2 text-gray-600 hover:text-gray-900 transition-colors rounded-lg"
               >
                 <i className={`text-xl ${mobileMenuOpen ? 'ri-close-line' : 'ri-menu-line'}`}></i>
               </button>
@@ -114,12 +124,13 @@ export default function B2BHeader() {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div ref={menuRef} className="md:hidden border-t border-gray-200 bg-white animate-fade-up">
+          <div ref={menuRef} id="b2b-mobile-menu" className="lg:hidden border-t border-gray-200 bg-white animate-fade-up">
             <nav className="px-4 py-3 grid grid-cols-2 gap-1.5">
               {navLinks.map(link => (
                 <Link
                   key={link.to}
                   to={link.to}
+                  aria-current={isActive(link.to) ? 'page' : undefined}
                   className={`flex items-center gap-2.5 px-3 py-3 rounded-xl text-sm font-medium transition-all ${
                     isActive(link.to)
                       ? 'text-emerald-700 bg-emerald-50'
@@ -143,6 +154,8 @@ export default function B2BHeader() {
           </div>
         )}
       </header>
+      {cartError && <p role="alert" className="mx-auto max-w-7xl px-4 py-3 bg-red-50 text-red-800 text-sm">{cartError}</p>}
+      {storageWarning && <p role="status" className="mx-auto max-w-7xl px-4 py-3 bg-amber-50 text-amber-800 text-sm">{storageWarning}</p>}
     </>
   );
 }

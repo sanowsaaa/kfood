@@ -6,6 +6,7 @@ import B2BHeader from '@/pages/b2b/components/B2BHeader';
 import { useCustomerRead } from '@/hooks/useCustomerRead';
 import CustomerReadError from '@/components/CustomerReadError';
 import B2BFooter from '@/pages/b2b/components/B2BFooter';
+import { maxPacks, packSize } from '@/utils/b2bCart';
 
 async function load(signal: AbortSignal): Promise<B2BProduct[]> {
   const { data, error } = await supabase.from('products')
@@ -21,6 +22,8 @@ export default function B2BQuickOrderPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchMode, setSearchMode] = useState<'name' | 'sku'>('name');
   const [bulkInput, setBulkInput] = useState('');
+  const [bulkError, setBulkError] = useState('');
+  const [bulkNotice, setBulkNotice] = useState('');
   const searchRef = useRef<HTMLInputElement>(null);
 
   const filteredProducts = products.filter(p => {
@@ -32,32 +35,46 @@ export default function B2BQuickOrderPage() {
 
   const handleBulkInput = () => {
     const lines = bulkInput.trim().split('\n').filter(l => l.trim());
-    lines.forEach(line => {
+    const unresolved: string[] = [], messages: string[] = [];
+    let added = 0;
+    lines.forEach((line, index) => {
       const parts = line.split(/[\t,;]/).map(s => s.trim());
-      const skuOrName = parts[0];
-      const qty = parseInt(parts[1]) || 1;
-      const product = products.find(p =>
-        (p.sku && p.sku.toLowerCase() === skuOrName.toLowerCase()) ||
-        p.name.toLowerCase().includes(skuOrName.toLowerCase())
-      );
-      if (product) {
-        const piecesPerUnit = product.pieces_per_carton > 0 ? product.pieces_per_carton : 1;
-        addToB2BCart(product, qty * piecesPerUnit);
+      const query = parts[0].toLowerCase();
+      const quantityText = parts[1] || '1';
+      const qty = Number(quantityText);
+      const exact = products.filter(p => p.sku?.toLowerCase() === query || p.name.toLowerCase() === query);
+      const matches = query ? (exact.length ? exact : products.filter(p => p.name.toLowerCase().includes(query))) : [];
+      const product = matches.length === 1 ? matches[0] : null;
+      let problem = '';
+      if (!query || matches.length === 0) problem = 'продуктът не е намерен';
+      else if (!product) problem = 'повече от един продукт — използвайте точния каталожен №';
+      else if (parts.length > 2 || !/^\d+$/.test(quantityText) || !Number.isSafeInteger(qty) || qty < 1 || qty > maxPacks(product)) problem = `количеството трябва да е цяло число от 1 до ${maxPacks(product)}`;
+      else if (!addToB2BCart(product, qty * packSize(product))) problem = 'достигнато е максималното количество или броят продукти в количката';
+      if (problem) {
+        unresolved.push(line); messages.push(`Ред ${index + 1}: ${problem}.`);
+      } else {
+        added++;
       }
     });
-    setBulkInput('');
+    setBulkInput(unresolved.join('\n'));
+    setBulkError(messages.join(' '));
+    setBulkNotice(added ? `Добавени редове: ${added}. ${unresolved.length ? 'Останалите редове са запазени за поправка.' : 'Списъкът е добавен в количката.'}` : '');
   };
 
-  const handlePaste = () => {
-    navigator.clipboard.readText().then(text => setBulkInput(text)).catch(() => {});
+  const handlePaste = async () => {
+    setBulkError(''); setBulkNotice('');
+    try {
+      if (!navigator.clipboard?.readText) throw new Error('Clipboard unavailable');
+      setBulkInput(await navigator.clipboard.readText());
+    } catch { setBulkError('Няма достъп до клипборда. Поставете списъка директно в полето.'); }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && searchQuery && searchMode === 'sku') {
       e.preventDefault();
-      const product = products.find(p => p.sku?.toLowerCase() === searchQuery.toLowerCase());
+      const product = products.find(p => p.sku?.toLowerCase() === searchQuery.trim().toLowerCase());
       if (product) {
-        addCarton(product, 1);
+        if (!addCarton(product, 1)) return;
         setSearchQuery('');
         searchRef.current?.focus();
       }
@@ -99,6 +116,7 @@ export default function B2BQuickOrderPage() {
                 </div>
                 <div className="relative flex-1">
                   <input
+                    aria-label="Търси продукт за бърза поръчка"
                     ref={searchRef}
                     type="text"
                     value={searchQuery}
@@ -109,7 +127,7 @@ export default function B2BQuickOrderPage() {
                     autoFocus
                   />
                   {searchQuery && (
-                    <button onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
+                    <button aria-label="Изчисти търсенето" onClick={() => setSearchQuery('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 cursor-pointer">
                       <i className="ri-close-circle-line"></i>
                     </button>
                   )}
@@ -121,9 +139,9 @@ export default function B2BQuickOrderPage() {
                   {filteredProducts.map(p => {
                     const isCarton = p.pieces_per_carton > 0;
                     return (
-                      <div key={p.id} className="flex items-center gap-3 p-2.5 hover:bg-emerald-50/50 rounded-lg transition-colors">
+                      <div key={p.id} className="flex flex-wrap sm:flex-nowrap items-center gap-3 p-2.5 hover:bg-emerald-50/50 rounded-lg transition-colors">
                         <img src={p.image} alt={p.name} className="w-10 h-10 rounded-lg object-contain bg-gray-50 flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1 min-w-[calc(100%-4rem)] sm:min-w-0">
                           <p className="text-xs font-semibold text-gray-900 truncate">{p.name}</p>
                           <p className="text-[10px] text-emerald-600 font-semibold mt-0.5">
                             {isCarton
@@ -131,7 +149,7 @@ export default function B2BQuickOrderPage() {
                               : <>€{calculateB2BPrice(p).toFixed(2)} / бр.</>
                             }
                           </p>
-                          <div className="flex items-center gap-2 text-[10px]">
+                          <div className="flex flex-wrap items-center gap-2 text-xs">
                             {p.sku && <span className="text-gray-400 font-mono">{p.sku}</span>}
                             {isCarton && (
                               <span className="text-emerald-600 font-semibold flex items-center gap-0.5">
@@ -146,12 +164,14 @@ export default function B2BQuickOrderPage() {
                             )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center justify-end gap-2 w-full sm:w-auto sm:shrink-0">
                           <div className="flex items-center gap-1">
                             <span className="text-[10px] text-gray-500 whitespace-nowrap">{isCarton ? 'каш.' : 'бр.'}</span>
                             <input
+                              aria-label={`Добави количество за ${p.name}`}
                               type="number"
                               min={1}
+                              max={maxPacks(p)}
                               defaultValue={1}
                               className="w-16 px-2 py-2 sm:py-1.5 bg-white border border-gray-300 rounded-lg text-xs text-center text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
                               id={`qty-b2b-${p.id}`}
@@ -160,7 +180,7 @@ export default function B2BQuickOrderPage() {
                           <button
                             onClick={() => {
                               const input = document.getElementById(`qty-b2b-${p.id}`) as HTMLInputElement;
-                              const val = parseInt(input?.value || '1') || 1;
+                              const val = Number(input?.value);
                               if (isCarton) addCarton(p, val);
                               else addToB2BCart(p, val);
                             }}
@@ -188,13 +208,16 @@ export default function B2BQuickOrderPage() {
                 Всеки ред: <code className="bg-gray-100 px-1.5 py-0.5 rounded text-emerald-700 text-[10px]">SKU[таб/запетая]кашони</code>
               </p>
               <textarea
+                aria-label="Списък с продукти и количества"
                 value={bulkInput}
                 onChange={e => setBulkInput(e.target.value)}
                 rows={5}
                 placeholder={`KR-001\t10\nKR-002\t5\nSamyang Ramen\t3`}
                 className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl text-sm text-gray-900 font-mono placeholder-gray-400 resize-none focus:outline-none focus:ring-2 focus:ring-emerald-500/50"
               />
-              <div className="flex gap-2 mt-3">
+              {bulkError && <p role="alert" className="mt-3 text-sm text-red-700">{bulkError}</p>}
+              {bulkNotice && <p role="status" className="mt-3 text-sm text-emerald-700">{bulkNotice}</p>}
+              <div className="flex flex-wrap gap-2 mt-3">
                 <button onClick={handleBulkInput} disabled={!bulkInput.trim()}
                   className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-200 disabled:text-gray-400 text-white rounded-lg text-xs font-semibold cursor-pointer disabled:cursor-not-allowed">
                   <i className="ri-play-list-add-line mr-1"></i> Обработи
@@ -203,7 +226,7 @@ export default function B2BQuickOrderPage() {
                   className="px-4 py-2 border border-gray-300 hover:bg-gray-50 text-gray-600 rounded-lg text-xs font-semibold cursor-pointer">
                   <i className="ri-clipboard-line mr-1"></i> От клипборд
                 </button>
-                <button onClick={() => setBulkInput('')} className="px-4 py-2 text-gray-400 hover:text-gray-600 text-xs cursor-pointer">Изчисти</button>
+                <button onClick={() => { setBulkInput(''); setBulkError(''); setBulkNotice(''); }} className="px-4 py-2 text-gray-500 hover:text-gray-600 text-xs cursor-pointer">Изчисти</button>
               </div>
             </div>
           </div>
@@ -239,20 +262,22 @@ export default function B2BQuickOrderPage() {
                               {isCarton ? `${cartons} кашон${cartons !== 1 ? 'а' : ''} × ${item.product.pieces_per_carton} бр.` : `${item.quantity} бр.`}
                             </p>
                             <div className="flex items-center gap-1.5 mt-1">
-                              <button onClick={() => updateB2BCartQty(item.product.id, item.quantity - step)}
-                                className="w-5 h-5 rounded bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-[10px] text-gray-600 cursor-pointer">−</button>
+                              <button aria-label={`Намали ${item.product.name}`} disabled={item.quantity <= step} onClick={() => updateB2BCartQty(item.product.id, quantity => quantity - step)}
+                                className="w-9 h-9 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-40 flex items-center justify-center text-sm text-gray-600 cursor-pointer">−</button>
                               <input
+                                aria-label={`Количество за ${item.product.name}`}
                                 type="number"
                                 value={isCarton ? cartons : item.quantity}
-                                onChange={e => updateB2BCartQty(item.product.id, (parseInt(e.target.value) || 1) * step)}
+                                onChange={e => updateB2BCartQty(item.product.id, Number(e.target.value) * step)}
                                 className="w-10 text-center bg-white text-xs text-gray-900 border border-gray-300 rounded py-0.5 focus:outline-none"
                                 min={1}
+                                max={maxPacks(item.product)}
                               />
-                              <button onClick={() => updateB2BCartQty(item.product.id, item.quantity + step)}
-                                className="w-5 h-5 rounded bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-[10px] text-gray-600 cursor-pointer">+</button>
+                              <button aria-label={`Увеличи ${item.product.name}`} disabled={cartons >= maxPacks(item.product)} onClick={() => updateB2BCartQty(item.product.id, quantity => quantity + step)}
+                                className="w-9 h-9 rounded bg-gray-100 hover:bg-gray-200 disabled:opacity-40 flex items-center justify-center text-sm text-gray-600 cursor-pointer">+</button>
                             </div>
                           </div>
-                          <button onClick={() => removeFromB2BCart(item.product.id)}
+                          <button aria-label={`Премахни ${item.product.name}`} onClick={() => removeFromB2BCart(item.product.id)}
                             className="text-gray-400 hover:text-red-500 text-[10px] cursor-pointer">
                             <i className="ri-delete-bin-line"></i>
                           </button>

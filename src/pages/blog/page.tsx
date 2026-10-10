@@ -4,6 +4,7 @@ import Header from '../home/components/Header';
 import Footer from '../home/components/Footer';
 import { supabase } from '@/utils/supabase';
 import { useSEO } from '@/utils/seo';
+import { withBlogCover } from '@/utils/blogImages';
 
 interface BlogPost {
   id: number;
@@ -72,7 +73,7 @@ export default function BlogPage() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setPosts(data || []);
+      setPosts((data || []).map(withBlogCover));
     } catch (error) {
       console.error('Error fetching posts:', error);
     } finally {

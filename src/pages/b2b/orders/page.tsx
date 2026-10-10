@@ -15,6 +15,7 @@ interface OrderItem {
   sku: string | null;
   carton_price: number;
   pieces_per_carton: number;
+  line_total_minor?: number;
 }
 
 interface Order {
@@ -115,12 +116,12 @@ export default function B2BOrdersPage() {
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         {loading ? (
-          <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
+          <div role="status" className="bg-white border border-gray-200 rounded-xl p-12 text-center">
             <i className="ri-loader-4-line text-3xl text-gray-300 animate-spin"></i>
             <p className="text-gray-500 text-sm mt-3">Зареждане на поръчките...</p>
           </div>
         ) : error ? (
-          <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
+          <div role="alert" className="bg-white border border-gray-200 rounded-xl p-12 text-center">
             <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
               <i className="ri-error-warning-line text-2xl text-red-500"></i>
             </div>
@@ -150,19 +151,22 @@ export default function B2BOrdersPage() {
           <div className="space-y-3">
             {orders.map(order => {
               const isExpanded = expandedId === order.id;
-              const itemCount = (order.items || []).length;
+              const items = Array.isArray(order.items) ? order.items.filter(item => item && typeof item === 'object') : [];
+              const itemCount = items.length;
               return (
                 <div key={order.id} className="bg-white border border-gray-200 rounded-xl overflow-hidden">
                   <button
+                    aria-expanded={isExpanded}
+                    aria-controls={`order-${order.id}`}
                     onClick={() => setExpandedId(isExpanded ? null : order.id)}
-                    className="w-full px-5 py-4 flex items-center justify-between gap-4 hover:bg-gray-50 transition-colors cursor-pointer text-left"
+                    className="w-full px-5 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-gray-50 transition-colors cursor-pointer text-left"
                   >
                     <div className="flex items-center gap-4 min-w-0">
                       <div className="w-10 h-10 bg-emerald-50 rounded-lg flex items-center justify-center flex-shrink-0">
                         <i className="ri-file-list-3-line text-emerald-600 text-lg"></i>
                       </div>
                       <div className="min-w-0">
-                        <p className="font-semibold text-gray-900 text-sm font-mono">#{order.order_number}</p>
+                        <p className="font-semibold text-gray-900 text-sm font-mono break-all">#{order.order_number}</p>
                         <p className="text-xs text-gray-400">
                           {new Date(order.created_at).toLocaleDateString('bg-BG')} · {itemCount} артикула
                         </p>
@@ -178,13 +182,15 @@ export default function B2BOrdersPage() {
                   </button>
 
                   {isExpanded && (
-                    <div className="border-t border-gray-100 px-5 py-4">
+                    <div id={`order-${order.id}`} className="border-t border-gray-100 px-5 py-4">
                       {/* Items */}
                       <div className="space-y-3">
-                        {(order.items || []).map((item, i) => {
+                        {items.map((item, i) => {
                           const hasCarton = item.pieces_per_carton > 0;
                           const cartons = hasCarton ? Math.floor(item.quantity / item.pieces_per_carton) : 0;
-                          const lineTotal = (item.price || 0) * item.quantity;
+                          const unitPrice = Number.isFinite(Number(item.price)) ? Number(item.price) : 0;
+                          const lineTotal = Number.isSafeInteger(item.line_total_minor) && item.line_total_minor! >= 0
+                            ? item.line_total_minor! / 100 : unitPrice * (Number(item.quantity) || 0);
                           return (
                             <div key={i} className="flex items-center gap-3">
                               {item.image ? (
@@ -198,8 +204,8 @@ export default function B2BOrdersPage() {
                                 <p className="text-xs font-medium text-gray-900 line-clamp-1">{item.name}</p>
                                 <p className="text-[10px] text-gray-400">
                                   {hasCarton
-                                    ? `${cartons} кашон${cartons !== 1 ? 'а' : ''} × ${item.pieces_per_carton} бр. · €${(item.price || 0).toFixed(2)}/бр.`
-                                    : `${item.quantity} бр. · €${(item.price || 0).toFixed(2)}/бр.`}
+                                    ? `${cartons} кашон${cartons !== 1 ? 'а' : ''} × ${item.pieces_per_carton} бр. · €${unitPrice.toFixed(2)}/бр.`
+                                    : `${item.quantity} бр. · €${unitPrice.toFixed(2)}/бр.`}
                                 </p>
                                 {item.sku && (
                                   <p className="text-[10px] text-gray-400 font-mono mt-0.5">Кат. № {item.sku}</p>
