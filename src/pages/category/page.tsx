@@ -244,7 +244,7 @@ export default function Category() {
                   aria-label="Сортиране на продуктите"
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="px-3 sm:px-4 py-2 pr-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent cursor-pointer text-sm"
+                  className="min-w-0 flex-1 sm:flex-none px-3 sm:px-4 py-2 pr-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-primary focus:border-transparent cursor-pointer text-sm"
                 >
                   <option value="featured">Препоръчани</option>
                   <option value="price-low">Цена: Ниска → Висока</option>
@@ -257,27 +257,27 @@ export default function Category() {
 
           {/* Products Grid - mobile: 2 cols, better gaps */}
           {filteredProducts.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6" data-product-shop>
+            <div className="customer-product-grid grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6" data-product-shop>
               {filteredProducts.map((product) => (
                 <div
                   key={product.id}
-                  className="bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-md hover:shadow-xl transition-all duration-300 group"
+                  className="customer-product-card bg-white rounded-xl sm:rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 group"
                 >
-                  <Link to={`/product/${product.slug || product.id}`} className="block relative overflow-hidden cursor-pointer bg-white flex items-center justify-center" style={{ aspectRatio: '3 / 4' }}>
+                  <Link to={`/product/${product.slug || product.id}`} className="customer-product-image cursor-pointer">
                     <img
                         loading="lazy"
                         decoding="async"
                       src={product.image}
                       alt={product.name}
-                      className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-500"
+                      className="transition-transform duration-300"
                     />
                     {product.badge && (
-                      <span className="absolute top-2 sm:top-4 left-2 sm:left-4 bg-brand-primary text-white px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-sm font-semibold whitespace-nowrap">
+                      <span className="customer-product-badge absolute top-2 sm:top-3 left-2 sm:left-3 bg-brand-primary text-white px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs font-semibold">
                         {product.badge}
                       </span>
                     )}
                     {!product.in_stock && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                      <div className="customer-product-unavailable absolute inset-0 flex items-center justify-center">
                         <span className="bg-white text-gray-900 px-2 sm:px-4 py-1 sm:py-2 rounded-lg text-xs sm:text-sm font-semibold whitespace-nowrap">
                           Изчерпан
                         </span>
@@ -285,9 +285,9 @@ export default function Category() {
                     )}
                   </Link>
 
-                  <div className="p-3 sm:p-6">
+                  <div className="customer-product-body p-3 sm:p-4 md:p-5">
                     <Link to={`/product/${product.slug || product.id}`} className="cursor-pointer">
-                      <h3 className="text-sm sm:text-lg font-bold text-gray-900 mb-1 sm:mb-2 group-hover:text-brand-primary transition-colors line-clamp-2">
+                      <h3 className="customer-product-name font-bold text-gray-900 mb-2 group-hover:text-brand-primary transition-colors">
                         {product.name}
                       </h3>
                     </Link>
@@ -308,16 +308,17 @@ export default function Category() {
                       <span className="text-xs sm:text-sm text-gray-600">({product.reviews})</span>
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    <div className="customer-product-actions flex items-center justify-between gap-2">
                       <div>
                         <div className="flex flex-col">
-                          <span className="text-lg sm:text-2xl font-bold text-brand-primary">
+                          <span className="customer-product-price font-bold text-brand-primary">
                             €{product.price.toFixed(2)}
                           </span>
                         </div>
                       </div>
 
                       <button
+                        aria-label={`Добави ${product.name}`}
                         onClick={() => handleAddToCart(product)}
                         disabled={!product.in_stock}
                         className={`${product.in_stock ? 'bg-brand-primary hover:bg-brand-hover text-white' : 'bg-gray-300 text-gray-500 cursor-not-allowed'} w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg hover:shadow-xl whitespace-nowrap touch-target-sm`}

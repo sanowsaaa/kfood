@@ -50,7 +50,7 @@ export default function CookieConsent() {
         right: 0,
         bottom: 0,
         width: '100vw',
-        height: '100vh',
+        height: '100dvh',
         zIndex: 9999,
         display: 'flex',
         alignItems: 'center',
@@ -79,22 +79,22 @@ export default function CookieConsent() {
 
         {/* Видове бисквитки */}
         <div className="space-y-3 mb-6">
-          <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
+          <div className="flex flex-wrap items-start gap-3 p-3 bg-gray-50 rounded-xl">
             <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
               <i className="ri-settings-3-line text-emerald-600 text-sm"></i>
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-gray-900">Задължителни</p>
               <p className="text-xs text-gray-500">Необходими за работата на сайта (количка, сесия)</p>
             </div>
-            <span className="ml-auto text-xs text-emerald-600 font-medium whitespace-nowrap">Винаги активни</span>
+            <span className="basis-full pl-11 sm:basis-auto sm:pl-0 sm:ml-auto text-xs text-emerald-600 font-medium whitespace-nowrap">Винаги активни</span>
           </div>
 
           <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
             <div className="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
               <i className="ri-bar-chart-line text-amber-600 text-sm"></i>
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-gray-900">Аналитични</p>
               <p className="text-xs text-gray-500">Помагат ни да разберем как използвате сайта</p>
             </div>
@@ -104,7 +104,7 @@ export default function CookieConsent() {
             <div className="w-8 h-8 bg-rose-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
               <i className="ri-megaphone-line text-rose-600 text-sm"></i>
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-gray-900">Маркетингови</p>
               <p className="text-xs text-gray-500">За персонализирани реклами и оферти</p>
             </div>

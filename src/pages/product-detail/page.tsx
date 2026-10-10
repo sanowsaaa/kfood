@@ -201,7 +201,7 @@ export default function ProductDetail() {
             <i aria-hidden="true" className="ri-arrow-right-s-line text-gray-300"></i>
             <Link to="/products" className="hover:text-brand-primary transition-colors">Продукти</Link>
             <i aria-hidden="true" className="ri-arrow-right-s-line text-gray-300"></i>
-            <span className="text-gray-800 font-medium line-clamp-1">{product.name}</span>
+            <span className="customer-product-name text-gray-800 font-medium">{product.name}</span>
           </div>
         </div>
       </div>
@@ -212,9 +212,9 @@ export default function ProductDetail() {
 
           {/* Product Image - smaller on mobile */}
           <div className="relative group">
-            <div className="bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-100 relative flex items-center justify-center cursor-zoom-in" style={{ aspectRatio: '3 / 4' }}>
+            <div className="customer-product-image customer-detail-image bg-white rounded-xl sm:rounded-2xl overflow-hidden border border-gray-100">
               {!product.in_stock && (
-                <div className="absolute inset-0 bg-black/55 flex items-center justify-center z-10">
+                <div className="customer-product-unavailable absolute inset-0 flex items-center justify-center z-10">
                   <span className="bg-white text-gray-900 px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-bold text-base sm:text-lg whitespace-nowrap">
                     Изчерпан
                   </span>
@@ -223,7 +223,7 @@ export default function ProductDetail() {
               <img
                 src={product.image}
                 alt={product.name}
-                className="w-full h-full object-contain object-center transition-transform duration-300 group-hover:scale-110"
+                className="transition-transform duration-300"
               />
             </div>
           </div>
@@ -236,7 +236,7 @@ export default function ProductDetail() {
               </span>
             )}
 
-            <h1 id="main-content" tabIndex={-1} className="text-lg sm:text-xl md:text-4xl font-bold text-gray-900 leading-tight">{product.name}</h1>
+            <h1 id="main-content" tabIndex={-1} className="customer-product-name text-[22px] sm:text-2xl md:text-4xl font-bold text-gray-900 leading-tight">{product.name}</h1>
 
             {/* Rating */}
             <div className="flex items-center gap-2">
@@ -381,29 +381,29 @@ export default function ProductDetail() {
         {relatedProducts.length > 0 && (
           <div className="mt-8 sm:mt-10 md:mt-20">
             <h2 className="text-lg sm:text-xl md:text-3xl font-bold text-gray-900 mb-4 sm:mb-5 md:mb-8">Подобни продукти</h2>
-            <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-3 -mx-4 px-4 sm:mx-0 sm:px-0 snap-x snap-mandatory md:grid md:grid-cols-4 md:overflow-visible md:pb-0 scrollbar-hide">
+            <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-3 -mx-4 px-4 sm:mx-0 sm:px-0 snap-x snap-mandatory md:grid md:grid-cols-4 md:overflow-visible md:pb-0 scrollbar-hide" data-product-shop>
               {relatedProducts.map(rp => (
                 <Link
                   key={rp.id}
                   to={`/product/${rp.slug || rp.id}`}
-                  className="flex-shrink-0 w-36 sm:w-40 md:w-auto bg-white rounded-xl overflow-hidden border border-gray-100 group active:scale-95 transition-transform snap-start"
+                  className="customer-product-card flex-shrink-0 w-44 sm:w-48 md:w-auto bg-white rounded-xl overflow-hidden border border-gray-100 group active:scale-95 transition-transform snap-start"
                 >
-                  <div className="relative overflow-hidden bg-white flex items-center justify-center" style={{ aspectRatio: '3 / 4' }}>
+                  <div className="customer-product-image">
                     <img
                       src={rp.image}
                       alt={rp.name}
                       loading="lazy"
-                      className="w-full h-full object-contain object-center group-hover:scale-105 transition-transform duration-300"
+                      className="transition-transform duration-300"
                     />
                     {!rp.in_stock && (
-                      <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                      <div className="customer-product-unavailable absolute inset-0 flex items-center justify-center">
                         <span className="bg-white text-gray-900 px-2 py-0.5 rounded text-[10px] font-bold">Изчерпан</span>
                       </div>
                     )}
                   </div>
-                  <div className="p-2.5 sm:p-3">
-                    <h3 className="text-xs sm:text-sm font-bold text-gray-900 line-clamp-2 mb-1 group-hover:text-brand-primary transition-colors">{rp.name}</h3>
-                    <span className="text-xs sm:text-sm font-bold text-brand-primary">€{(rp.price).toFixed(2)}</span>
+                  <div className="customer-product-body p-3">
+                    <h3 className="customer-product-name font-bold text-gray-900 mb-2 group-hover:text-brand-primary transition-colors">{rp.name}</h3>
+                    <span className="customer-product-actions customer-product-price font-bold text-brand-primary">€{(rp.price).toFixed(2)}</span>
                   </div>
                 </Link>
               ))}
@@ -417,8 +417,7 @@ export default function ProductDetail() {
       {/* Mobile Sticky Buy Bar - improved spacing and touch targets */}
       {product.in_stock && (
         <div
-          className="md:hidden fixed left-0 right-0 bg-white border-t border-gray-200 px-3 sm:px-4 py-2.5 sm:py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.12)]"
-          style={{ bottom: 'calc(60px + env(safe-area-inset-bottom))', zIndex: 60 }}
+          className="customer-mobile-actions md:hidden fixed left-0 right-0 bg-white border-t border-gray-200 px-3 sm:px-4 py-2.5 sm:py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.12)]"
         >
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Quantity */}
@@ -444,7 +443,7 @@ export default function ProductDetail() {
             <button
               aria-label="Добави в количката"
               onClick={handleAddToCart}
-              className="flex-1 py-2.5 sm:py-3 bg-brand-primary text-white rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-transform whitespace-nowrap touch-target"
+              className="min-w-0 flex-1 min-h-12 py-2.5 sm:py-3 bg-brand-primary text-white rounded-xl font-bold text-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-transform whitespace-nowrap touch-target"
             >
               {addedToCart ? (
                 <><i aria-hidden="true" className="ri-check-line text-sm"></i> Добавено!</>
@@ -456,7 +455,7 @@ export default function ProductDetail() {
             {/* Buy now */}
             <button
               onClick={handleBuyNow}
-              className="flex-1 py-2.5 sm:py-3 bg-orange-700 text-white rounded-xl font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-transform whitespace-nowrap touch-target"
+              className="min-w-0 flex-1 min-h-12 py-2.5 sm:py-3 bg-orange-700 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 transition-transform whitespace-nowrap touch-target"
             >
               <i aria-hidden="true" className="ri-flashlight-fill text-sm"></i>
               Купи сега

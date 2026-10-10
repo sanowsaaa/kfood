@@ -43,7 +43,7 @@ async function setup(options = {}) {
     }
   }, options);
   const requests = [], errors = [];
-  const rows = structuredClone(products);
+  const rows = structuredClone(options.products || products);
   let readFailure = options.readFailure;
   let creationFailure = options.creationFailure;
   let stateIndex = 0;
@@ -92,6 +92,10 @@ async function setup(options = {}) {
     }
     requests.push({ asset: url.href, method: req.method() });
     if (assetMap[url.href]) return route.fulfill({ body: await readFile(assetMap[url.href].path), contentType: assetMap[url.href].type });
+    if (req.resourceType() === 'image' && options.imageSizes?.[url.pathname]) {
+      const [width, height] = options.imageSizes[url.pathname];
+      return route.fulfill({ contentType: 'image/svg+xml', body: `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect x="2" y="2" width="${width - 4}" height="${height - 4}" rx="10" fill="#ff208a" stroke="#2b0b22" stroke-width="4"/><text x="${width / 2}" y="${height / 2}" text-anchor="middle" fill="#2b0b22" font-size="24">K-FOOD</text></svg>` });
+    }
     if (req.resourceType() === 'image') return route.fulfill({ contentType: 'image/svg+xml', body: '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="500"><rect width="400" height="500" fill="#fff7ed"/><rect x="95" y="75" width="210" height="350" rx="20" fill="#b91c1c"/><text x="200" y="240" text-anchor="middle" fill="white" font-size="28">K-FOOD</text></svg>' });
     if (url.pathname.endsWith('remixicon.css') && process.env.CUSTOMER_TEST_FONT_CSS) return route.fulfill({ contentType: 'text/css', body: await readFile(process.env.CUSTOMER_TEST_FONT_CSS, 'utf8') });
     return route.fulfill({ body: '', contentType: req.resourceType() === 'stylesheet' ? 'text/css' : 'text/plain' });
@@ -238,6 +242,218 @@ for (const width of [360, 1440]) {
     } finally { if (lighthouseBrowser) await lighthouseBrowser.disconnect(); await qa.close(); }
   });
 }
+
+const layoutProducts = [
+  { ...products[0], name: 'Nongshim Рамен Shin Ramyun с пикантен вкус в купа, голяма опаковка 114 г — лимитирана серия за споделяне', image: 'https://static.readdy.ai/offline-customer-tall.svg', badge: 'Много остро' },
+  { ...products[1], name: 'Paldo Рамен Рабоки Мултипак с оризови хапки и сос, 4 × 145 г', price: 123.45, image: 'https://static.readdy.ai/offline-customer-wide.svg', category: products[0].category, badge: 'Мултипак' },
+  { ...products[2], name: `Десерт ${'LimitedEdition'.repeat(5)} 50 г` },
+];
+const layoutImages = { '/offline-customer-tall.svg': [180, 600], '/offline-customer-wide.svg': [600, 240] };
+async function assertFullText(locator, label) {
+  const size = await locator.evaluate(element => ({ height: element.clientHeight, fullHeight: element.scrollHeight, width: element.clientWidth, fullWidth: element.scrollWidth }));
+  assert.ok(size.height > 0 && size.fullHeight <= size.height + 1 && size.fullWidth <= size.width + 1, `${label}: complete text must fit ${JSON.stringify(size)}`);
+}
+async function assertTouchable(locator, label) {
+  await locator.evaluate(element => element.scrollIntoView({ block: 'center', inline: 'nearest', behavior: 'instant' }));
+  await locator.click({ trial: true });
+  const bounds = await locator.evaluate(element => {
+    const b = element.getBoundingClientRect(), top = document.elementFromPoint(b.x + b.width / 2, b.y + b.height / 2);
+    return { width: b.width, height: b.height, left: b.left, right: b.right, top: b.top, bottom: b.bottom, viewport: innerWidth, hit: element === top || element.contains(top) };
+  });
+  assert.ok(bounds.width >= 44 && bounds.height >= 44, `${label}: tap target ${JSON.stringify(bounds)}`);
+  assert.ok(bounds.left >= -1 && bounds.right <= bounds.viewport + 1 && bounds.hit, `${label}: control is covered or outside the screen ${JSON.stringify(bounds)}`);
+}
+async function assertMobileBar(page) {
+  const bar = page.locator('.customer-mobile-actions').filter({ visible: true });
+  if (!await bar.count()) return;
+  const action = await bar.boundingBox(), nav = await page.getByRole('navigation', { name: 'Бърза навигация', exact: true }).boundingBox();
+  assert.ok(action.y + action.height <= nav.y + 1, 'purchase actions must stay above bottom navigation');
+  assert.ok(action.y >= 60, 'fixed actions must leave space for the page');
+  assert.equal(await bar.getByRole('textbox').count(), 0, 'promo input belongs in the summary, outside the fixed purchase bar');
+}
+
+for (const width of [320, 360, 390, 640, 768, 1440]) {
+  test(`${width}px UX: full product names and uncropped square images across shopping surfaces`, async () => {
+    const qa = await setup({ width, products: layoutProducts, imageSizes: layoutImages, cart: [{ ...layoutProducts[0], quantity: 3 }] });
+    try {
+      for (const path of ['/products', '/category/noodles', '/product/ramen-buldak', '/cart', '/']) {
+        await ready(qa.page, path);
+        await qa.page.locator('.customer-product-card h3').first().waitFor();
+        const cards = qa.page.locator('.customer-product-card');
+        for (let n = 0; n < await cards.count(); n++) {
+          const card = cards.nth(n), title = card.locator('h3'), frame = card.locator('.customer-product-image');
+          await card.scrollIntoViewIfNeeded();
+          await assertFullText(title, `${path} product ${n}`);
+          assert.ok(await title.evaluate(element => parseFloat(getComputedStyle(element).fontSize) >= 14), 'product titles stay readable on mobile');
+          await frame.locator('img').evaluate(img => img.decode());
+          const bounds = await frame.evaluate(frame => {
+            const img = frame.querySelector('img'), b = frame.getBoundingClientRect(), p = img.getBoundingClientRect();
+            const style = getComputedStyle(img), ratio = Math.min(p.width / img.naturalWidth, p.height / img.naturalHeight);
+            const drawWidth = ratio * img.naturalWidth, drawHeight = ratio * img.naturalHeight;
+            return { width: b.width, height: b.height, fit: style.objectFit, naturalWidth: img.naturalWidth, naturalHeight: img.naturalHeight,
+              left: p.left + (p.width - drawWidth) / 2 - b.left, right: p.left + (p.width + drawWidth) / 2 - b.right,
+              top: p.top + (p.height - drawHeight) / 2 - b.top, bottom: p.top + (p.height + drawHeight) / 2 - b.bottom };
+          });
+          assert.ok(Math.abs(bounds.width - bounds.height) <= 1, `${path}: square image frame ${JSON.stringify(bounds)}`);
+          assert.equal(bounds.fit, 'contain');
+          assert.ok(bounds.naturalWidth > 0 && bounds.naturalHeight > 0 && bounds.left >= 0 && bounds.top >= 0 && bounds.right <= 0 && bounds.bottom <= 0, `${path}: complete image must fit ${JSON.stringify(bounds)}`);
+          const button = card.getByRole('button', { name: /Добави/ }).filter({ visible: true });
+          if (await button.count() && await button.isEnabled()) {
+            await assertTouchable(button, `${path} add ${n}`);
+            const actionBounds = await button.boundingBox(), cardBounds = await card.boundingBox();
+            assert.ok(actionBounds.x >= cardBounds.x && actionBounds.x + actionBounds.width <= cardBounds.x + cardBounds.width, `${path}: add control fits inside its card beside a longer price`);
+          }
+        }
+        if (path === '/products') {
+          const header = await qa.page.locator('.brand-header').boundingBox(), search = await qa.page.locator('.customer-catalog-search').boundingBox();
+          assert.ok(Math.abs(header.y) <= 1, 'customer header stays visible after scrolling through the catalog');
+          assert.ok(Math.abs(search.y - (header.y + header.height)) <= 1, 'sticky search starts below the customer header at every breakpoint');
+          const buttons = qa.page.locator('.customer-product-actions').filter({ visible: true });
+          const first = await buttons.nth(0).boundingBox(), second = await buttons.nth(1).boundingBox();
+          if (width >= 360) assert.ok(Math.abs(first.y - second.y) <= 1, 'prices and add controls line up despite different title lengths');
+          if (artifacts) await qa.page.locator('[data-product-shop]').screenshot({ path: `${artifacts}/square-cards-${width}.png` });
+        }
+        const sizes = await qa.page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }));
+        assert.ok(sizes.scroll <= sizes.client + 1, `${path}: no horizontal page overflow at ${width}px`);
+        if (path === '/cart') {
+          const main = await qa.page.locator('main').evaluate(element => ({ scroll: element.scrollWidth, client: element.clientWidth }));
+          assert.ok(main.scroll <= main.client + 1, `cart content must fit before page overflow clipping ${JSON.stringify(main)}`);
+        }
+      }
+      assert.deepEqual(qa.errors, []);
+      assert.equal(qa.requests.some(request => request.method !== 'GET' && request.method !== undefined), false);
+    } finally { await qa.close(); }
+  });
+}
+
+for (const width of [320, 360, 390]) {
+  test(`${width}px UX: home → quick view → product → cart → contact validation → payment`, async () => {
+    const qa = await setup({ width, consent: null }); const { page } = qa;
+    try {
+      await ready(page, '/');
+      const consent = page.getByRole('dialog', { name: 'Използваме бисквитки', exact: true });
+      await consent.waitFor();
+      const dialogWidth = await consent.evaluate(element => ({ client: element.clientWidth, scroll: element.scrollWidth }));
+      assert.ok(dialogWidth.scroll <= dialogWidth.client + 1, 'first-visit consent must fit the mobile screen');
+      const decline = consent.getByRole('button', { name: 'Само задължителни', exact: true });
+      await assertTouchable(decline, 'first-visit consent choice'); await decline.click();
+      await consent.waitFor({ state: 'hidden' });
+      await page.setViewportSize({ width, height: 360 });
+      await page.getByRole('button', { name: 'Меню', exact: true }).click();
+      const menu = page.getByRole('navigation', { name: 'Мобилно меню', exact: true });
+      await menu.waitFor();
+      await assertTouchable(menu.getByRole('link', { name: 'За нас', exact: true }), 'menu on a short screen');
+      const menuBounds = await page.locator('.customer-mobile-menu').boundingBox(), bottomNav = await page.getByRole('navigation', { name: 'Бърза навигация', exact: true }).boundingBox();
+      assert.ok(menuBounds.y + menuBounds.height <= bottomNav.y + 1, 'mobile menu remains above bottom navigation');
+      await page.keyboard.press('Escape');
+      await page.setViewportSize({ width, height: 900 });
+      const browse = page.locator('.brand-hero a[href="/products"]');
+      await assertTouchable(browse, 'home catalog link'); await browse.click();
+      await page.getByRole('button', { name: `Бърз преглед на ${products[0].name}`, exact: true }).click();
+      const dialog = page.getByRole('dialog', { name: products[0].name, exact: true });
+      await dialog.waitFor();
+      await assertFullText(dialog.getByRole('heading'), 'quick view title');
+      await page.setViewportSize({ width, height: 500 });
+      await assertTouchable(dialog.getByRole('button', { name: 'Добави в количката', exact: true }), 'quick view action on a short screen');
+      const closeBounds = await dialog.getByRole('button', { name: 'Затвори', exact: true }).boundingBox(), dialogBounds = await dialog.boundingBox();
+      assert.ok(closeBounds.y >= dialogBounds.y && closeBounds.y + closeBounds.height <= dialogBounds.y + dialogBounds.height, 'quick view close stays visible after scrolling to the purchase controls');
+      await assertTouchable(dialog.getByRole('button', { name: 'Затвори', exact: true }), 'quick view close');
+      await page.keyboard.press('Escape');
+      await dialog.waitFor({ state: 'hidden' });
+      await page.setViewportSize({ width, height: 900 });
+      await page.getByRole('button', { name: 'Филтри', exact: true }).click();
+      const filters = page.getByRole('dialog', { name: 'Филтри', exact: true });
+      await filters.waitFor();
+      await assertTouchable(filters.getByRole('button', { name: 'Затвори филтрите' }), 'filter close');
+      await page.keyboard.press('Escape');
+      await filters.waitFor({ state: 'hidden' });
+      await page.locator('[data-product-shop]').getByRole('link', { name: products[0].name, exact: true }).click();
+      await page.getByRole('heading', { name: products[0].name, exact: true }).waitFor();
+      const increase = page.getByRole('button', { name: 'Увеличи количество', exact: true }).filter({ visible: true });
+      await assertTouchable(increase, 'product quantity'); await increase.click(); await increase.click();
+      const add = page.getByRole('button', { name: 'Добави в количката', exact: true }).filter({ visible: true });
+      await assertMobileBar(page); await assertTouchable(add, 'product add'); await add.click();
+      const toastLink = page.getByRole('link', { name: 'Към количката', exact: true });
+      await assertTouchable(toastLink, 'cart confirmation link'); await toastLink.click();
+      await page.getByRole('heading', { name: 'Количка', exact: true }).waitFor();
+      await assertFullText(page.locator('.customer-cart-info h3').first(), 'cart product name');
+      const more = page.getByRole('button', { name: `Увеличи количеството на ${products[0].name}`, exact: true });
+      const less = page.getByRole('button', { name: `Намали количеството на ${products[0].name}`, exact: true });
+      await assertTouchable(more, 'cart quantity up'); await more.click();
+      await assertTouchable(less, 'cart quantity down'); await less.click();
+      assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('cart'))[0].quantity), 3);
+      await assertMobileBar(page);
+      const checkout = page.getByRole('button', { name: 'Поръчай и плати', exact: true }).filter({ visible: true });
+      await waitEnabled(checkout); await assertTouchable(checkout, 'cart checkout'); await checkout.click();
+      await page.getByRole('heading', { name: 'Завършване на поръчка', exact: true }).waitFor();
+      await waitEnabled(visiblePay(page)); await assertMobileBar(page); await visiblePay(page).click();
+      await page.locator('#checkout-email[aria-invalid="true"]').waitFor();
+      assert.equal(await page.locator('#checkout-email').evaluate(element => document.activeElement === element), true);
+      assert.equal(calls(qa.requests, 'create-checkout').length, 0);
+      await contact(page);
+      await page.setViewportSize({ width, height: 500 });
+      await assertTouchable(page.getByLabel('Телефон', { exact: false }), 'contact field at reduced viewport height');
+      assert.ok(Math.abs((await page.locator('.brand-header').boundingBox()).y) <= 1, 'contact scrolling preserves the mobile header');
+      await assertMobileBar(page); await assertTouchable(visiblePay(page), 'payment at reduced viewport height');
+      if (artifacts) await page.screenshot({ path: `${artifacts}/checkout-short-${width}.png` });
+      await sameTick(visiblePay(page)); await page.waitForURL('https://checkout.stripe.com/**');
+      assert.equal(calls(qa.requests, 'create-checkout').length, 1);
+      assert.deepEqual(calls(qa.requests, 'create-checkout')[0].body.items, [{ id: 17, quantity: 3 }]);
+      assert.equal(calls(qa.requests, 'create-checkout')[0].body.expectedTotalMinor, 1470);
+      assert.equal(qa.requests.some(row => row.table === 'orders' || /notification|send-/.test(row.name || '')), false);
+      assert.deepEqual(qa.errors, []);
+    } finally { await qa.close(); }
+  });
+}
+
+test('mobile UX: saved products, remove controls and promo errors remain usable outside the fixed bar', async () => {
+  const qa = await setup({ width: 320, products: layoutProducts, imageSizes: layoutImages, cart: [{ ...layoutProducts[0], quantity: 3 }, { ...layoutProducts[1], quantity: 1 }] });
+  try {
+    await ready(qa.page, '/cart', 'Количка');
+    await qa.page.locator('.customer-cart-info').first().waitFor();
+    const save = qa.page.getByRole('button', { name: 'Запази за по-късно', exact: true }).first();
+    await assertTouchable(save, 'save product'); await save.click();
+    const saved = qa.page.locator('.customer-cart-row').filter({ has: qa.page.locator('.customer-saved-actions') });
+    await saved.waitFor(); await assertFullText(saved.locator('h3'), 'saved product name');
+    const restore = saved.getByRole('button', { name: 'Добави в количката', exact: true });
+    await assertTouchable(restore, 'restore product'); await restore.click();
+    await saved.waitFor({ state: 'hidden' });
+    const remove = qa.page.getByRole('button', { name: `Премахни ${layoutProducts[1].name}`, exact: true });
+    await assertTouchable(remove, 'remove product'); await remove.click();
+    assert.deepEqual(await qa.page.evaluate(() => JSON.parse(localStorage.getItem('cart')).map(row => ({ id: row.id, quantity: row.quantity }))), [{ id: 17, quantity: 1 }]);
+    const promo = qa.page.getByRole('textbox', { name: 'Промо код', exact: true });
+    assert.equal(await promo.count(), 1);
+    await promo.fill('INVALID-CODE');
+    const apply = qa.page.getByRole('button', { name: 'Приложи', exact: true });
+    await assertTouchable(apply, 'apply promo'); await apply.click();
+    await qa.page.getByText('Няма активна игра сесия', { exact: true }).waitFor();
+    await assertMobileBar(qa.page);
+    const layout = await qa.page.locator('main').evaluate(element => ({ client: element.clientWidth, scroll: element.scrollWidth }));
+    assert.ok(layout.scroll <= layout.client + 1, 'saved rows and promo errors fit the screen');
+    assert.equal(calls(qa.requests, 'create-checkout').length, 0);
+    assert.deepEqual(qa.errors, []);
+  } finally { await qa.close(); }
+});
+
+test('desktop UX: product image hover keeps both portrait and landscape packages within their frame', async () => {
+  const qa = await setup({ products: layoutProducts, imageSizes: layoutImages });
+  try {
+    await qa.page.emulateMedia({ reducedMotion: 'no-preference' });
+    await ready(qa.page, '/products', 'Корейска Храна Онлайн');
+    const cards = qa.page.locator('.customer-product-card');
+    for (let n = 0; n < 2; n++) {
+      const card = cards.nth(n), img = card.locator('.customer-product-image > img');
+      await card.hover();
+      await qa.page.waitForFunction(el => new DOMMatrix(getComputedStyle(el).transform).a >= 1.019, await img.elementHandle());
+      const fits = await img.evaluate(img => {
+        const picture = img.getBoundingClientRect(), frame = img.parentElement.getBoundingClientRect();
+        return picture.left >= frame.left && picture.right <= frame.right && picture.top >= frame.top && picture.bottom <= frame.bottom;
+      });
+      assert.equal(fits, true, 'hover scaling must leave the whole image inside the frame');
+    }
+    assert.deepEqual(qa.errors, []);
+  } finally { await qa.close(); }
+});
 
 for (const width of [390, 1440]) {
   test(`${width}px guest: catalog → product → cart → checkout → Stripe preserves the server contract`, async () => {
