@@ -133,7 +133,7 @@ export default function Header() {
         </div>
 
         {/* Red accent line */}
-        <div className="h-[2px] bg-gradient-to-r from-brand-primary via-brand-primary to-brand-primary"></div>
+        <div className="h-[3px] bg-gradient-to-r from-brand-primary via-brand-pop to-brand-sun"></div>
 
         {/* Mobile Dropdown */}
         {isMenuOpen && (

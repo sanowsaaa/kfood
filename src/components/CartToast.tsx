@@ -56,7 +56,7 @@ export default function CartToast({ product, onClose }: CartToastProps) {
           <Link
             to="/cart"
             onClick={onClose}
-            className="flex-shrink-0 inline-flex min-h-11 items-center bg-emerald-600 text-white text-xs font-bold px-3 py-2 rounded-xl cursor-pointer hover:bg-emerald-700 transition-colors whitespace-nowrap"
+            className="flex-shrink-0 inline-flex min-h-11 items-center bg-brand-primary text-white text-xs font-bold px-3 py-2 rounded-xl cursor-pointer hover:bg-brand-hover transition-colors whitespace-nowrap"
           >
             Към количката
           </Link>

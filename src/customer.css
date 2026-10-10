@@ -1,11 +1,12 @@
 .customer-shell {
-  --brand-primary: #703b62;
-  --brand-hover: #552749;
-  --brand-ink: #312332;
-  --brand-blush: #fff4f8;
-  --brand-border: #e9ccd9;
+  --brand-primary: #c90073;
+  --brand-hover: #ab005d;
+  --brand-ink: #2b0b22;
+  --brand-blush: #fff0f7;
+  --brand-border: #f3a6cb;
+  --brand-field: #8d637a;
   color: var(--brand-ink);
-  background: #fffaf4;
+  background: #fffafc;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   line-height: 1.6;
   padding-bottom: 0;
@@ -21,21 +22,31 @@
 .customer-shell :is(button, .touch-target-sm) { min-height: 44px; min-width: 44px; }
 .customer-shell button:disabled { cursor: not-allowed; }
 .customer-shell .text-\[10px\], .customer-shell .text-\[11px\] { font-size: 0.75rem; line-height: 1.5; }
-.customer-shell .text-gray-400 { color: #64748b; }
-.customer-shell .text-gray-300 { color: #64748b; }
-.customer-shell .text-red-500 { color: #b91c1c; }
-.customer-shell .text-brand-primary { color: var(--brand-primary); }
+/* Keep these defaults weaker than hover/selected utilities. */
+:where(.customer-shell) :is(.text-gray-300, .text-gray-400, .text-gray-500) { color: #475569; }
+:where(.customer-shell) .text-red-500 { color: #b91c1c; }
+:where(.customer-shell) .text-rose-500 { color: #be185d; }
+:where(.customer-shell) .text-emerald-600, :where(.customer-shell) .hover\:text-emerald-600:hover { color: #047857; }
+:where(.customer-shell) .text-teal-600 { color: #0f766e; }
+:where(.customer-shell) .text-green-600 { color: #15803d; }
+:where(.customer-shell) .text-amber-600 { color: #92400e; }
+:where(.customer-shell) .text-orange-600 { color: #9a3412; }
+:where(.customer-shell) .bg-orange-500 { background-color: #c2410c; }
+:where(.customer-shell) .bg-emerald-600 { background-color: #047857; }
+:where(.customer-shell) .bg-pink-500 { background-color: var(--brand-primary); }
 .customer-shell .brand-header { border-bottom: 1px solid var(--brand-border); }
-.customer-shell .brand-footer { background: #312332; }
-.customer-shell .brand-footer :is(.text-brand-primary, .text-brand-hover) { color: #f7dce8; }
+.customer-shell .brand-footer { background: var(--brand-ink); border-top: 4px solid #ff208a; }
+.customer-shell .brand-footer :is(.text-brand-primary, .text-brand-hover) { color: #ffe2ef; }
 .customer-shell .brand-footer :is(a, p, li, span) { font-size: 0.875rem; }
 .customer-shell .brand-footer h4 { font-size: 0.8rem; }
 .customer-shell .brand-footer a:hover { color: #fff; }
-.customer-shell .brand-hero-overlay { background: linear-gradient(90deg, rgb(49 35 50 / 0.96), rgb(49 35 50 / 0.74) 55%, rgb(49 35 50 / 0.30)); }
+.customer-shell .brand-hero-overlay { background: linear-gradient(90deg, rgb(201 0 115 / 0.98) 0%, rgb(201 0 115 / 0.98) 62%, rgb(201 0 115 / 0.76) 82%, rgb(201 0 115 / 0.3)); }
 .customer-shell .brand-hero :is(p, span) { text-wrap: pretty; }
-.customer-shell .brand-dark-section { background: linear-gradient(125deg, #703b62, #552749); }
-.customer-shell .brand-story { background: linear-gradient(145deg, #fffaf4, #fff4f8); }
-.customer-shell :is(.brand-footer, .brand-hero, .brand-dark-section) :is(a, button, input):focus-visible { outline-color: #f7dce8; }
+.customer-shell .brand-dark-section { background: linear-gradient(125deg, #c90073, #ab005d); }
+.customer-shell .brand-story { background: linear-gradient(145deg, #fff0f7, #ffe2ef); }
+.customer-shell :is(.brand-footer, .brand-hero, .brand-dark-section) :is(a, button, input):focus-visible { outline-color: #fff; }
+.customer-shell .brand-category-shade { background: linear-gradient(0deg, rgb(43 11 34 / 0.97) 0%, rgb(43 11 34 / 0.9) 48%, rgb(43 11 34 / 0) 85%); }
+.customer-shell .brand-article-shade { background: linear-gradient(0deg, rgb(43 11 34 / 0.98) 0%, rgb(43 11 34 / 0.94) 65%, rgb(43 11 34 / 0.12) 100%); }
 .customer-shell [data-product-shop] > a { border-color: #eadde5; box-shadow: 0 4px 16px rgb(49 35 50 / 0.04); }
 .customer-shell footer :is(.text-gray-300, .text-gray-400, .text-gray-500, .text-gray-600) { color: #cbd5e1; }
 .customer-shell footer :is(.text-red-500, .text-red-600) { color: #fca5a5; }
@@ -46,8 +57,15 @@
   background: white;
   box-shadow: 0 6px 24px rgb(15 23 42 / 0.035);
 }
+.customer-shell :is(input, textarea, select):not([type='hidden']):not([type='checkbox']):not([type='radio']):not([aria-hidden='true']) {
+  color: var(--brand-ink); background-color: #fff;
+}
+.customer-shell :is(input, textarea, select):not([type='hidden']):not([type='checkbox']):not([type='radio']):not([aria-hidden='true']):not([aria-invalid='true']) { border-color: var(--brand-field); }
+.customer-shell :is(input, textarea, select)[aria-invalid='true'] { border-color: #b91c1c; }
+.customer-shell :is(input, textarea)::placeholder { color: #5b3b50; opacity: 1; }
+.customer-shell .brand-newsletter input:not([type='hidden']):not([type='checkbox']):not([type='radio']):not([aria-hidden='true']) { border-color: #fff; }
 .customer-shell .customer-input {
-  width: 100%; padding: 0.8rem 1rem; border: 1px solid #cbd5e1;
+  width: 100%; padding: 0.8rem 1rem; border: 1px solid var(--brand-field);
   border-radius: 0.75rem; font-size: 1rem; background: white;
 }
 .customer-shell .customer-primary, .customer-shell .customer-secondary {
@@ -58,12 +76,12 @@
 .customer-shell .customer-primary { color: white; background: var(--brand-primary); }
 .customer-shell .customer-primary:hover { background: var(--brand-hover); }
 .customer-shell .customer-primary:disabled { opacity: 0.5; }
-.customer-shell .customer-secondary { color: var(--brand-primary); border: 1px solid var(--brand-border); background: #fff; }
+.customer-shell .customer-secondary { color: var(--brand-primary); border: 1px solid var(--brand-primary); background: #fff; }
 .customer-shell .customer-secondary:hover { background: var(--brand-blush); }
 .customer-shell #main-content { scroll-margin-top: 6rem; }
 @media (max-width: 1023px) { .customer-root { padding-bottom: calc(76px + env(safe-area-inset-bottom)); } }
+@media (max-width: 1279px) { .customer-shell .brand-hero-overlay { background: rgb(201 0 115 / 0.96); } }
 @media (max-width: 767px) {
-  .customer-shell .brand-hero-overlay { background: linear-gradient(0deg, rgb(49 35 50 / 0.96), rgb(49 35 50 / 0.72)); }
   .customer-shell :is(input:not([type='checkbox']):not([type='radio']), select, textarea) { font-size: 16px; }
 }
 @media (prefers-reduced-motion: reduce) {

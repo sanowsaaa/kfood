@@ -29,12 +29,12 @@ export default function AgeVerification({ onVerified, onDenied }: AgeVerificatio
     <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm transition-opacity duration-300 ${isClosing ? 'opacity-0' : 'opacity-100'}`}>
       <div ref={dialog} role="dialog" aria-modal="true" aria-labelledby="age-title" tabIndex={-1} className={`customer-shell bg-white rounded-3xl shadow-2xl max-w-md w-full mx-4 max-h-[calc(100dvh-32px)] overflow-y-auto transform transition-all duration-300 ${isClosing ? 'scale-95 opacity-0' : 'scale-100 opacity-100'}`}>
         {/* Header */}
-        <div className="bg-gradient-to-r from-amber-500 to-orange-600 px-8 py-6 text-center">
+        <div className="brand-dark-section bg-gradient-to-r from-brand-primary to-brand-hover px-8 py-6 text-center">
           <div className="w-20 h-20 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4">
             <i className="ri-shield-check-line text-5xl text-white"></i>
           </div>
           <h2 id="age-title" className="text-2xl font-bold text-white mb-2">Проверка на възраст</h2>
-          <p className="text-amber-50 text-lg">Необходимо е потвърждение</p>
+          <p className="text-white text-lg">Необходимо е потвърждение</p>
         </div>
 
         {/* Content */}

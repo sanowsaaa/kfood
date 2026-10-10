@@ -89,7 +89,7 @@ export default function LeaveReviewPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-green-50 flex flex-col">
+    <div className="min-h-screen bg-gradient-to-br from-brand-blush via-white to-brand-petal flex flex-col">
       {/* Top bar */}
       <div className="w-full py-4 px-6 flex items-center justify-between bg-white/80 backdrop-blur-sm border-b border-gray-100">
         <Link to="/" className="flex items-center gap-2 cursor-pointer">
@@ -195,7 +195,7 @@ export default function LeaveReviewPage() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-lg transition-colors text-base cursor-pointer whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full bg-brand-primary hover:bg-brand-hover text-white font-bold py-4 rounded-lg transition-colors text-base cursor-pointer whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 {submitting ? (
                   <span className="flex items-center justify-center gap-2">
@@ -233,7 +233,7 @@ export default function LeaveReviewPage() {
               </blockquote>
               <Link
                 to="/"
-                className="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-8 py-3 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
+                className="inline-flex items-center gap-2 bg-brand-primary hover:bg-brand-hover text-white font-semibold px-8 py-3 rounded-lg transition-colors cursor-pointer whitespace-nowrap"
               >
                 <i className="ri-home-4-line" />
                 Към начало

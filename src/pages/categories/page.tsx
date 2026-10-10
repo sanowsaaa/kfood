@@ -178,7 +178,7 @@ export default function Categories() {
                   alt={category.name}
                   className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-500"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                <div className="brand-category-shade absolute inset-0"></div>
                 {category.requiresAge && (
                   <div className="absolute top-4 right-4 bg-brand-primary text-white px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1">
                     <i aria-hidden="true" className="ri-error-warning-line"></i>
@@ -193,7 +193,7 @@ export default function Categories() {
                 )}
                 <div className="absolute bottom-4 left-4 right-4">
                   <h3 className="text-2xl font-bold text-white mb-1">{category.name}</h3>
-                  <p className="text-sm text-white/90 flex items-center gap-2">
+                  <p className="text-sm text-white flex items-center gap-2">
                     <i aria-hidden="true" className="ri-shopping-bag-line"></i>
                     {loading || error ? 'Разгледай продуктите' : `${products.filter(p => p.category === category.name).length} продукта`}
                   </p>

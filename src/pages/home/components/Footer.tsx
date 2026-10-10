@@ -35,7 +35,7 @@ export default function Footer() {
             <h4 className="text-[11px] font-semibold text-brand-petal uppercase tracking-[0.15em] mb-5">Корейска Храна</h4>
             <ul className="space-y-2.5">
               <li><Link to="/products" className="text-gray-400 hover:text-brand-petal transition-colors text-xs font-light">Всички Продукти</Link></li>
-              <li><Link to="/category/cosmetics" className="text-gray-400 hover:text-brand-petal transition-colors text-xs font-light flex items-center gap-1.5">Корейска Козметика <span className="text-[9px] bg-pink-500 text-white px-1.5 py-0.5 rounded-full font-bold">NEW</span></Link></li>
+              <li><Link to="/category/cosmetics" className="text-gray-400 hover:text-brand-petal transition-colors text-xs font-light flex items-center gap-1.5">Корейска Козметика <span className="text-[9px] bg-brand-primary text-white px-1.5 py-0.5 rounded-full font-bold">NEW</span></Link></li>
               <li><Link to="/category/noodles" className="text-gray-400 hover:text-brand-petal transition-colors text-xs font-light">Корейски Рамен и Нудъли</Link></li>
               <li><Link to="/category/sauces" className="text-gray-400 hover:text-brand-petal transition-colors text-xs font-light">Корейски Сосове и Масла</Link></li>
               <li><Link to="/category/snacks" className="text-gray-400 hover:text-brand-petal transition-colors text-xs font-light">Корейски Снакове и Чай</Link></li>

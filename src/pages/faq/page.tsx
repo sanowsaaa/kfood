@@ -60,13 +60,13 @@ export default function FAQPage() {
       <Header />
 
       {/* Hero - compact on mobile */}
-      <section className="bg-gradient-to-br from-emerald-700 to-teal-600 text-white py-10 sm:py-14 md:py-16 px-4">
+      <section className="brand-dark-section bg-gradient-to-br from-brand-primary to-brand-hover text-white py-10 sm:py-14 md:py-16 px-4">
         <div className="max-w-3xl mx-auto text-center">
           <div className="w-12 h-12 sm:w-16 sm:h-16 flex items-center justify-center bg-white/20 rounded-xl sm:rounded-2xl mx-auto mb-3 sm:mb-4">
             <i className="ri-question-answer-line text-2xl sm:text-3xl text-white"></i>
           </div>
           <h1 className="text-2xl sm:text-3xl md:text-5xl font-bold mb-2 sm:mb-3">Често задавани въпроси</h1>
-          <p className="text-emerald-100 text-sm sm:text-lg">Намери бързо отговор на въпроса си. Не намираш? Пиши ни!</p>
+          <p className="text-white text-sm sm:text-lg">Намери бързо отговор на въпроса си. Не намираш? Пиши ни!</p>
         </div>
       </section>
 
@@ -81,8 +81,8 @@ export default function FAQPage() {
                 aria-pressed={activeCategory === cat}
                 className={`whitespace-nowrap px-3 sm:px-4 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-medium transition-all cursor-pointer touch-target-sm ${
                   activeCategory === cat
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-emerald-50 hover:text-emerald-700'
+                    ? 'bg-brand-primary text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-brand-blush hover:text-brand-primary'
                 }`}
               >
                 {cat}
@@ -110,7 +110,7 @@ export default function FAQPage() {
                 className="w-full flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-5 text-left cursor-pointer hover:bg-gray-50 transition-colors touch-target"
               >
                 <div className="flex items-start gap-2 sm:gap-3 flex-1 pr-3 sm:pr-4">
-                  <span className="bg-emerald-50 text-emerald-600 text-[10px] sm:text-xs font-semibold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full whitespace-nowrap mt-0.5">
+                  <span className="bg-brand-blush text-brand-primary text-[10px] sm:text-xs font-semibold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full whitespace-nowrap mt-0.5">
                     {faq.category}
                   </span>
                   <span className="font-semibold text-gray-900 text-xs sm:text-base leading-snug">{faq.question}</span>
@@ -129,14 +129,14 @@ export default function FAQPage() {
         </div>
 
         {/* Contact CTA - compact on mobile */}
-        <div className="mt-8 sm:mt-12 bg-gradient-to-br from-emerald-600 to-teal-600 rounded-2xl p-5 sm:p-8 text-white text-center">
+        <div className="brand-dark-section mt-8 sm:mt-12 bg-gradient-to-br from-brand-primary to-brand-hover rounded-2xl p-5 sm:p-8 text-white text-center">
           <h2 className="text-lg sm:text-2xl font-bold mb-1 sm:mb-2">Не намери отговора си?</h2>
-          <p className="text-emerald-100 text-xs sm:text-base mb-4 sm:mb-6">Свържи се с нас директно - отговаряме бързо!</p>
+          <p className="text-white text-xs sm:text-base mb-4 sm:mb-6">Свържи се с нас директно - отговаряме бързо!</p>
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 justify-center">
-            <a href="mailto:kfoodtarnovo@gmail.com" className="bg-white text-emerald-700 font-bold px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl hover:bg-emerald-50 transition-colors whitespace-nowrap flex items-center justify-center gap-2 text-xs sm:text-base touch-target">
+            <a href="mailto:kfoodtarnovo@gmail.com" className="bg-white text-brand-primary font-bold px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl hover:bg-brand-petal transition-colors whitespace-nowrap flex items-center justify-center gap-2 text-xs sm:text-base touch-target">
               <i className="ri-mail-line"></i>kfoodtarnovo@gmail.com
             </a>
-            <a href="tel:+359899897566" className="bg-emerald-500 text-white font-bold px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl hover:bg-emerald-400 transition-colors whitespace-nowrap flex items-center justify-center gap-2 text-xs sm:text-base touch-target">
+            <a href="tel:+359899897566" className="bg-white text-brand-primary font-bold px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl hover:bg-brand-petal transition-colors whitespace-nowrap flex items-center justify-center gap-2 text-xs sm:text-base touch-target">
               <i className="ri-phone-line"></i>0899 897 566
             </a>
           </div>
