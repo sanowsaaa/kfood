@@ -9,7 +9,7 @@ import { absoluteSiteUrl } from '../src/utils/urls.ts';
 import { productSitemap, fetchSitemapProducts, refreshProductSitemap } from '../scripts/productSitemap.ts';
 
 let db, pool, beforeRows;
-const migration = await readFile(new URL('../supabase/migrations/20261010054523_product_slugs_and_seo.sql', import.meta.url), 'utf8');
+const migration = await readFile(new URL('../supabase/migrations/20261010060218_product_slugs_and_seo.sql', import.meta.url), 'utf8');
 before(async () => {
   if (process.env.TEST_DATABASE_URL) {
     const url = new URL(process.env.TEST_DATABASE_URL);
