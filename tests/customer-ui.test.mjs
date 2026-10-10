@@ -83,6 +83,20 @@ async function setup(options = {}) {
       }
       if (url.searchParams.get('in_stock')) data = data.filter(row => row.in_stock);
       if (url.searchParams.get('stock') === 'gt.0') data = data.filter(row => row.stock > 0);
+      const ordering = (url.searchParams.get('order') || '').split(',').filter(Boolean);
+      if (ordering.length) data = [...data].sort((a, b) => {
+        for (const item of ordering) {
+          const [field, direction, nulls] = item.split('.');
+          if (a[field] === b[field]) continue;
+          const nullsFirst = nulls ? nulls === 'nullsfirst' : direction === 'desc';
+          if (a[field] == null) return nullsFirst ? -1 : 1;
+          if (b[field] == null) return nullsFirst ? 1 : -1;
+          return (a[field] < b[field] ? -1 : 1) * (direction === 'desc' ? -1 : 1);
+        }
+        return 0;
+      });
+      const limit = url.searchParams.get('limit');
+      if (limit !== null) data = data.slice(0, Number(limit));
       return reply(req.headers()['accept']?.includes('vnd.pgrst.object') ? data[0] ?? null : data);
     }
     if (url.pathname.includes('/api/form/')) {
@@ -126,6 +140,69 @@ for (const path of ['/product/ramen-buldak', '/product/17']) {
   });
 }
 function visiblePay(page) { return page.getByRole('button', { name: /Към плащане/ }).filter({ visible: true }); }
+
+test('home selection keeps the existing eight highest ratings and id ties without transferring the catalog', async () => {
+  const inventory = Array.from({ length: 24 }, (_, index) => ({ ...products[0], id: 100 + index,
+    name: `Продукт ${index}`, slug: `product-${index}`, rating: 4.5 + (index % 4) / 10,
+    stock: index === 3 ? 0 : 100 }));
+  const expected = [...inventory].sort((a, b) => b.rating - a.rating || a.id - b.id).slice(0, 8);
+  const qa = await setup({ products: [...inventory].reverse() });
+  try {
+    await ready(qa.page, '/');
+    await qa.page.locator('[data-product-shop] .customer-product-name').first().waitFor();
+    assert.deepEqual(await qa.page.locator('[data-product-shop] .customer-product-name').allTextContents(), expected.map(row => row.name));
+    const request = qa.requests.find(row => row.table === 'products');
+    assert.equal(new URL(request.url).searchParams.get('limit'), '8');
+    assert.equal(request.method, 'GET');
+    assert.equal(qa.requests.filter(row => row.table === 'products').length, 1);
+    assert.deepEqual(qa.errors, []);
+  } finally { await qa.close(); }
+});
+
+test('home revisits refresh price and availability; denied featured reads retain the existing retry', async () => {
+  const qa = await setup();
+  try {
+    await ready(qa.page, '/');
+    const card = qa.page.locator('[data-product-shop] .customer-product-card').filter({ hasText: products[0].name });
+    await card.getByRole('button', { name: /Добави/ }).waitFor();
+    assert.match(await card.textContent(), /€4\.90/);
+    qa.rows[0].price = 6.2; qa.rows[0].stock = 0;
+    await qa.page.getByRole('link', { name: 'Виж всички', exact: true }).click();
+    await qa.page.getByRole('heading', { name: 'Корейска Храна Онлайн', exact: true }).waitFor();
+    await qa.page.locator('header a[href="/"]').first().click();
+    await card.locator('button:disabled').waitFor();
+    assert.match(await card.textContent(), /€6\.20/);
+    assert.match(await card.textContent(), /Изчерпан/);
+    assert.deepEqual(qa.errors, []);
+  } finally { await qa.close(); }
+  const failed = await setup({ readFailure: true });
+  try {
+    await ready(failed.page, '/');
+    await failed.page.getByText('Не успяхме да заредим данните.', { exact: false }).waitFor();
+    failed.recoverRead();
+    await failed.page.getByRole('button', { name: 'Опитай отново', exact: true }).click();
+    await failed.page.locator('[data-product-shop] .customer-product-name').first().waitFor();
+    assert.equal(failed.requests.filter(row => row.table === 'products').length, 2);
+    assert.deepEqual(failed.errors, []);
+  } finally { await failed.close(); }
+});
+
+test('only home preloads the hero; shopping and payment routes do not download an unused home photo', async () => {
+  const hero = 'https://static.readdy.ai/image/658b459fcf05a7723f8029c45615de2f/7c3b0ad01c5499c798ab7897a6ed0ab2.webp';
+  const qa = await setup({ cart: cart() });
+  try {
+    await ready(qa.page, '/');
+    assert.equal(await qa.page.locator(`link[rel="preload"][as="image"][href="${hero}"]`).count(), 1);
+    assert.equal(await qa.page.locator(`img[src="${hero}"]`).getAttribute('fetchpriority'), 'high');
+    for (const path of ['/products', '/product/ramen-buldak', '/cart', '/checkout']) {
+      qa.requests.length = 0;
+      await ready(qa.page, path);
+      assert.equal(await qa.page.locator(`link[rel="preload"][as="image"][href="${hero}"]`).count(), 0, path);
+      assert.equal(qa.requests.some(row => row.asset === hero), false, path);
+    }
+    assert.deepEqual(qa.errors, []);
+  } finally { await qa.close(); }
+});
 async function contact(page) { await page.getByLabel('Имейл адрес').fill('buyer@example.invalid'); await page.getByLabel('Телефон', { exact: false }).fill('0899 123 456'); }
 async function sameTick(locator) { await locator.evaluate(button => { button.click(); button.click(); }); }
 async function waitEnabled(locator) { await locator.waitFor(); for (let n = 0; n < 100 && await locator.isDisabled(); n++) await locator.page().waitForTimeout(40); assert.equal(await locator.isEnabled(), true); }

@@ -26,8 +26,18 @@
     <link rel="dns-prefetch" href="//storage.readdy-site.link" />
     <link rel="dns-prefetch" href="//readdy.ai" />
     
-    <!-- Preload hero image for instant LCP -->
-    <link rel="preload" as="image" href="https://static.readdy.ai/image/658b459fcf05a7723f8029c45615de2f/7c3b0ad01c5499c798ab7897a6ed0ab2.webp" type="image/webp" fetchpriority="high" />
+    <!-- Keep the hero high priority on home without downloading it on every route. -->
+    <script>
+      if (window.location.pathname === '/') {
+        const heroPreload = document.createElement('link');
+        heroPreload.rel = 'preload';
+        heroPreload.as = 'image';
+        heroPreload.href = 'https://static.readdy.ai/image/658b459fcf05a7723f8029c45615de2f/7c3b0ad01c5499c798ab7897a6ed0ab2.webp';
+        heroPreload.type = 'image/webp';
+        heroPreload.fetchPriority = 'high';
+        document.head.appendChild(heroPreload);
+      }
+    </script>
     
     <!-- Google Fonts with display swap -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet" />

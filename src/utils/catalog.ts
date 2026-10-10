@@ -8,3 +8,13 @@ export async function loadProducts(signal: AbortSignal): Promise<StoreProduct[]>
   if (error || !Array.isArray(data)) throw new Error('Products unavailable');
   return (data as unknown as StoreProduct[]).map(product => ({ ...product, in_stock: productAvailable(product) }));
 }
+
+// Keep the existing rating selection and id tie-breaker without transferring
+// the full catalog. Fetch fresh public prices and stock on every home visit.
+export async function loadFeaturedProducts(signal: AbortSignal): Promise<StoreProduct[]> {
+  const { data, error } = await supabase.from('products').select(PUBLIC_PRODUCT_FIELDS)
+    .order('rating', { ascending: false, nullsFirst: false })
+    .order('id', { ascending: true }).limit(8).abortSignal(signal);
+  if (error || !Array.isArray(data)) throw new Error('Products unavailable');
+  return (data as unknown as StoreProduct[]).map(product => ({ ...product, in_stock: productAvailable(product) }));
+}
