@@ -39,4 +39,5 @@ jobs:
       - run: npm run test:admin
       - run: npm run typecheck
       - run: npm run test:client
+      - run: npm run test:seo
       - run: npm run build

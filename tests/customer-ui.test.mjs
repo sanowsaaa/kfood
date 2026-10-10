@@ -96,6 +96,28 @@ async function setup(options = {}) {
   return { page, context, requests, errors, rows, close: () => browser.close(), recoverRead: () => { readFailure = false; }, recoverCreation: () => { creationFailure = false; } };
 }
 async function ready(page, path, heading) { await page.goto(base + path); if (heading) await page.getByRole('heading', { name: heading, exact: true }).waitFor(); }
+for (const path of ['/product/ramen-buldak', '/product/17']) {
+  test(`SEO product URL: ${path} resolves to one slug in canonical, OG, Offer and breadcrumb`, async () => {
+    const qa = await setup();
+    try {
+      await ready(qa.page, path, products[0].name);
+      await qa.page.waitForURL('**/product/ramen-buldak');
+      const expected = 'https://k-foodvelikotarnovo.com/product/ramen-buldak';
+      await qa.page.waitForFunction(url => document.querySelector('link[rel="canonical"]')?.href === url, expected);
+      const metadata = await qa.page.evaluate(() => ({
+        canonical: [...document.querySelectorAll('link[rel="canonical"]')].map(element => element.href),
+        og: document.querySelector('meta[property="og:url"]')?.content,
+        graph: [...document.querySelectorAll('script[type="application/ld+json"]')].flatMap(element => { const value = JSON.parse(element.textContent || '{}'); return value['@graph'] || [value]; }),
+      }));
+      assert.deepEqual(metadata.canonical, [expected]);
+      assert.equal(metadata.og, expected);
+      assert.equal(metadata.graph.find(value => value['@type'] === 'Product').offers.url, expected);
+      assert.equal(metadata.graph.find(value => value['@type'] === 'BreadcrumbList').itemListElement.at(-1).item, expected);
+      assert.equal(qa.requests.some(request => request.method !== 'GET' && request.method !== undefined), false);
+      assert.deepEqual(qa.errors, []);
+    } finally { await qa.close(); }
+  });
+}
 function visiblePay(page) { return page.getByRole('button', { name: /Към плащане/ }).filter({ visible: true }); }
 async function contact(page) { await page.getByLabel('Имейл адрес').fill('buyer@example.invalid'); await page.getByLabel('Телефон', { exact: false }).fill('0899 123 456'); }
 async function sameTick(locator) { await locator.evaluate(button => { button.click(); button.click(); }); }
