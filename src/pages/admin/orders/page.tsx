@@ -3,7 +3,8 @@ import { useAdminAction } from '@/hooks/useAdminAction';
 import { useAdminRead } from '@/hooks/useAdminRead';
 import { checkedData, confirmedRecord } from '@/utils/admin';
 import AdminFeedback from '@/pages/admin/components/AdminFeedback';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { canFulfillOrder, decodeAdminOrders, fulfillmentStatuses, isCardOrder, paymentPresentation, type OrderPayment } from '@/utils/orderPayments';
 import { supabase } from '@/utils/supabase';
 import { Navigate } from 'react-router-dom';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
@@ -40,7 +41,7 @@ interface B2BCompanyInfo {
   phone: string;
 }
 
-interface Order {
+interface Order extends OrderPayment {
   id: string;
   order_number: string;
   customer_email: string;
@@ -65,6 +66,7 @@ interface Order {
 const statusOptions = [
   { value: 'pending_review', label: 'За преглед', color: 'bg-amber-100 text-amber-800', dot: 'bg-amber-400' },
   { value: 'pending', label: 'Чакаща', color: 'bg-yellow-100 text-yellow-800', dot: 'bg-yellow-400' },
+  { value: 'payment_review', label: 'Плащане за преглед', color: 'bg-red-100 text-red-800', dot: 'bg-red-400' },
   { value: 'approved', label: 'Одобрена', color: 'bg-emerald-100 text-emerald-800', dot: 'bg-emerald-400' },
   { value: 'confirmed', label: 'Потвърдена', color: 'bg-sky-100 text-sky-800', dot: 'bg-sky-400' },
   { value: 'processing', label: 'Обработва се', color: 'bg-violet-100 text-violet-800', dot: 'bg-violet-400' },
@@ -73,10 +75,12 @@ const statusOptions = [
   { value: 'cancelled', label: 'Отказана', color: 'bg-red-100 text-red-800', dot: 'bg-red-400' },
 ];
 
+const readOrders = async () => decodeAdminOrders<Order>(checkedData(await supabase.rpc('admin_orders')));
+
 export default function OrdersManagement() {
   const { isAdmin, loading: authLoading, error: authError, retry: retryAuth } = useAdminAuth();
   const [orders, setOrders] = useState<Order[]>([]);
-  const { loading, error: loadError, load } = useAdminRead();
+  const { loading, error: loadError, load, reset: resetOrderRead } = useAdminRead();
   const mutation = useAdminAction();
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const dialogRef = useAdminDialog(!!selectedOrder, !!mutation.pending, () => setSelectedOrder(null));
@@ -98,29 +102,43 @@ export default function OrdersManagement() {
   const [lineItems, setLineItems] = useState<Array<{id: number; name: string; quantity: number; pieces_per_carton: number; unit_price: string; carton_price: string; sku: string | null}>>([]);
   const [useCustomPrices, setUseCustomPrices] = useState(false);
 
+  const applyOrders = useCallback((data: Order[]) => {
+    setOrders(data);
+    setSelectedOrder(current => current ? data.find(order => order.id === current.id) || null : null);
+  }, []);
+  const fetchOrders = useCallback(() => load(readOrders, applyOrders), [load, applyOrders]);
+
   useEffect(() => {
     if (isAdmin) {
       fetchOrders();
     }
-  }, [isAdmin]);
+  }, [isAdmin, fetchOrders]);
 
-  const fetchOrders = () => load(async () => checkedData(await supabase.from('orders').select('*').order('created_at', { ascending: false })) as Order[], data => {
-    setOrders(data);
-    setSelectedOrder(current => current ? data.find(order => order.id === current.id) || current : null);
-  });
+  useEffect(() => {
+    if (!isAdmin || mutation.pending) return;
+    const refresh = () => { if (document.visibilityState === 'visible') void fetchOrders(); };
+    const timer = window.setInterval(refresh, 30_000);
+    window.addEventListener('focus', refresh);
+    return () => { window.clearInterval(timer); window.removeEventListener('focus', refresh); };
+  }, [isAdmin, mutation.pending, fetchOrders]);
 
   const refreshStripeOrder = (order: Order) => {
     if (!order.stripe_session_id) return;
     return mutation.run('stripe-refresh', async () => {
       const { data, error } = await supabase.functions.invoke('reconcile-checkouts', { body: { orderId: order.id } });
       if (error || !data || typeof data.checked !== 'number') throw new Error('Автоматичната проверка не е потвърдена. Проверете плащането ръчно.');
-      await fetchOrders();
-      mutation.setMessage(data.reviews > 0
-        ? { type: 'info', text: 'Плащането изисква ръчен преглед. Статусът не е променен автоматично.' }
-        : { type: 'success', text: 'Проверката приключи. Показани са записаните данни за поръчката.' });
+      const latest = await readOrders();
+      resetOrderRead();
+      applyOrders(latest);
+      const updated = latest.find(item => item.id === order.id);
+      if (!updated) throw new Error('Поръчката не е заредена. Обновете списъка.');
+      const payment = paymentPresentation(updated);
+      mutation.setMessage({ type: canFulfillOrder(updated) ? 'success' : 'info', text: `${payment.label}. ${payment.detail}` });
     });
   };
   const updateOrderStatus = (orderId: string, newStatus: string) => mutation.run(`status:${orderId}`, async () => {
+    const order = orders.find(item => item.id === orderId);
+    if (!order || (!canFulfillOrder(order) && fulfillmentStatuses.has(newStatus))) throw new Error('Необходимо е потвърдено реално плащане. Обновете поръчката.');
     confirmedRecord(await supabase.from('orders').update({ status: newStatus, updated_at: new Date().toISOString() }).eq('id', orderId).select('id').single(), orderId);
     setOrders(current => current.map(order => order.id === orderId ? { ...order, status: newStatus } : order));
     setSelectedOrder(current => current?.id === orderId ? { ...current, status: newStatus } : current);
@@ -179,7 +197,7 @@ export default function OrdersManagement() {
   };
 
   const getStatusInfo = (status: string) => statusOptions.find(o => o.value === status) || { label: status, color: 'bg-gray-100 text-gray-800', dot: 'bg-gray-400' };
-  const isStripe = (order: Order) => order.payment_method === 'stripe' || !!order.stripe_session_id;
+  const isStripe = isCardOrder;
   const isB2B = (order: Order) => !!(order.b2b_company_id || order.is_b2b_order || order.payment_method === 'b2b_invoice');
 
   const retryB2BNotification = (order: Order) => mutation.run('notification', async () => {
@@ -217,14 +235,20 @@ export default function OrdersManagement() {
       const result = await response.json();
       if (!response.ok || result.success !== true) throw new Error(result.error || 'Обработката не е потвърдена. Обновете данните преди нов опит.');
       mutation.setMessage({ type: 'success', text: result.message || 'Операцията е потвърдена.' });
-      await fetchOrders();
-      const updated = await supabase.from('orders').select('*').eq('id', orderId).single();
-      if (updated.error || !updated.data) {
+      let updated: Order[];
+      try { updated = await readOrders(); } catch {
+        setSelectedOrder(null);
+        mutation.setMessage({ type: 'info', text: 'Операцията е потвърдена, но новите данни не са заредени. Обновете списъка преди следващо действие.' });
+        return;
+      }
+      applyOrders(updated);
+      const current = updated.find(order => order.id === orderId);
+      if (!current) {
         setSelectedOrder(null);
         mutation.setMessage({ type: 'info', text: 'Операцията е потвърдена, но новите данни не са заредени. Обновете списъка преди следващо действие.' });
       } else {
-        setSelectedOrder(updated.data as Order);
-        setLocalNotes(updated.data.tracking_notes || '');
+        setSelectedOrder(current);
+        setLocalNotes(current.tracking_notes || '');
       }
     });
   };
@@ -244,8 +268,8 @@ export default function OrdersManagement() {
     const isB2BOrder = isB2B(order);
     const matchesStatus = filterStatus === 'all' || order.status === filterStatus;
     const matchesType = filterType === 'all'
-      || (filterType === 'cod' && !order.stripe_session_id && !isB2BOrder)
-      || (filterType === 'stripe' && !!order.stripe_session_id)
+      || (filterType === 'cod' && !isStripe(order) && !isB2BOrder)
+      || (filterType === 'stripe' && isStripe(order))
       || (filterType === 'b2b' && isB2BOrder)
       || (filterType === 'b2b_review' && isB2BOrder && order.status === 'pending_review');
     const q = searchQuery.toLowerCase();
@@ -263,8 +287,8 @@ export default function OrdersManagement() {
     total: orders.length,
     pending: orders.filter(o => o.status === 'pending').length,
     b2bReview: b2bReviewCount,
-    cod: orders.filter(o => !o.stripe_session_id && !isB2B(o)).length,
-    stripe: orders.filter(o => !!o.stripe_session_id).length,
+    cod: orders.filter(o => !isStripe(o) && !isB2B(o)).length,
+    stripe: orders.filter(o => isStripe(o)).length,
     b2b: orders.filter(o => isB2B(o)).length,
     totalRevenue: orders.filter(o => o.status !== 'cancelled').reduce((s, o) => s + Number(o.total_amount), 0),
   };
@@ -296,7 +320,7 @@ export default function OrdersManagement() {
             { label: 'B2B за преглед', value: stats.b2bReview, icon: 'ri-eye-line', color: b2bReviewCount > 0 ? 'text-amber-600' : 'text-gray-400' },
             { label: 'B2B общо', value: stats.b2b, icon: 'ri-building-2-line', color: 'text-gray-800' },
             { label: 'Наложен платеж', value: stats.cod, icon: 'ri-truck-line', color: 'text-orange-600' },
-            { label: 'С карта', value: stats.stripe, icon: 'ri-bank-card-line', color: 'text-emerald-600' },
+            { label: 'Поръчки с карта', value: stats.stripe, icon: 'ri-bank-card-line', color: 'text-gray-700' },
           ].map((stat, i) => (
             <div key={i} className="bg-white rounded-xl p-4 border border-gray-100">
               <div className={`w-8 h-8 flex items-center justify-center mb-2 ${stat.color}`}>
@@ -425,7 +449,7 @@ export default function OrdersManagement() {
                         </td>
                         <td className="px-5 py-4 whitespace-nowrap">
                           {stripe ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700">
+                            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700">
                               <i aria-hidden="true" className="ri-bank-card-line"></i> Карта
                             </span>
                           ) : b2b ? (
@@ -437,6 +461,7 @@ export default function OrdersManagement() {
                               <i aria-hidden="true" className="ri-truck-line"></i> Наложен
                             </span>
                           )}
+                          {stripe && <div className="mt-1"><span className={`inline-flex px-2 py-1 rounded-full text-xs font-semibold ${paymentPresentation(order).color}`}>{paymentPresentation(order).label}</span></div>}
                         </td>
                         <td className="px-5 py-4 whitespace-nowrap">
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${statusInfo.color}`}>
@@ -475,11 +500,11 @@ export default function OrdersManagement() {
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                {isStripe(selectedOrder) && (!selectedOrder.customer_email || !(selectedOrder.shipping_address?.full_name || selectedOrder.shipping_address?.name)) && (
+                {isStripe(selectedOrder) && selectedOrder.stripe_session_id && (
                   <button
                     disabled={!!mutation.pending} onClick={() => refreshStripeOrder(selectedOrder)}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors whitespace-nowrap cursor-pointer"
-                    title="Вземи данните от Stripe"
+                    title="Провери плащането в Stripe"
                   >
                     <i aria-hidden="true" className="ri-refresh-line"></i> Обнови от Stripe
                   </button>
@@ -489,8 +514,8 @@ export default function OrdersManagement() {
                     <i aria-hidden="true" className="ri-building-2-line"></i> B2B Поръчка
                   </span>
                 ) : isStripe(selectedOrder) ? (
-                  <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">
-                    <i aria-hidden="true" className="ri-bank-card-line"></i> Онлайн плащане
+                  <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
+                    <i aria-hidden="true" className="ri-bank-card-line"></i> Метод: карта
                   </span>
                 ) : (
                   <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold bg-orange-50 text-orange-700">
@@ -507,6 +532,14 @@ export default function OrdersManagement() {
             </div>
 
             <div className="p-6">
+              <AdminFeedback message={loadError ? { type: 'error', text: 'Данните за поръчката не са обновени. Обновете списъка преди следващо действие.' } : null} onRetry={fetchOrders} />
+              {isStripe(selectedOrder) && <section aria-label="Платежен статус" className="mb-4 rounded-xl border border-slate-200 p-4" aria-live="polite">
+                <h3 className="text-xs font-semibold text-slate-600 mb-2">Плащане с карта</h3>
+                <span className={`inline-flex px-3 py-1.5 rounded-full text-sm font-bold ${paymentPresentation(selectedOrder).color}`}>{paymentPresentation(selectedOrder).label}</span>
+                <p className="mt-2 text-sm text-slate-700">{paymentPresentation(selectedOrder).detail}</p>
+                {!canFulfillOrder(selectedOrder) && <p className="mt-2 text-sm font-semibold text-amber-900">Не обработвайте и не изпращайте тази поръчка като платена.</p>}
+                {selectedOrder.payment_paid_at && <p className="mt-2 text-xs text-slate-600">Записано потвърждение: {new Date(selectedOrder.payment_paid_at).toLocaleString('bg-BG')}</p>}
+              </section>}
               <AdminFeedback message={mutation.message} onDismiss={mutation.clearMessage} />
               <AdminFeedback message={companyError ? { type: 'error', text: 'Фирмените данни не са заредени. Опитайте отново.' } : null} onRetry={() => { if (selectedOrder.b2b_company_id) void fetchCompanyInfo(selectedOrder.b2b_company_id); }} />
             </div>
@@ -842,14 +875,16 @@ export default function OrdersManagement() {
               {/* Статус */}
               <div>
                 <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                  Смяна на статус
+                  Статус на изпълнение
                 </label>
                 <div className="flex flex-wrap gap-2">
                   {statusOptions.map(s => (
                     <button
                       key={s.value}
+                      disabled={!canFulfillOrder(selectedOrder) && fulfillmentStatuses.has(s.value)}
+                      title={!canFulfillOrder(selectedOrder) && fulfillmentStatuses.has(s.value) ? 'Необходимо е потвърдено реално плащане.' : undefined}
                       onClick={() => updateOrderStatus(selectedOrder.id, s.value)}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap cursor-pointer ${
+                      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
                         selectedOrder.status === s.value
                           ? s.color + ' ring-2 ring-offset-1 ring-teal-400'
                           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'

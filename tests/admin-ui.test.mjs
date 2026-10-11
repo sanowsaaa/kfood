@@ -30,6 +30,7 @@ async function setup(options = {}) {
   }, { project, token, user });
   const requests = []; const errors = [];
   const rows = { products: [structuredClone(product)], orders: [structuredClone(order)], blog_posts: [structuredClone(post)], reviews: [structuredClone(review)], b2b_companies: [structuredClone(company)], b2b_applications: [structuredClone(application)], b2b_pricing_tiers: [], b2b_company_contacts: [], b2b_company_addresses: [], b2b_order_rules: [], b2b_payment_rules: [], b2b_documents: [], b2b_notifications: [] };
+  if (options.orders) rows.orders = structuredClone(options.orders);
   let authFailure = options.authFailure;
   const page = await context.newPage();
   page.setDefaultTimeout(10000);
@@ -54,9 +55,19 @@ async function setup(options = {}) {
       if (name === 'approve-b2b') { rows.b2b_applications[0].status = 'approved'; return reply({ success: true, email_sent: options.emailSent !== false }); }
       if (name === 'review-b2b-order') { rows.orders[0].status = body.action === 'approve' ? 'approved' : 'cancelled'; return reply({ success: true, message: 'Операцията е потвърдена.' }); }
       if (name === 'create-b2b-checkout' && body.mode === 'resend_notification') return reply({ success: true, email_sent: true });
+      if (name === 'reconcile-checkouts') {
+        if (options.paymentAfterRefresh) Object.assign(rows.orders.find(row => row.id === body.orderId), options.paymentAfterRefresh);
+        return reply({ checked: 1, reviews: 0 });
+      }
       return reply({ error: 'offline endpoint unavailable' }, 404);
     }
     if (url.pathname.includes('/auth/v1/user')) return reply(user);
+    if (url.pathname.endsWith('/rest/v1/rpc/admin_orders')) {
+      requests.push({ table: 'orders', method: 'GET', body: null, url: url.href });
+      if (options.readFailure === 'orders') return reply({ code: '42501', message: 'denied' }, 403);
+      return reply(rows.orders.map(row => ({ order_data: row, payment_state: row.payment_state ?? null,
+        payment_livemode: row.payment_livemode ?? null, payment_paid_at: row.payment_paid_at ?? null })));
+    }
     if (url.pathname.endsWith('/rest/v1/rpc/admin_products')) {
       requests.push({ table: 'products', method: 'GET', body: null, url: url.href });
       if (options.readFailure === 'products') return reply({ code: '42501', message: 'denied' }, 403);
@@ -92,6 +103,71 @@ async function setup(options = {}) {
 async function ready(page, path) { await page.goto(base + path); await page.locator('nav[aria-label="Административни раздели"]').waitFor(); await page.waitForTimeout(120); }
 async function sameTickDoubleClick(locator) { await locator.evaluate(button => { button.click(); button.click(); }); }
 function writes(requests, table) { return requests.filter(request => request.table === table && request.method !== 'GET'); }
+
+const card = { ...order, order_number: 'ORD-CARD-SYNTHETIC', b2b_company_id: null, is_b2b_order: false,
+  payment_method: 'stripe', stripe_session_id: 'cs_live_synthetic', status: 'pending',
+  payment_state: 'pending', payment_livemode: true, payment_paid_at: null };
+
+for (const mobile of [false, true]) test(`${mobile ? 'mobile' : 'desktop'}: card methods never masquerade as paid; fulfillment requires live payment proof`, async () => {
+  const cases = [
+    ['pending', true, null, 'Неплатена', false],
+    ['awaiting_payment', true, null, 'Чака потвърждение', false],
+    ['failed', true, null, 'Неуспешно плащане', false],
+    ['expired', true, null, 'Изтекло плащане', false],
+    ['review', true, null, 'Плащане за преглед', false],
+    [null, null, null, 'Непотвърдено плащане', false],
+    ['paid', true, null, 'Непотвърдено плащане', false],
+    ['paid', null, date, 'Непотвърдено плащане', false],
+    ['paid', false, date, 'Тестова: платена', false],
+    ['paid', true, date, 'Платена', true],
+  ];
+  const orders = cases.map(([state, live, paid], i) => ({ ...card, id: `synthetic-card-${i}`, order_number: `ORD-CARD-${i}`, payment_state: state, payment_livemode: live, payment_paid_at: paid }));
+  const { page, context, requests, errors } = await setup({ mobile, orders });
+  try {
+    await ready(page, '/admin/orders');
+    assert.equal(await page.getByText('Платена', { exact: true }).count(), 1);
+    for (let i = 0; i < cases.length; i++) {
+      await page.getByText(orders[i].order_number, { exact: true }).click();
+      const dialog = page.getByRole('dialog');
+      await dialog.getByRole('region', { name: 'Платежен статус' }).getByText(cases[i][3], { exact: true }).waitFor();
+      for (const label of ['Одобрена', 'Потвърдена', 'Обработва се', 'Изпратена', 'Доставена']) {
+        assert.equal(await dialog.getByRole('button', { name: label, exact: true }).isEnabled(), cases[i][4]);
+      }
+      assert.equal(await dialog.getByRole('button', { name: 'Отказана', exact: true }).isEnabled(), true);
+      await dialog.getByLabel('Затвори', { exact: true }).click();
+    }
+    assert.equal(writes(requests, 'orders').length, 0); assert.deepEqual(errors, []);
+  } finally { await context.close(); }
+});
+
+test('refreshing an unpaid Stripe session reports unpaid; a later verified payment enables fulfillment', async () => {
+  const { page, context, rows, requests } = await setup({ orders: [card] });
+  try {
+    await ready(page, '/admin/orders'); await page.getByText(card.order_number, { exact: true }).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByRole('button', { name: 'Обнови от Stripe', exact: true }).click();
+    await dialog.getByText('Неплатена. Checkout е създаден. Плащането още не е потвърдено.', { exact: true }).waitFor();
+    assert.equal(await dialog.getByRole('button', { name: 'Изпратена', exact: true }).isEnabled(), false);
+    Object.assign(rows.orders[0], { payment_state: 'paid', payment_paid_at: date, status: 'confirmed' });
+    await dialog.getByRole('button', { name: 'Обнови от Stripe', exact: true }).click();
+    await dialog.getByText('Платена. Плащането е проверено и записано от сървъра.', { exact: true }).waitFor();
+    await dialog.getByRole('button', { name: 'Обработва се', exact: true }).click();
+    await dialog.getByText('Статусът е записан.', { exact: true }).waitFor();
+    assert.deepEqual(writes(requests, 'orders').map(r => r.body.status), ['processing']);
+  } finally { await context.close(); }
+});
+
+test('returning to the admin tab reloads webhook payment changes without losing the order dialog', async () => {
+  const { page, context, rows } = await setup({ orders: [card] });
+  try {
+    await ready(page, '/admin/orders'); await page.getByText(card.order_number, { exact: true }).click();
+    Object.assign(rows.orders[0], { payment_state: 'paid', payment_paid_at: date, status: 'confirmed' });
+    await page.evaluate(() => window.dispatchEvent(new Event('focus')));
+    const dialog = page.getByRole('dialog');
+    await dialog.getByRole('region', { name: 'Платежен статус' }).getByText('Платена', { exact: true }).waitFor();
+    assert.equal(await dialog.getByRole('button', { name: 'Изпратена', exact: true }).isEnabled(), true);
+  } finally { await context.close(); }
+});
 
 for (const mobile of [false, true]) {
   test(`${mobile ? 'mobile' : 'desktop'}: every existing admin screen renders with one active navigation section`, async () => {
