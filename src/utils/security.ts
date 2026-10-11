@@ -1,88 +1,52 @@
-// XSS Sanitization utility for blog content and other user-generated HTML
-// This strips dangerous tags and attributes while preserving safe formatting
+// Parse HTML in an inert document and rebuild only safe formatting.
+const FORMATTING_TAGS = new Set('p br h1 h2 h3 h4 h5 h6 strong em b i u s span div blockquote pre code ul ol li table thead tbody tfoot tr th td caption hr a img figure figcaption'.split(' '));
+const DROP_TAGS = new Set('script style iframe object embed svg math template form input textarea button select option link meta base'.split(' '));
 
-const DANGEROUS_TAGS = [
-  'script', 'iframe', 'object', 'embed', 'form', 'input', 'textarea',
-  'button', 'select', 'option', 'style', 'link', 'meta', 'head', 'body',
-  'html', 'frame', 'frameset', 'applet', 'base',
-];
-
-const DANGEROUS_ATTRS = [
-  'onabort', 'onblur', 'onchange', 'onclick', 'oncontextmenu',
-  'ondblclick', 'ondrag', 'ondragend', 'ondragenter', 'ondragleave',
-  'ondragover', 'ondragstart', 'ondrop', 'onerror', 'onfocus',
-  'oninput', 'oninvalid', 'onkeydown', 'onkeypress', 'onkeyup',
-  'onload', 'onmousedown', 'onmousemove', 'onmouseout', 'onmouseover',
-  'onmouseup', 'onmousewheel', 'onreset', 'onresize', 'onscroll',
-  'onselect', 'onsubmit', 'ontoggle', 'onunload', 'onwheel',
-  'oncopy', 'oncut', 'onpaste', 'onplay', 'onpause', 'onwaiting',
-  'formaction', 'formmethod', 'formtarget', 'xmlns', 'xlink:href',
-];
-
-/**
- * Sanitizes HTML string by removing dangerous tags and attributes.
- * Preserves safe formatting tags like headings, paragraphs, links, images, lists, tables.
- */
 export function sanitizeHtml(input: string): string {
   if (!input || typeof input !== 'string') return '';
-
-  let cleaned = input;
-
-  // Remove script tags and their contents entirely (case-insensitive, multiline)
-  cleaned = cleaned.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
-
-  // Remove style tags and their contents
-  cleaned = cleaned.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
-
-  // Remove dangerous tags (with or without attributes, self-closing)
-  const tagPattern = new RegExp(
-    `<\\/?(?:${DANGEROUS_TAGS.join('|')})\\b[^>]*>`,
-    'gi',
-  );
-  cleaned = cleaned.replace(tagPattern, '');
-
-  // Remove javascript: URLs from href/src/action attributes
-  cleaned = cleaned.replace(
-    /(href|src|action|background|poster|data)=\s*["']?javascript:[^"'>\s]*/gi,
-    '$1="#"',
-  );
-
-  // Remove data:text/html and data:text/javascript URLs
-  cleaned = cleaned.replace(
-    /(href|src|action|background|poster|data)=\s*["']?data:text\/(?:html|javascript|xml)[^"'>\s]*/gi,
-    '$1="#"',
-  );
-
-  // Remove dangerous event handler attributes
-  const attrPattern = new RegExp(
-    `\\s(?:${DANGEROUS_ATTRS.join('|')})\\s*=\\s*["'][^"']*["']`,
-    'gi',
-  );
-  cleaned = cleaned.replace(attrPattern, '');
-
-  // Also remove dangerous attributes without quotes (single word)
-  const attrPatternNoQuotes = new RegExp(
-    `\\s(?:${DANGEROUS_ATTRS.join('|')})\\s*=\\s*[^\\s>]+`,
-    'gi',
-  );
-  cleaned = cleaned.replace(attrPatternNoQuotes, '');
-
-  // Remove expression() and url() in CSS that could leak data
-  cleaned = cleaned.replace(/expression\s*\(/gi, '');
-
-  // Remove vbscript: URLs
-  cleaned = cleaned.replace(
-    /(href|src|action|background|poster)=\s*["']?vbscript:[^"'>\s]*/gi,
-    '$1="#"',
-  );
-
-  // Remove mhtml: URLs
-  cleaned = cleaned.replace(
-    /(href|src|action|background|poster)=\s*["']?mhtml:[^"'>\s]*/gi,
-    '$1="#"',
-  );
-
-  return cleaned;
+  const source = new DOMParser().parseFromString(input, 'text/html');
+  const output = document.createElement('div');
+  const safeUrl = (value: string, image = false) => {
+    if (!value.trim()) return null;
+    try {
+      const url = new URL(value, window.location.origin);
+      if (url.username || url.password) return null;
+      if (url.protocol === 'https:' || url.protocol === 'http:') return url.href;
+      if (!image && url.protocol === 'mailto:' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(url.pathname) && !url.search) return url.href;
+    } catch { /* Invalid URLs are omitted. */ }
+    return null;
+  };
+  const copy = (node: Node, parent: Node) => {
+    if (node.nodeType === Node.TEXT_NODE) { parent.appendChild(document.createTextNode(node.textContent || '')); return; }
+    if (!(node instanceof Element)) return;
+    const tag = node.tagName.toLowerCase();
+    if (DROP_TAGS.has(tag) || node.namespaceURI !== 'http://www.w3.org/1999/xhtml') return;
+    if (!FORMATTING_TAGS.has(tag)) { for (const child of node.childNodes) copy(child, parent); return; }
+    const clean = document.createElement(tag);
+    for (const name of ['title', ...(tag === 'img' ? ['alt'] : [])]) {
+      const value = node.getAttribute(name); if (value) clean.setAttribute(name, value.slice(0, 1000));
+    }
+    if (tag === 'a' || tag === 'img') {
+      const name = tag === 'a' ? 'href' : 'src';
+      const value = safeUrl(node.getAttribute(name) || '', tag === 'img');
+      if (value) clean.setAttribute(name, value);
+      if (tag === 'a') clean.setAttribute('rel', 'noopener noreferrer');
+      else { clean.setAttribute('loading', 'lazy'); clean.setAttribute('decoding', 'async'); }
+    }
+    for (const name of ['colspan', 'rowspan', 'width', 'height']) {
+      const value = node.getAttribute(name);
+      if (value && /^(?:[1-9][0-9]{0,3}|100%)$/.test(value)) clean.setAttribute(name, value);
+    }
+    // Retain editorial colors and alignment, excluding URLs and arbitrary CSS.
+    for (const name of ['color', 'background-color', 'text-align', 'font-weight', 'font-style', 'text-decoration']) {
+      const value = (node as HTMLElement).style?.getPropertyValue(name);
+      if (value && /^[#(),.% a-z0-9-]+$/i.test(value) && !/(?:url|expression|var|attr)\s*\(/i.test(value)) clean.style.setProperty(name, value);
+    }
+    for (const child of node.childNodes) copy(child, clean);
+    parent.appendChild(clean);
+  };
+  for (const child of source.body.childNodes) copy(child, output);
+  return output.innerHTML;
 }
 
 /**

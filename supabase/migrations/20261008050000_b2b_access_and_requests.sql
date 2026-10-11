@@ -110,7 +110,7 @@ begin
       if v_qty>10000 or (v_line->>'id')::integer=any(v_ids) then raise exception 'INVALID_CART'; end if;
       v_ids:=array_append(v_ids,(v_line->>'id')::integer);
       select * into v_product from public.products where id=(v_line->>'id')::integer for share;
-      if not found or v_product.in_stock is distinct from true then raise exception 'PRODUCT_UNAVAILABLE'; end if;
+      if not found then raise exception 'PRODUCT_UNAVAILABLE'; end if;
       v_pack:=greatest(coalesce(v_product.pieces_per_carton,0),1);
       if v_qty % v_pack <> 0 then raise exception 'WHOLE_CARTONS_REQUIRED'; end if;
       v_price:=case when coalesce(v_product.pieces_per_carton,0)>0

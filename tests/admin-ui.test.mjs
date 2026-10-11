@@ -57,6 +57,11 @@ async function setup(options = {}) {
       return reply({ error: 'offline endpoint unavailable' }, 404);
     }
     if (url.pathname.includes('/auth/v1/user')) return reply(user);
+    if (url.pathname.endsWith('/rest/v1/rpc/admin_products')) {
+      requests.push({ table: 'products', method: 'GET', body: null, url: url.href });
+      if (options.readFailure === 'products') return reply({ code: '42501', message: 'denied' }, 403);
+      return reply(rows.products);
+    }
     if (url.pathname.includes('/rest/v1/')) {
       const table = url.pathname.split('/').at(-1); const method = request.method();
       if (options.slowPendingRead && table === 'reviews' && url.searchParams.get('is_approved') === 'eq.false' && method === 'GET') await new Promise(resolve => setTimeout(resolve, 800));
@@ -274,5 +279,22 @@ test('auth: every administrator route rejects a denied role before reading admin
       assert.equal(await page.locator('nav[aria-label="Административни раздели"]').count(), 0);
     }
     assert.equal(requests.filter(request => request.table).length, 0);
+  } finally { await context.close(); }
+});
+
+test('B2B custom prices: unit/carton edits stay consistent and preserve exact carton totals', async () => {
+  const { page, context, requests } = await setup();
+  try {
+    await ready(page, '/admin/orders'); await page.getByText(order.order_number, { exact: true }).click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByLabel('Задай персонализирани цени за всеки продукт').check();
+    const unit = dialog.getByRole('spinbutton', { name: `Цена за брой: ${product.name}` });
+    const carton = dialog.getByRole('spinbutton', { name: `Цена за кашон: ${product.name}` });
+    await unit.fill('2.50'); assert.equal(await carton.inputValue(), '30.00');
+    await carton.fill('7.00'); assert.equal(await unit.inputValue(), '0.58');
+    await dialog.getByRole('button', { name: /Одобри с персонализирани цени/ }).click();
+    await dialog.getByText('Операцията е потвърдена.', { exact: true }).waitFor();
+    assert.deepEqual(requests.find(r => r.name === 'review-b2b-order').body.line_items,
+      [{ id: product.id, unit_price: 0.58, carton_price: 7 }]);
   } finally { await context.close(); }
 });

@@ -16,6 +16,8 @@ export type Config = {
   workerSecret: string;
 };
 export type Dependencies = { db: SupabaseClient; stripe: Stripe; config: Config };
+export type DatabaseDependencies = Pick<Dependencies, "db" | "config">;
+export type WorkerDependencies = DatabaseDependencies & { stripe: Stripe | null };
 export type QuoteLine = {
   id: number;
   name: string;
@@ -63,7 +65,42 @@ export function checkEnvironment(mode: string, environment: string, url: string)
   }
 }
 
-export function dependencies(): Dependencies {
+let workerKey: { url: string; value: string; expires: number } | undefined;
+export async function databaseDependencies(): Promise<DatabaseDependencies> {
+  const env = (key: string) => {
+    const value = Deno.env.get(key);
+    if (!value) throw new Error(`Missing configuration: ${key}`);
+    return value;
+  };
+  const supabaseUrl = env("SUPABASE_URL");
+  const live = new URL(supabaseUrl).hostname === "quqlovoiwgqfmgjumpgd.supabase.co";
+  const app = new URL(Deno.env.get("CHECKOUT_APP_URL") || "https://k-foodvelikotarnovo.com");
+  if (app.pathname !== "/" || app.search || app.hash || app.username || app.password ||
+      (app.protocol !== "https:" && (live || app.hostname !== "localhost"))) {
+    throw new Error("Invalid CHECKOUT_APP_URL");
+  }
+  const db = createClient(supabaseUrl, env("SUPABASE_SERVICE_ROLE_KEY"), {
+    auth: { persistSession: false, autoRefreshToken: false },
+    global: { fetch: (url, init) => fetch(url, {
+      ...init, signal: init?.signal
+        ? AbortSignal.any([init.signal, AbortSignal.timeout(12_000)])
+        : AbortSignal.timeout(12_000),
+    }) },
+  });
+  if (!workerKey || workerKey.url !== supabaseUrl || workerKey.expires <= Date.now()) {
+    const { data, error } = await db.rpc("checkout_worker_secret");
+    if (error || typeof data !== "string" || data.length < 32) throw new Error("Worker configuration unavailable");
+    workerKey = { url: supabaseUrl, value: data, expires: Date.now() + 60_000 };
+  }
+  return { db, config: {
+    live, appUrl: app.origin, workerSecret: workerKey.value,
+    webhookSecret: Deno.env.get("STRIPE_WEBHOOK_SECRET") || "",
+    origins: [app.origin, "https://k-foodvelikotarnovo.com", "https://www.k-foodvelikotarnovo.com",
+      ...(Deno.env.get("CHECKOUT_ALLOWED_ORIGINS") || "").split(",").map(v => v.trim()).filter(Boolean)],
+  } };
+}
+
+export async function dependencies(): Promise<Dependencies> {
   const env = (key: string) => {
     const value = Deno.env.get(key);
     if (!value) throw new Error(`Missing configuration: ${key}`);
@@ -87,21 +124,9 @@ export function dependencies(): Dependencies {
   ) {
     throw new Error("Invalid CHECKOUT_APP_URL");
   }
-  const workerSecret = env("CHECKOUT_WORKER_SECRET");
-  if (workerSecret.length < 32) throw new Error("Worker secret must have at least 32 characters");
+  const base = await databaseDependencies();
   return {
-    db: createClient(supabaseUrl, env("SUPABASE_SERVICE_ROLE_KEY"), {
-      auth: { persistSession: false, autoRefreshToken: false },
-      global: {
-        fetch: (url, init) =>
-          fetch(url, {
-            ...init,
-            signal: init?.signal
-              ? AbortSignal.any([init.signal, AbortSignal.timeout(12_000)])
-              : AbortSignal.timeout(12_000),
-          }),
-      },
-    }),
+    ...base,
     stripe: new Stripe(key, {
       apiVersion: "2026-09-30.endive",
       httpClient: Stripe.createFetchHttpClient(),
@@ -111,15 +136,33 @@ export function dependencies(): Dependencies {
     config: {
       live: mode === "live",
       appUrl: app.origin,
-      workerSecret,
-      origins: [
-        app.origin,
-        ...(Deno.env.get("CHECKOUT_ALLOWED_ORIGINS") || "").split(",")
-          .map((v) => v.trim()).filter(Boolean),
-      ],
+      workerSecret: base.config.workerSecret,
+      origins: base.config.origins,
       webhookSecret: env("STRIPE_WEBHOOK_SECRET"),
     },
   };
+}
+
+export async function workerDependencies(): Promise<WorkerDependencies> {
+  const base = await databaseDependencies();
+  const bucket = await base.db.storage.getBucket("b2b-documents");
+  if (bucket.error) {
+    if (!/not found/i.test(bucket.error.message)) throw new Error("Document storage unavailable");
+    const created = await base.db.storage.createBucket("b2b-documents", {
+      public: false, fileSizeLimit: 10 * 1024 * 1024,
+      allowedMimeTypes: ["application/pdf", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/msword", "image/jpeg", "image/png", "image/webp"],
+    });
+    if (created.error) {
+      const existing = await base.db.storage.getBucket("b2b-documents");
+      if (existing.error || existing.data?.public !== false) throw new Error("Document storage setup failed");
+    }
+  } else if (bucket.data?.public !== false) {
+    throw new Error("B2B document storage must be private");
+  }
+  try { return await dependencies(); }
+  catch { return { ...base, stripe: null }; }
 }
 
 export function headers(req?: Request, config?: Config): HeadersInit {
@@ -266,7 +309,7 @@ export function lineItems(lines: QuoteLine[]): Stripe.Checkout.SessionCreatePara
       }));
   });
 }
-export async function limited(req: Request, deps: Dependencies, scope: string, count: number, windowSeconds = 60) {
+export async function limited(req: Request, deps: DatabaseDependencies, scope: string, count: number, windowSeconds = 60) {
   const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
   const bucket = await sha256(`${deps.config.workerSecret}:${scope}:${ip}`);
   const { data, error } = await deps.db.rpc("checkout_rate_limit", {

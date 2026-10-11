@@ -1,0 +1,5555 @@
+{
+  "rls": [
+    {
+      "table": "orders",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "b2b_companies",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "products",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "b2b_company_contacts",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "reviews",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "game_settings",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "b2b_pricing_tiers",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "b2b_applications",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "b2b_company_addresses",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "blog_posts",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "game_sessions",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "b2b_sales_reps",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "user_roles",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "b2b_notifications",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "b2b_documents",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "b2b_product_pricing",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "b2b_category_discounts",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "b2b_brand_discounts",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "b2b_order_rules",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "b2b_payment_rules",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "b2b_support_tickets",
+      "forced": false,
+      "enabled": true
+    },
+    {
+      "table": "b2b_invoices",
+      "forced": false,
+      "enabled": true
+    }
+  ],
+  "grants": [
+    {
+      "table": "orders",
+      "grantee": "anon",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "orders",
+      "grantee": "anon",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "orders",
+      "grantee": "anon",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "orders",
+      "grantee": "anon",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "orders",
+      "grantee": "anon",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "orders",
+      "grantee": "anon",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "orders",
+      "grantee": "anon",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "orders",
+      "grantee": "authenticated",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "orders",
+      "grantee": "authenticated",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "orders",
+      "grantee": "authenticated",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "orders",
+      "grantee": "authenticated",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "orders",
+      "grantee": "authenticated",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "orders",
+      "grantee": "authenticated",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "orders",
+      "grantee": "authenticated",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "orders",
+      "grantee": "service_role",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "orders",
+      "grantee": "service_role",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "orders",
+      "grantee": "service_role",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "orders",
+      "grantee": "service_role",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "orders",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "orders",
+      "grantee": "service_role",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "orders",
+      "grantee": "service_role",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_companies",
+      "grantee": "anon",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_companies",
+      "grantee": "anon",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_companies",
+      "grantee": "anon",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_companies",
+      "grantee": "anon",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_companies",
+      "grantee": "anon",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_companies",
+      "grantee": "anon",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_companies",
+      "grantee": "anon",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_companies",
+      "grantee": "authenticated",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_companies",
+      "grantee": "authenticated",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_companies",
+      "grantee": "authenticated",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_companies",
+      "grantee": "authenticated",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_companies",
+      "grantee": "authenticated",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_companies",
+      "grantee": "authenticated",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_companies",
+      "grantee": "authenticated",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_companies",
+      "grantee": "service_role",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_companies",
+      "grantee": "service_role",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_companies",
+      "grantee": "service_role",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_companies",
+      "grantee": "service_role",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_companies",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_companies",
+      "grantee": "service_role",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_companies",
+      "grantee": "service_role",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "products",
+      "grantee": "anon",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "products",
+      "grantee": "anon",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "products",
+      "grantee": "anon",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "products",
+      "grantee": "anon",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "products",
+      "grantee": "anon",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "products",
+      "grantee": "anon",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "products",
+      "grantee": "anon",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "products",
+      "grantee": "authenticated",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "products",
+      "grantee": "authenticated",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "products",
+      "grantee": "authenticated",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "products",
+      "grantee": "authenticated",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "products",
+      "grantee": "authenticated",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "products",
+      "grantee": "authenticated",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "products",
+      "grantee": "authenticated",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "products",
+      "grantee": "service_role",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "products",
+      "grantee": "service_role",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "products",
+      "grantee": "service_role",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "products",
+      "grantee": "service_role",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "products",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "products",
+      "grantee": "service_role",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "products",
+      "grantee": "service_role",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_company_contacts",
+      "grantee": "anon",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_company_contacts",
+      "grantee": "anon",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_company_contacts",
+      "grantee": "anon",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_company_contacts",
+      "grantee": "anon",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_company_contacts",
+      "grantee": "anon",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_company_contacts",
+      "grantee": "anon",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_company_contacts",
+      "grantee": "anon",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_company_contacts",
+      "grantee": "authenticated",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_company_contacts",
+      "grantee": "authenticated",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_company_contacts",
+      "grantee": "authenticated",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_company_contacts",
+      "grantee": "authenticated",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_company_contacts",
+      "grantee": "authenticated",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_company_contacts",
+      "grantee": "authenticated",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_company_contacts",
+      "grantee": "authenticated",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_company_contacts",
+      "grantee": "service_role",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_company_contacts",
+      "grantee": "service_role",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_company_contacts",
+      "grantee": "service_role",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_company_contacts",
+      "grantee": "service_role",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_company_contacts",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_company_contacts",
+      "grantee": "service_role",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_company_contacts",
+      "grantee": "service_role",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "reviews",
+      "grantee": "anon",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "reviews",
+      "grantee": "anon",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "reviews",
+      "grantee": "anon",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "reviews",
+      "grantee": "anon",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "reviews",
+      "grantee": "anon",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "reviews",
+      "grantee": "anon",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "reviews",
+      "grantee": "anon",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "reviews",
+      "grantee": "authenticated",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "reviews",
+      "grantee": "authenticated",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "reviews",
+      "grantee": "authenticated",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "reviews",
+      "grantee": "authenticated",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "reviews",
+      "grantee": "authenticated",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "reviews",
+      "grantee": "authenticated",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "reviews",
+      "grantee": "authenticated",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "reviews",
+      "grantee": "service_role",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "reviews",
+      "grantee": "service_role",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "reviews",
+      "grantee": "service_role",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "reviews",
+      "grantee": "service_role",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "reviews",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "reviews",
+      "grantee": "service_role",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "reviews",
+      "grantee": "service_role",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "game_settings",
+      "grantee": "anon",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "game_settings",
+      "grantee": "anon",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "game_settings",
+      "grantee": "anon",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "game_settings",
+      "grantee": "anon",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "game_settings",
+      "grantee": "anon",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "game_settings",
+      "grantee": "anon",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "game_settings",
+      "grantee": "anon",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "game_settings",
+      "grantee": "authenticated",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "game_settings",
+      "grantee": "authenticated",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "game_settings",
+      "grantee": "authenticated",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "game_settings",
+      "grantee": "authenticated",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "game_settings",
+      "grantee": "authenticated",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "game_settings",
+      "grantee": "authenticated",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "game_settings",
+      "grantee": "authenticated",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "game_settings",
+      "grantee": "service_role",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "game_settings",
+      "grantee": "service_role",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "game_settings",
+      "grantee": "service_role",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "game_settings",
+      "grantee": "service_role",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "game_settings",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "game_settings",
+      "grantee": "service_role",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "game_settings",
+      "grantee": "service_role",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_pricing_tiers",
+      "grantee": "anon",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_pricing_tiers",
+      "grantee": "anon",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_pricing_tiers",
+      "grantee": "anon",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_pricing_tiers",
+      "grantee": "anon",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_pricing_tiers",
+      "grantee": "anon",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_pricing_tiers",
+      "grantee": "anon",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_pricing_tiers",
+      "grantee": "anon",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_pricing_tiers",
+      "grantee": "authenticated",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_pricing_tiers",
+      "grantee": "authenticated",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_pricing_tiers",
+      "grantee": "authenticated",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_pricing_tiers",
+      "grantee": "authenticated",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_pricing_tiers",
+      "grantee": "authenticated",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_pricing_tiers",
+      "grantee": "authenticated",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_pricing_tiers",
+      "grantee": "authenticated",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_pricing_tiers",
+      "grantee": "service_role",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_pricing_tiers",
+      "grantee": "service_role",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_pricing_tiers",
+      "grantee": "service_role",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_pricing_tiers",
+      "grantee": "service_role",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_pricing_tiers",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_pricing_tiers",
+      "grantee": "service_role",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_pricing_tiers",
+      "grantee": "service_role",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_applications",
+      "grantee": "anon",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_applications",
+      "grantee": "anon",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_applications",
+      "grantee": "anon",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_applications",
+      "grantee": "anon",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_applications",
+      "grantee": "anon",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_applications",
+      "grantee": "anon",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_applications",
+      "grantee": "anon",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_applications",
+      "grantee": "authenticated",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_applications",
+      "grantee": "authenticated",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_applications",
+      "grantee": "authenticated",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_applications",
+      "grantee": "authenticated",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_applications",
+      "grantee": "authenticated",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_applications",
+      "grantee": "authenticated",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_applications",
+      "grantee": "authenticated",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_applications",
+      "grantee": "service_role",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_applications",
+      "grantee": "service_role",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_applications",
+      "grantee": "service_role",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_applications",
+      "grantee": "service_role",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_applications",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_applications",
+      "grantee": "service_role",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_applications",
+      "grantee": "service_role",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_company_addresses",
+      "grantee": "anon",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_company_addresses",
+      "grantee": "anon",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_company_addresses",
+      "grantee": "anon",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_company_addresses",
+      "grantee": "anon",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_company_addresses",
+      "grantee": "anon",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_company_addresses",
+      "grantee": "anon",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_company_addresses",
+      "grantee": "anon",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_company_addresses",
+      "grantee": "authenticated",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_company_addresses",
+      "grantee": "authenticated",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_company_addresses",
+      "grantee": "authenticated",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_company_addresses",
+      "grantee": "authenticated",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_company_addresses",
+      "grantee": "authenticated",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_company_addresses",
+      "grantee": "authenticated",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_company_addresses",
+      "grantee": "authenticated",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_company_addresses",
+      "grantee": "service_role",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_company_addresses",
+      "grantee": "service_role",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_company_addresses",
+      "grantee": "service_role",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_company_addresses",
+      "grantee": "service_role",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_company_addresses",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_company_addresses",
+      "grantee": "service_role",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_company_addresses",
+      "grantee": "service_role",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "blog_posts",
+      "grantee": "anon",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "blog_posts",
+      "grantee": "anon",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "blog_posts",
+      "grantee": "anon",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "blog_posts",
+      "grantee": "anon",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "blog_posts",
+      "grantee": "anon",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "blog_posts",
+      "grantee": "anon",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "blog_posts",
+      "grantee": "anon",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "blog_posts",
+      "grantee": "authenticated",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "blog_posts",
+      "grantee": "authenticated",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "blog_posts",
+      "grantee": "authenticated",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "blog_posts",
+      "grantee": "authenticated",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "blog_posts",
+      "grantee": "authenticated",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "blog_posts",
+      "grantee": "authenticated",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "blog_posts",
+      "grantee": "authenticated",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "blog_posts",
+      "grantee": "service_role",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "blog_posts",
+      "grantee": "service_role",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "blog_posts",
+      "grantee": "service_role",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "blog_posts",
+      "grantee": "service_role",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "blog_posts",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "blog_posts",
+      "grantee": "service_role",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "blog_posts",
+      "grantee": "service_role",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "game_sessions",
+      "grantee": "anon",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "game_sessions",
+      "grantee": "anon",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "game_sessions",
+      "grantee": "anon",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "game_sessions",
+      "grantee": "anon",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "game_sessions",
+      "grantee": "anon",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "game_sessions",
+      "grantee": "anon",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "game_sessions",
+      "grantee": "anon",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "game_sessions",
+      "grantee": "authenticated",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "game_sessions",
+      "grantee": "authenticated",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "game_sessions",
+      "grantee": "authenticated",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "game_sessions",
+      "grantee": "authenticated",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "game_sessions",
+      "grantee": "authenticated",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "game_sessions",
+      "grantee": "authenticated",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "game_sessions",
+      "grantee": "authenticated",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "game_sessions",
+      "grantee": "service_role",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "game_sessions",
+      "grantee": "service_role",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "game_sessions",
+      "grantee": "service_role",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "game_sessions",
+      "grantee": "service_role",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "game_sessions",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "game_sessions",
+      "grantee": "service_role",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "game_sessions",
+      "grantee": "service_role",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_sales_reps",
+      "grantee": "anon",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_sales_reps",
+      "grantee": "anon",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_sales_reps",
+      "grantee": "anon",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_sales_reps",
+      "grantee": "anon",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_sales_reps",
+      "grantee": "anon",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_sales_reps",
+      "grantee": "anon",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_sales_reps",
+      "grantee": "anon",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_sales_reps",
+      "grantee": "authenticated",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_sales_reps",
+      "grantee": "authenticated",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_sales_reps",
+      "grantee": "authenticated",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_sales_reps",
+      "grantee": "authenticated",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_sales_reps",
+      "grantee": "authenticated",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_sales_reps",
+      "grantee": "authenticated",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_sales_reps",
+      "grantee": "authenticated",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_sales_reps",
+      "grantee": "service_role",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_sales_reps",
+      "grantee": "service_role",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_sales_reps",
+      "grantee": "service_role",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_sales_reps",
+      "grantee": "service_role",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_sales_reps",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_sales_reps",
+      "grantee": "service_role",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_sales_reps",
+      "grantee": "service_role",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "user_roles",
+      "grantee": "anon",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "user_roles",
+      "grantee": "anon",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "user_roles",
+      "grantee": "anon",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "user_roles",
+      "grantee": "anon",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "user_roles",
+      "grantee": "anon",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "user_roles",
+      "grantee": "anon",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "user_roles",
+      "grantee": "anon",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "user_roles",
+      "grantee": "authenticated",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "user_roles",
+      "grantee": "authenticated",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "user_roles",
+      "grantee": "authenticated",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "user_roles",
+      "grantee": "authenticated",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "user_roles",
+      "grantee": "authenticated",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "user_roles",
+      "grantee": "authenticated",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "user_roles",
+      "grantee": "authenticated",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "user_roles",
+      "grantee": "service_role",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "user_roles",
+      "grantee": "service_role",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "user_roles",
+      "grantee": "service_role",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "user_roles",
+      "grantee": "service_role",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "user_roles",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "user_roles",
+      "grantee": "service_role",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "user_roles",
+      "grantee": "service_role",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_notifications",
+      "grantee": "anon",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_notifications",
+      "grantee": "anon",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_notifications",
+      "grantee": "anon",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_notifications",
+      "grantee": "anon",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_notifications",
+      "grantee": "anon",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_notifications",
+      "grantee": "anon",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_notifications",
+      "grantee": "anon",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_notifications",
+      "grantee": "authenticated",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_notifications",
+      "grantee": "authenticated",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_notifications",
+      "grantee": "authenticated",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_notifications",
+      "grantee": "authenticated",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_notifications",
+      "grantee": "authenticated",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_notifications",
+      "grantee": "authenticated",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_notifications",
+      "grantee": "authenticated",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_notifications",
+      "grantee": "service_role",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_notifications",
+      "grantee": "service_role",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_notifications",
+      "grantee": "service_role",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_notifications",
+      "grantee": "service_role",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_notifications",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_notifications",
+      "grantee": "service_role",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_notifications",
+      "grantee": "service_role",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_documents",
+      "grantee": "anon",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_documents",
+      "grantee": "anon",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_documents",
+      "grantee": "anon",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_documents",
+      "grantee": "anon",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_documents",
+      "grantee": "anon",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_documents",
+      "grantee": "anon",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_documents",
+      "grantee": "anon",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_documents",
+      "grantee": "authenticated",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_documents",
+      "grantee": "authenticated",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_documents",
+      "grantee": "authenticated",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_documents",
+      "grantee": "authenticated",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_documents",
+      "grantee": "authenticated",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_documents",
+      "grantee": "authenticated",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_documents",
+      "grantee": "authenticated",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_documents",
+      "grantee": "service_role",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_documents",
+      "grantee": "service_role",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_documents",
+      "grantee": "service_role",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_documents",
+      "grantee": "service_role",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_documents",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_documents",
+      "grantee": "service_role",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_documents",
+      "grantee": "service_role",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_product_pricing",
+      "grantee": "anon",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_product_pricing",
+      "grantee": "anon",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_product_pricing",
+      "grantee": "anon",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_product_pricing",
+      "grantee": "anon",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_product_pricing",
+      "grantee": "anon",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_product_pricing",
+      "grantee": "anon",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_product_pricing",
+      "grantee": "anon",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_product_pricing",
+      "grantee": "authenticated",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_product_pricing",
+      "grantee": "authenticated",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_product_pricing",
+      "grantee": "authenticated",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_product_pricing",
+      "grantee": "authenticated",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_product_pricing",
+      "grantee": "authenticated",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_product_pricing",
+      "grantee": "authenticated",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_product_pricing",
+      "grantee": "authenticated",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_product_pricing",
+      "grantee": "service_role",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_product_pricing",
+      "grantee": "service_role",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_product_pricing",
+      "grantee": "service_role",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_product_pricing",
+      "grantee": "service_role",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_product_pricing",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_product_pricing",
+      "grantee": "service_role",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_product_pricing",
+      "grantee": "service_role",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_category_discounts",
+      "grantee": "anon",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_category_discounts",
+      "grantee": "anon",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_category_discounts",
+      "grantee": "anon",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_category_discounts",
+      "grantee": "anon",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_category_discounts",
+      "grantee": "anon",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_category_discounts",
+      "grantee": "anon",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_category_discounts",
+      "grantee": "anon",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_category_discounts",
+      "grantee": "authenticated",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_category_discounts",
+      "grantee": "authenticated",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_category_discounts",
+      "grantee": "authenticated",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_category_discounts",
+      "grantee": "authenticated",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_category_discounts",
+      "grantee": "authenticated",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_category_discounts",
+      "grantee": "authenticated",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_category_discounts",
+      "grantee": "authenticated",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_category_discounts",
+      "grantee": "service_role",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_category_discounts",
+      "grantee": "service_role",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_category_discounts",
+      "grantee": "service_role",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_category_discounts",
+      "grantee": "service_role",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_category_discounts",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_category_discounts",
+      "grantee": "service_role",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_category_discounts",
+      "grantee": "service_role",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_brand_discounts",
+      "grantee": "anon",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_brand_discounts",
+      "grantee": "anon",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_brand_discounts",
+      "grantee": "anon",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_brand_discounts",
+      "grantee": "anon",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_brand_discounts",
+      "grantee": "anon",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_brand_discounts",
+      "grantee": "anon",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_brand_discounts",
+      "grantee": "anon",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_brand_discounts",
+      "grantee": "authenticated",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_brand_discounts",
+      "grantee": "authenticated",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_brand_discounts",
+      "grantee": "authenticated",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_brand_discounts",
+      "grantee": "authenticated",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_brand_discounts",
+      "grantee": "authenticated",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_brand_discounts",
+      "grantee": "authenticated",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_brand_discounts",
+      "grantee": "authenticated",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_brand_discounts",
+      "grantee": "service_role",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_brand_discounts",
+      "grantee": "service_role",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_brand_discounts",
+      "grantee": "service_role",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_brand_discounts",
+      "grantee": "service_role",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_brand_discounts",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_brand_discounts",
+      "grantee": "service_role",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_brand_discounts",
+      "grantee": "service_role",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_order_rules",
+      "grantee": "anon",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_order_rules",
+      "grantee": "anon",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_order_rules",
+      "grantee": "anon",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_order_rules",
+      "grantee": "anon",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_order_rules",
+      "grantee": "anon",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_order_rules",
+      "grantee": "anon",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_order_rules",
+      "grantee": "anon",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_order_rules",
+      "grantee": "authenticated",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_order_rules",
+      "grantee": "authenticated",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_order_rules",
+      "grantee": "authenticated",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_order_rules",
+      "grantee": "authenticated",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_order_rules",
+      "grantee": "authenticated",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_order_rules",
+      "grantee": "authenticated",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_order_rules",
+      "grantee": "authenticated",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_order_rules",
+      "grantee": "service_role",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_order_rules",
+      "grantee": "service_role",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_order_rules",
+      "grantee": "service_role",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_order_rules",
+      "grantee": "service_role",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_order_rules",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_order_rules",
+      "grantee": "service_role",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_order_rules",
+      "grantee": "service_role",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_payment_rules",
+      "grantee": "anon",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_payment_rules",
+      "grantee": "anon",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_payment_rules",
+      "grantee": "anon",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_payment_rules",
+      "grantee": "anon",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_payment_rules",
+      "grantee": "anon",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_payment_rules",
+      "grantee": "anon",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_payment_rules",
+      "grantee": "anon",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_payment_rules",
+      "grantee": "authenticated",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_payment_rules",
+      "grantee": "authenticated",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_payment_rules",
+      "grantee": "authenticated",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_payment_rules",
+      "grantee": "authenticated",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_payment_rules",
+      "grantee": "authenticated",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_payment_rules",
+      "grantee": "authenticated",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_payment_rules",
+      "grantee": "authenticated",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_payment_rules",
+      "grantee": "service_role",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_payment_rules",
+      "grantee": "service_role",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_payment_rules",
+      "grantee": "service_role",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_payment_rules",
+      "grantee": "service_role",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_payment_rules",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_payment_rules",
+      "grantee": "service_role",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_payment_rules",
+      "grantee": "service_role",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_support_tickets",
+      "grantee": "anon",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_support_tickets",
+      "grantee": "anon",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_support_tickets",
+      "grantee": "anon",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_support_tickets",
+      "grantee": "anon",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_support_tickets",
+      "grantee": "anon",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_support_tickets",
+      "grantee": "anon",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_support_tickets",
+      "grantee": "anon",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_support_tickets",
+      "grantee": "authenticated",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_support_tickets",
+      "grantee": "authenticated",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_support_tickets",
+      "grantee": "authenticated",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_support_tickets",
+      "grantee": "authenticated",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_support_tickets",
+      "grantee": "authenticated",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_support_tickets",
+      "grantee": "authenticated",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_support_tickets",
+      "grantee": "authenticated",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_support_tickets",
+      "grantee": "service_role",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_support_tickets",
+      "grantee": "service_role",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_support_tickets",
+      "grantee": "service_role",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_support_tickets",
+      "grantee": "service_role",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_support_tickets",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_support_tickets",
+      "grantee": "service_role",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_support_tickets",
+      "grantee": "service_role",
+      "privilege": "TRIGGER"
+    },
+    {
+      "table": "b2b_invoices",
+      "grantee": "service_role",
+      "privilege": "INSERT"
+    },
+    {
+      "table": "b2b_invoices",
+      "grantee": "service_role",
+      "privilege": "SELECT"
+    },
+    {
+      "table": "b2b_invoices",
+      "grantee": "service_role",
+      "privilege": "UPDATE"
+    },
+    {
+      "table": "b2b_invoices",
+      "grantee": "service_role",
+      "privilege": "DELETE"
+    },
+    {
+      "table": "b2b_invoices",
+      "grantee": "service_role",
+      "privilege": "TRUNCATE"
+    },
+    {
+      "table": "b2b_invoices",
+      "grantee": "service_role",
+      "privilege": "REFERENCES"
+    },
+    {
+      "table": "b2b_invoices",
+      "grantee": "service_role",
+      "privilege": "TRIGGER"
+    }
+  ],
+  "columns": [
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "b2b_applications",
+      "default": "gen_random_uuid()",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "company_name",
+      "type": "text",
+      "table": "b2b_applications",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "bulstat",
+      "type": "text",
+      "table": "b2b_applications",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "vat_number",
+      "type": "text",
+      "table": "b2b_applications",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "mol",
+      "type": "text",
+      "table": "b2b_applications",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "address",
+      "type": "text",
+      "table": "b2b_applications",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "city",
+      "type": "text",
+      "table": "b2b_applications",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "postal_code",
+      "type": "text",
+      "table": "b2b_applications",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "country",
+      "type": "text",
+      "table": "b2b_applications",
+      "default": "'България'::text",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "phone",
+      "type": "text",
+      "table": "b2b_applications",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "email",
+      "type": "text",
+      "table": "b2b_applications",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "website",
+      "type": "text",
+      "table": "b2b_applications",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "contact_first_name",
+      "type": "text",
+      "table": "b2b_applications",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "contact_last_name",
+      "type": "text",
+      "table": "b2b_applications",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "contact_position",
+      "type": "text",
+      "table": "b2b_applications",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "contact_mobile",
+      "type": "text",
+      "table": "b2b_applications",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "contact_email",
+      "type": "text",
+      "table": "b2b_applications",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "business_type",
+      "type": "text",
+      "table": "b2b_applications",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "years_in_business",
+      "type": "integer",
+      "table": "b2b_applications",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "number_of_locations",
+      "type": "integer",
+      "table": "b2b_applications",
+      "default": "1",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "estimated_monthly_value",
+      "type": "text",
+      "table": "b2b_applications",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "estimated_monthly_volume",
+      "type": "text",
+      "table": "b2b_applications",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "existing_brands",
+      "type": "text",
+      "table": "b2b_applications",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "imports_products",
+      "type": "boolean",
+      "table": "b2b_applications",
+      "default": "false",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "requires_pallets",
+      "type": "boolean",
+      "table": "b2b_applications",
+      "default": "false",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "additional_notes",
+      "type": "text",
+      "table": "b2b_applications",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "accept_terms",
+      "type": "boolean",
+      "table": "b2b_applications",
+      "default": "false",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "accept_privacy",
+      "type": "boolean",
+      "table": "b2b_applications",
+      "default": "false",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "confirm_accurate",
+      "type": "boolean",
+      "table": "b2b_applications",
+      "default": "false",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "status",
+      "type": "text",
+      "table": "b2b_applications",
+      "default": "'pending'::text",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "reviewer_id",
+      "type": "uuid",
+      "table": "b2b_applications",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "review_notes",
+      "type": "text",
+      "table": "b2b_applications",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "company_id",
+      "type": "uuid",
+      "table": "b2b_applications",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "b2b_applications",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "table": "b2b_applications",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "reviewed_at",
+      "type": "timestamp with time zone",
+      "table": "b2b_applications",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "b2b_brand_discounts",
+      "default": "gen_random_uuid()",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "company_id",
+      "type": "uuid",
+      "table": "b2b_brand_discounts",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "pricing_tier_id",
+      "type": "uuid",
+      "table": "b2b_brand_discounts",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "brand",
+      "type": "text",
+      "table": "b2b_brand_discounts",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "discount_percent",
+      "type": "numeric",
+      "table": "b2b_brand_discounts",
+      "default": "0",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "b2b_brand_discounts",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "b2b_category_discounts",
+      "default": "gen_random_uuid()",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "company_id",
+      "type": "uuid",
+      "table": "b2b_category_discounts",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "pricing_tier_id",
+      "type": "uuid",
+      "table": "b2b_category_discounts",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "category",
+      "type": "text",
+      "table": "b2b_category_discounts",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "discount_percent",
+      "type": "numeric",
+      "table": "b2b_category_discounts",
+      "default": "0",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "b2b_category_discounts",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "b2b_companies",
+      "default": "gen_random_uuid()",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "company_name",
+      "type": "text",
+      "table": "b2b_companies",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "bulstat",
+      "type": "text",
+      "table": "b2b_companies",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "vat_number",
+      "type": "text",
+      "table": "b2b_companies",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "mol",
+      "type": "text",
+      "table": "b2b_companies",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "address",
+      "type": "text",
+      "table": "b2b_companies",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "city",
+      "type": "text",
+      "table": "b2b_companies",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "postal_code",
+      "type": "text",
+      "table": "b2b_companies",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "country",
+      "type": "text",
+      "table": "b2b_companies",
+      "default": "'България'::text",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "phone",
+      "type": "text",
+      "table": "b2b_companies",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "email",
+      "type": "text",
+      "table": "b2b_companies",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "website",
+      "type": "text",
+      "table": "b2b_companies",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "business_type",
+      "type": "text",
+      "table": "b2b_companies",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "years_in_business",
+      "type": "integer",
+      "table": "b2b_companies",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "number_of_locations",
+      "type": "integer",
+      "table": "b2b_companies",
+      "default": "1",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "estimated_monthly_value",
+      "type": "text",
+      "table": "b2b_companies",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "status",
+      "type": "text",
+      "table": "b2b_companies",
+      "default": "'active'::text",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "pricing_tier_id",
+      "type": "uuid",
+      "table": "b2b_companies",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "global_discount",
+      "type": "numeric",
+      "table": "b2b_companies",
+      "default": "0",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "credit_limit",
+      "type": "numeric",
+      "table": "b2b_companies",
+      "default": "0",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "sales_rep_id",
+      "type": "uuid",
+      "table": "b2b_companies",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "internal_notes",
+      "type": "text",
+      "table": "b2b_companies",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "b2b_companies",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "table": "b2b_companies",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "table": "b2b_companies",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "b2b_company_addresses",
+      "default": "gen_random_uuid()",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "company_id",
+      "type": "uuid",
+      "table": "b2b_company_addresses",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "type",
+      "type": "text",
+      "table": "b2b_company_addresses",
+      "default": "'shipping'::text",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "address",
+      "type": "text",
+      "table": "b2b_company_addresses",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "city",
+      "type": "text",
+      "table": "b2b_company_addresses",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "postal_code",
+      "type": "text",
+      "table": "b2b_company_addresses",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "country",
+      "type": "text",
+      "table": "b2b_company_addresses",
+      "default": "'България'::text",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "is_default",
+      "type": "boolean",
+      "table": "b2b_company_addresses",
+      "default": "false",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "b2b_company_addresses",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "b2b_company_contacts",
+      "default": "gen_random_uuid()",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "company_id",
+      "type": "uuid",
+      "table": "b2b_company_contacts",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "first_name",
+      "type": "text",
+      "table": "b2b_company_contacts",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "last_name",
+      "type": "text",
+      "table": "b2b_company_contacts",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "position",
+      "type": "text",
+      "table": "b2b_company_contacts",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "email",
+      "type": "text",
+      "table": "b2b_company_contacts",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "mobile",
+      "type": "text",
+      "table": "b2b_company_contacts",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "is_primary",
+      "type": "boolean",
+      "table": "b2b_company_contacts",
+      "default": "false",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "b2b_company_contacts",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "b2b_documents",
+      "default": "gen_random_uuid()",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "title",
+      "type": "text",
+      "table": "b2b_documents",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "description",
+      "type": "text",
+      "table": "b2b_documents",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "file_url",
+      "type": "text",
+      "table": "b2b_documents",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "file_type",
+      "type": "text",
+      "table": "b2b_documents",
+      "default": "'pdf'::text",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "category",
+      "type": "text",
+      "table": "b2b_documents",
+      "default": "'catalogue'::text",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "visibility",
+      "type": "text",
+      "table": "b2b_documents",
+      "default": "'all'::text",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "tier_id",
+      "type": "uuid",
+      "table": "b2b_documents",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "company_id",
+      "type": "uuid",
+      "table": "b2b_documents",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "b2b_documents",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "b2b_invoices",
+      "default": "gen_random_uuid()",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "order_id",
+      "type": "uuid",
+      "table": "b2b_invoices",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "invoice_number",
+      "type": "text",
+      "table": "b2b_invoices",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "company_name",
+      "type": "text",
+      "table": "b2b_invoices",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "company_bulstat",
+      "type": "text",
+      "table": "b2b_invoices",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "company_vat",
+      "type": "text",
+      "table": "b2b_invoices",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "company_address",
+      "type": "text",
+      "table": "b2b_invoices",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "company_city",
+      "type": "text",
+      "table": "b2b_invoices",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "company_postal_code",
+      "type": "text",
+      "table": "b2b_invoices",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "company_mol",
+      "type": "text",
+      "table": "b2b_invoices",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "company_email",
+      "type": "text",
+      "table": "b2b_invoices",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "company_phone",
+      "type": "text",
+      "table": "b2b_invoices",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "items",
+      "type": "jsonb",
+      "table": "b2b_invoices",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "original_total",
+      "type": "numeric",
+      "table": "b2b_invoices",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "discount_percent",
+      "type": "numeric",
+      "table": "b2b_invoices",
+      "default": "0",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "discounted_total",
+      "type": "numeric",
+      "table": "b2b_invoices",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "vat_percent",
+      "type": "numeric",
+      "table": "b2b_invoices",
+      "default": "20",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "vat_amount",
+      "type": "numeric",
+      "table": "b2b_invoices",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "total_with_vat",
+      "type": "numeric",
+      "table": "b2b_invoices",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "total_in_words",
+      "type": "text",
+      "table": "b2b_invoices",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "payment_method",
+      "type": "text",
+      "table": "b2b_invoices",
+      "default": "'bank_transfer'::text",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "notes",
+      "type": "text",
+      "table": "b2b_invoices",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "created_by",
+      "type": "uuid",
+      "table": "b2b_invoices",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "b2b_invoices",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "table": "b2b_invoices",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "b2b_notifications",
+      "default": "gen_random_uuid()",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "type",
+      "type": "text",
+      "table": "b2b_notifications",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "title",
+      "type": "text",
+      "table": "b2b_notifications",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "message",
+      "type": "text",
+      "table": "b2b_notifications",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "is_read",
+      "type": "boolean",
+      "table": "b2b_notifications",
+      "default": "false",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "related_id",
+      "type": "uuid",
+      "table": "b2b_notifications",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "b2b_notifications",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "b2b_order_rules",
+      "default": "gen_random_uuid()",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "company_id",
+      "type": "uuid",
+      "table": "b2b_order_rules",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "pricing_tier_id",
+      "type": "uuid",
+      "table": "b2b_order_rules",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "min_order_value",
+      "type": "numeric",
+      "table": "b2b_order_rules",
+      "default": "0",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "min_cart_quantity",
+      "type": "integer",
+      "table": "b2b_order_rules",
+      "default": "1",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "min_product_quantity",
+      "type": "integer",
+      "table": "b2b_order_rules",
+      "default": "1",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "max_order_value",
+      "type": "numeric",
+      "table": "b2b_order_rules",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "b2b_order_rules",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "b2b_payment_rules",
+      "default": "gen_random_uuid()",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "company_id",
+      "type": "uuid",
+      "table": "b2b_payment_rules",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "payment_method",
+      "type": "text",
+      "table": "b2b_payment_rules",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "is_enabled",
+      "type": "boolean",
+      "table": "b2b_payment_rules",
+      "default": "true",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "b2b_payment_rules",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "b2b_pricing_tiers",
+      "default": "gen_random_uuid()",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "table": "b2b_pricing_tiers",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "description",
+      "type": "text",
+      "table": "b2b_pricing_tiers",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "default_discount",
+      "type": "numeric",
+      "table": "b2b_pricing_tiers",
+      "default": "0",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "sort_order",
+      "type": "integer",
+      "table": "b2b_pricing_tiers",
+      "default": "0",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "is_active",
+      "type": "boolean",
+      "table": "b2b_pricing_tiers",
+      "default": "true",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "b2b_pricing_tiers",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "b2b_product_pricing",
+      "default": "gen_random_uuid()",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "company_id",
+      "type": "uuid",
+      "table": "b2b_product_pricing",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "pricing_tier_id",
+      "type": "uuid",
+      "table": "b2b_product_pricing",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "product_id",
+      "type": "integer",
+      "table": "b2b_product_pricing",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "custom_price",
+      "type": "numeric",
+      "table": "b2b_product_pricing",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "discount_percent",
+      "type": "numeric",
+      "table": "b2b_product_pricing",
+      "default": "0",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "is_active",
+      "type": "boolean",
+      "table": "b2b_product_pricing",
+      "default": "true",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "b2b_product_pricing",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "b2b_sales_reps",
+      "default": "gen_random_uuid()",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "table": "b2b_sales_reps",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "email",
+      "type": "text",
+      "table": "b2b_sales_reps",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "phone",
+      "type": "text",
+      "table": "b2b_sales_reps",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "is_active",
+      "type": "boolean",
+      "table": "b2b_sales_reps",
+      "default": "true",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "b2b_sales_reps",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "b2b_support_tickets",
+      "default": "gen_random_uuid()",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "company_id",
+      "type": "uuid",
+      "table": "b2b_support_tickets",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "subject",
+      "type": "text",
+      "table": "b2b_support_tickets",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "message",
+      "type": "text",
+      "table": "b2b_support_tickets",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "status",
+      "type": "text",
+      "table": "b2b_support_tickets",
+      "default": "'open'::text",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "priority",
+      "type": "text",
+      "table": "b2b_support_tickets",
+      "default": "'medium'::text",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "b2b_support_tickets",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "table": "b2b_support_tickets",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "id",
+      "type": "bigint",
+      "table": "blog_posts",
+      "default": "nextval('blog_posts_id_seq'::regclass)",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "title",
+      "type": "text",
+      "table": "blog_posts",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "slug",
+      "type": "text",
+      "table": "blog_posts",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "excerpt",
+      "type": "text",
+      "table": "blog_posts",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "content",
+      "type": "text",
+      "table": "blog_posts",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "cover_image",
+      "type": "text",
+      "table": "blog_posts",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "author",
+      "type": "text",
+      "table": "blog_posts",
+      "default": "'K-FOOD Team'::text",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "category",
+      "type": "text",
+      "table": "blog_posts",
+      "default": "'Общо'::text",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "tags",
+      "type": "text[]",
+      "table": "blog_posts",
+      "default": "'{}'::text[]",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "published",
+      "type": "boolean",
+      "table": "blog_posts",
+      "default": "false",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "views",
+      "type": "integer",
+      "table": "blog_posts",
+      "default": "0",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "read_time",
+      "type": "integer",
+      "table": "blog_posts",
+      "default": "5",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "blog_posts",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "table": "blog_posts",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "game_sessions",
+      "default": "gen_random_uuid()",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "session_id",
+      "type": "text",
+      "table": "game_sessions",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "ip_address",
+      "type": "text",
+      "table": "game_sessions",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "score",
+      "type": "integer",
+      "table": "game_sessions",
+      "default": "0",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "level",
+      "type": "integer",
+      "table": "game_sessions",
+      "default": "1",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "discount_percent",
+      "type": "integer",
+      "table": "game_sessions",
+      "default": "0",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "promo_code",
+      "type": "text",
+      "table": "game_sessions",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "code_used",
+      "type": "boolean",
+      "table": "game_sessions",
+      "default": "false",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "code_expires_at",
+      "type": "timestamp with time zone",
+      "table": "game_sessions",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "game_sessions",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "player_name",
+      "type": "text",
+      "table": "game_sessions",
+      "default": "'Анонимен'::text",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "game_settings",
+      "default": "gen_random_uuid()",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "is_active",
+      "type": "boolean",
+      "table": "game_settings",
+      "default": "true",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "max_discount",
+      "type": "integer",
+      "table": "game_settings",
+      "default": "10",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "score_5_percent",
+      "type": "integer",
+      "table": "game_settings",
+      "default": "50",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "score_10_percent",
+      "type": "integer",
+      "table": "game_settings",
+      "default": "150",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "score_50_percent",
+      "type": "integer",
+      "table": "game_settings",
+      "default": "300",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "jackpot_enabled",
+      "type": "boolean",
+      "table": "game_settings",
+      "default": "false",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "jackpot_probability",
+      "type": "numeric",
+      "table": "game_settings",
+      "default": "0.01",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "games_per_hour",
+      "type": "integer",
+      "table": "game_settings",
+      "default": "3",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "code_expiry_minutes",
+      "type": "integer",
+      "table": "game_settings",
+      "default": "30",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "table": "game_settings",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "orders",
+      "default": "gen_random_uuid()",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "stripe_session_id",
+      "type": "text",
+      "table": "orders",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "customer_email",
+      "type": "text",
+      "table": "orders",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "customer_phone",
+      "type": "text",
+      "table": "orders",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "total_amount",
+      "type": "numeric(10,2)",
+      "table": "orders",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "currency",
+      "type": "text",
+      "table": "orders",
+      "default": "'BGN'::text",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "status",
+      "type": "text",
+      "table": "orders",
+      "default": "'pending'::text",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "items",
+      "type": "jsonb",
+      "table": "orders",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "shipping_address",
+      "type": "jsonb",
+      "table": "orders",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "billing_address",
+      "type": "jsonb",
+      "table": "orders",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "orders",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "table": "orders",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "order_number",
+      "type": "text",
+      "table": "orders",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "tracking_notes",
+      "type": "text",
+      "table": "orders",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "estimated_delivery",
+      "type": "date",
+      "table": "orders",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "payment_method",
+      "type": "text",
+      "table": "orders",
+      "default": "'stripe'::text",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "b2b_company_id",
+      "type": "uuid",
+      "table": "orders",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "is_b2b_order",
+      "type": "boolean",
+      "table": "orders",
+      "default": "false",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "payment_terms",
+      "type": "text",
+      "table": "orders",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "admin_discount_percent",
+      "type": "numeric",
+      "table": "orders",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "discount_notes",
+      "type": "text",
+      "table": "orders",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "approved_by",
+      "type": "uuid",
+      "table": "orders",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "approved_at",
+      "type": "timestamp with time zone",
+      "table": "orders",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "original_total_amount",
+      "type": "numeric",
+      "table": "orders",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "id",
+      "type": "integer",
+      "table": "products",
+      "default": "nextval('products_id_seq'::regclass)",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "table": "products",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "description",
+      "type": "text",
+      "table": "products",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "price",
+      "type": "numeric(10,2)",
+      "table": "products",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "image",
+      "type": "text",
+      "table": "products",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "category",
+      "type": "text",
+      "table": "products",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "badge",
+      "type": "text",
+      "table": "products",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "rating",
+      "type": "numeric(2,1)",
+      "table": "products",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "reviews",
+      "type": "integer",
+      "table": "products",
+      "default": "0",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "in_stock",
+      "type": "boolean",
+      "table": "products",
+      "default": "true",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "stock",
+      "type": "integer",
+      "table": "products",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "weight",
+      "type": "text",
+      "table": "products",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "volume",
+      "type": "text",
+      "table": "products",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "products",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "updated_at",
+      "type": "timestamp with time zone",
+      "table": "products",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "price_euro",
+      "type": "numeric",
+      "table": "products",
+      "default": "0",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "sku",
+      "type": "text",
+      "table": "products",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "wholesale_price",
+      "type": "numeric",
+      "table": "products",
+      "default": "0",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "moq",
+      "type": "integer",
+      "table": "products",
+      "default": "1",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "moq_unit",
+      "type": "text",
+      "table": "products",
+      "default": "'бр.'::text",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "pieces_per_carton",
+      "type": "integer",
+      "table": "products",
+      "default": "0",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "carton_price",
+      "type": "numeric",
+      "table": "products",
+      "default": "0",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "slug",
+      "type": "text",
+      "table": "products",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "visibility",
+      "type": "text",
+      "table": "products",
+      "default": "'retail'::text",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "cost_price",
+      "type": "numeric",
+      "table": "products",
+      "default": "0",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "id",
+      "type": "uuid",
+      "table": "reviews",
+      "default": "gen_random_uuid()",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "name",
+      "type": "text",
+      "table": "reviews",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "rating",
+      "type": "integer",
+      "table": "reviews",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "text",
+      "type": "text",
+      "table": "reviews",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "product_name",
+      "type": "text",
+      "table": "reviews",
+      "default": null,
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "is_approved",
+      "type": "boolean",
+      "table": "reviews",
+      "default": "false",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "reviews",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    },
+    {
+      "name": "user_id",
+      "type": "uuid",
+      "table": "user_roles",
+      "default": null,
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "role",
+      "type": "text",
+      "table": "user_roles",
+      "default": "'user'::text",
+      "identity": "",
+      "not_null": true
+    },
+    {
+      "name": "created_at",
+      "type": "timestamp with time zone",
+      "table": "user_roles",
+      "default": "now()",
+      "identity": "",
+      "not_null": false
+    }
+  ],
+  "indexes": [
+    {
+      "name": "orders_order_number_key",
+      "table": "orders",
+      "definition": "CREATE UNIQUE INDEX orders_order_number_key ON public.orders USING btree (order_number)"
+    },
+    {
+      "name": "orders_pkey",
+      "table": "orders",
+      "definition": "CREATE UNIQUE INDEX orders_pkey ON public.orders USING btree (id)"
+    },
+    {
+      "name": "orders_stripe_session_id_key",
+      "table": "orders",
+      "definition": "CREATE UNIQUE INDEX orders_stripe_session_id_key ON public.orders USING btree (stripe_session_id)"
+    },
+    {
+      "name": "b2b_companies_pkey",
+      "table": "b2b_companies",
+      "definition": "CREATE UNIQUE INDEX b2b_companies_pkey ON public.b2b_companies USING btree (id)"
+    },
+    {
+      "name": "products_pkey",
+      "table": "products",
+      "definition": "CREATE UNIQUE INDEX products_pkey ON public.products USING btree (id)"
+    },
+    {
+      "name": "products_slug_key",
+      "table": "products",
+      "definition": "CREATE UNIQUE INDEX products_slug_key ON public.products USING btree (slug)"
+    },
+    {
+      "name": "b2b_company_contacts_pkey",
+      "table": "b2b_company_contacts",
+      "definition": "CREATE UNIQUE INDEX b2b_company_contacts_pkey ON public.b2b_company_contacts USING btree (id)"
+    },
+    {
+      "name": "reviews_pkey",
+      "table": "reviews",
+      "definition": "CREATE UNIQUE INDEX reviews_pkey ON public.reviews USING btree (id)"
+    },
+    {
+      "name": "game_settings_pkey",
+      "table": "game_settings",
+      "definition": "CREATE UNIQUE INDEX game_settings_pkey ON public.game_settings USING btree (id)"
+    },
+    {
+      "name": "b2b_pricing_tiers_pkey",
+      "table": "b2b_pricing_tiers",
+      "definition": "CREATE UNIQUE INDEX b2b_pricing_tiers_pkey ON public.b2b_pricing_tiers USING btree (id)"
+    },
+    {
+      "name": "b2b_applications_pkey",
+      "table": "b2b_applications",
+      "definition": "CREATE UNIQUE INDEX b2b_applications_pkey ON public.b2b_applications USING btree (id)"
+    },
+    {
+      "name": "b2b_company_addresses_pkey",
+      "table": "b2b_company_addresses",
+      "definition": "CREATE UNIQUE INDEX b2b_company_addresses_pkey ON public.b2b_company_addresses USING btree (id)"
+    },
+    {
+      "name": "blog_posts_pkey",
+      "table": "blog_posts",
+      "definition": "CREATE UNIQUE INDEX blog_posts_pkey ON public.blog_posts USING btree (id)"
+    },
+    {
+      "name": "blog_posts_slug_key",
+      "table": "blog_posts",
+      "definition": "CREATE UNIQUE INDEX blog_posts_slug_key ON public.blog_posts USING btree (slug)"
+    },
+    {
+      "name": "game_sessions_pkey",
+      "table": "game_sessions",
+      "definition": "CREATE UNIQUE INDEX game_sessions_pkey ON public.game_sessions USING btree (id)"
+    },
+    {
+      "name": "idx_game_sessions_score",
+      "table": "game_sessions",
+      "definition": "CREATE INDEX idx_game_sessions_score ON public.game_sessions USING btree (score DESC)"
+    },
+    {
+      "name": "b2b_sales_reps_pkey",
+      "table": "b2b_sales_reps",
+      "definition": "CREATE UNIQUE INDEX b2b_sales_reps_pkey ON public.b2b_sales_reps USING btree (id)"
+    },
+    {
+      "name": "user_roles_pkey",
+      "table": "user_roles",
+      "definition": "CREATE UNIQUE INDEX user_roles_pkey ON public.user_roles USING btree (user_id)"
+    },
+    {
+      "name": "b2b_notifications_pkey",
+      "table": "b2b_notifications",
+      "definition": "CREATE UNIQUE INDEX b2b_notifications_pkey ON public.b2b_notifications USING btree (id)"
+    },
+    {
+      "name": "b2b_documents_pkey",
+      "table": "b2b_documents",
+      "definition": "CREATE UNIQUE INDEX b2b_documents_pkey ON public.b2b_documents USING btree (id)"
+    },
+    {
+      "name": "b2b_product_pricing_pkey",
+      "table": "b2b_product_pricing",
+      "definition": "CREATE UNIQUE INDEX b2b_product_pricing_pkey ON public.b2b_product_pricing USING btree (id)"
+    },
+    {
+      "name": "b2b_product_pricing_company_id_pricing_tier_id_product_id_key",
+      "table": "b2b_product_pricing",
+      "definition": "CREATE UNIQUE INDEX b2b_product_pricing_company_id_pricing_tier_id_product_id_key ON public.b2b_product_pricing USING btree (company_id, pricing_tier_id, product_id)"
+    },
+    {
+      "name": "b2b_category_discounts_pkey",
+      "table": "b2b_category_discounts",
+      "definition": "CREATE UNIQUE INDEX b2b_category_discounts_pkey ON public.b2b_category_discounts USING btree (id)"
+    },
+    {
+      "name": "b2b_brand_discounts_pkey",
+      "table": "b2b_brand_discounts",
+      "definition": "CREATE UNIQUE INDEX b2b_brand_discounts_pkey ON public.b2b_brand_discounts USING btree (id)"
+    },
+    {
+      "name": "b2b_order_rules_pkey",
+      "table": "b2b_order_rules",
+      "definition": "CREATE UNIQUE INDEX b2b_order_rules_pkey ON public.b2b_order_rules USING btree (id)"
+    },
+    {
+      "name": "b2b_payment_rules_pkey",
+      "table": "b2b_payment_rules",
+      "definition": "CREATE UNIQUE INDEX b2b_payment_rules_pkey ON public.b2b_payment_rules USING btree (id)"
+    },
+    {
+      "name": "b2b_payment_rules_company_id_payment_method_key",
+      "table": "b2b_payment_rules",
+      "definition": "CREATE UNIQUE INDEX b2b_payment_rules_company_id_payment_method_key ON public.b2b_payment_rules USING btree (company_id, payment_method)"
+    },
+    {
+      "name": "b2b_support_tickets_pkey",
+      "table": "b2b_support_tickets",
+      "definition": "CREATE UNIQUE INDEX b2b_support_tickets_pkey ON public.b2b_support_tickets USING btree (id)"
+    },
+    {
+      "name": "b2b_invoices_pkey",
+      "table": "b2b_invoices",
+      "definition": "CREATE UNIQUE INDEX b2b_invoices_pkey ON public.b2b_invoices USING btree (id)"
+    },
+    {
+      "name": "b2b_invoices_invoice_number_key",
+      "table": "b2b_invoices",
+      "definition": "CREATE UNIQUE INDEX b2b_invoices_invoice_number_key ON public.b2b_invoices USING btree (invoice_number)"
+    },
+    {
+      "name": "idx_b2b_invoices_order_id",
+      "table": "b2b_invoices",
+      "definition": "CREATE INDEX idx_b2b_invoices_order_id ON public.b2b_invoices USING btree (order_id)"
+    },
+    {
+      "name": "idx_b2b_invoices_invoice_number",
+      "table": "b2b_invoices",
+      "definition": "CREATE INDEX idx_b2b_invoices_invoice_number ON public.b2b_invoices USING btree (invoice_number)"
+    }
+  ],
+  "policies": [
+    {
+      "cmd": "INSERT",
+      "qual": null,
+      "roles": [
+        "public"
+      ],
+      "tablename": "orders",
+      "permissive": "PERMISSIVE",
+      "policyname": "Anyone can create orders",
+      "schemaname": "public",
+      "with_check": "true"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "true",
+      "roles": [
+        "public"
+      ],
+      "tablename": "products",
+      "permissive": "PERMISSIVE",
+      "policyname": "Allow public read access",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(published = true)",
+      "roles": [
+        "public"
+      ],
+      "tablename": "blog_posts",
+      "permissive": "PERMISSIVE",
+      "policyname": "Public can read published posts",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(customer_email = (auth.jwt() ->> 'email'::text))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "orders",
+      "permissive": "PERMISSIVE",
+      "policyname": "Users can view own orders",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(is_approved = true)",
+      "roles": [
+        "public"
+      ],
+      "tablename": "reviews",
+      "permissive": "PERMISSIVE",
+      "policyname": "Public read approved reviews",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "INSERT",
+      "qual": null,
+      "roles": [
+        "public"
+      ],
+      "tablename": "reviews",
+      "permissive": "PERMISSIVE",
+      "policyname": "Anyone can insert review",
+      "schemaname": "public",
+      "with_check": "true"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "true",
+      "roles": [
+        "public"
+      ],
+      "tablename": "game_sessions",
+      "permissive": "PERMISSIVE",
+      "policyname": "Allow public read for leaderboard",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "INSERT",
+      "qual": null,
+      "roles": [
+        "public"
+      ],
+      "tablename": "game_sessions",
+      "permissive": "PERMISSIVE",
+      "policyname": "Allow insert via edge function",
+      "schemaname": "public",
+      "with_check": "true"
+    },
+    {
+      "cmd": "INSERT",
+      "qual": null,
+      "roles": [
+        "public"
+      ],
+      "tablename": "products",
+      "permissive": "PERMISSIVE",
+      "policyname": "products_admin_insert",
+      "schemaname": "public",
+      "with_check": "(EXISTS ( SELECT 1\n   FROM user_roles ur\n  WHERE ((ur.user_id = auth.uid()) AND (ur.role = 'admin'::text))))"
+    },
+    {
+      "cmd": "UPDATE",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_roles ur\n  WHERE ((ur.user_id = auth.uid()) AND (ur.role = 'admin'::text))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "products",
+      "permissive": "PERMISSIVE",
+      "policyname": "products_admin_update",
+      "schemaname": "public",
+      "with_check": "(EXISTS ( SELECT 1\n   FROM user_roles ur\n  WHERE ((ur.user_id = auth.uid()) AND (ur.role = 'admin'::text))))"
+    },
+    {
+      "cmd": "DELETE",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_roles ur\n  WHERE ((ur.user_id = auth.uid()) AND (ur.role = 'admin'::text))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "products",
+      "permissive": "PERMISSIVE",
+      "policyname": "products_admin_delete",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_roles ur\n  WHERE ((ur.user_id = auth.uid()) AND (ur.role = 'admin'::text))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "orders",
+      "permissive": "PERMISSIVE",
+      "policyname": "orders_admin_select",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "UPDATE",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_roles ur\n  WHERE ((ur.user_id = auth.uid()) AND (ur.role = 'admin'::text))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "orders",
+      "permissive": "PERMISSIVE",
+      "policyname": "orders_admin_update",
+      "schemaname": "public",
+      "with_check": "(EXISTS ( SELECT 1\n   FROM user_roles ur\n  WHERE ((ur.user_id = auth.uid()) AND (ur.role = 'admin'::text))))"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_roles ur\n  WHERE ((ur.user_id = auth.uid()) AND (ur.role = 'admin'::text))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "game_settings",
+      "permissive": "PERMISSIVE",
+      "policyname": "game_settings_admin_select",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "UPDATE",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_roles ur\n  WHERE ((ur.user_id = auth.uid()) AND (ur.role = 'admin'::text))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "game_settings",
+      "permissive": "PERMISSIVE",
+      "policyname": "game_settings_admin_update",
+      "schemaname": "public",
+      "with_check": "(EXISTS ( SELECT 1\n   FROM user_roles ur\n  WHERE ((ur.user_id = auth.uid()) AND (ur.role = 'admin'::text))))"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "true",
+      "roles": [
+        "public"
+      ],
+      "tablename": "b2b_pricing_tiers",
+      "permissive": "PERMISSIVE",
+      "policyname": "Anyone can read pricing tiers",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "INSERT",
+      "qual": null,
+      "roles": [
+        "public"
+      ],
+      "tablename": "b2b_pricing_tiers",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admin can insert pricing tiers",
+      "schemaname": "public",
+      "with_check": "(EXISTS ( SELECT 1\n   FROM user_roles\n  WHERE ((user_roles.user_id = auth.uid()) AND (user_roles.role = 'admin'::text))))"
+    },
+    {
+      "cmd": "UPDATE",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_roles\n  WHERE ((user_roles.user_id = auth.uid()) AND (user_roles.role = 'admin'::text))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "b2b_pricing_tiers",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admin can update pricing tiers",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "DELETE",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_roles\n  WHERE ((user_roles.user_id = auth.uid()) AND (user_roles.role = 'admin'::text))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "b2b_pricing_tiers",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admin can delete pricing tiers",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "INSERT",
+      "qual": null,
+      "roles": [
+        "public"
+      ],
+      "tablename": "b2b_applications",
+      "permissive": "PERMISSIVE",
+      "policyname": "Anyone can submit application",
+      "schemaname": "public",
+      "with_check": "true"
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_roles\n  WHERE ((user_roles.user_id = auth.uid()) AND (user_roles.role = 'admin'::text))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "b2b_applications",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admin can read applications",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "UPDATE",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_roles\n  WHERE ((user_roles.user_id = auth.uid()) AND (user_roles.role = 'admin'::text))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "b2b_applications",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admin can update applications",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "DELETE",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_roles\n  WHERE ((user_roles.user_id = auth.uid()) AND (user_roles.role = 'admin'::text))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "b2b_applications",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admin can delete applications",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_roles\n  WHERE ((user_roles.user_id = auth.uid()) AND (user_roles.role = 'admin'::text))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "b2b_companies",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admin full access companies",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(status = 'active'::text)",
+      "roles": [
+        "public"
+      ],
+      "tablename": "b2b_companies",
+      "permissive": "PERMISSIVE",
+      "policyname": "Public can read active companies",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_roles\n  WHERE ((user_roles.user_id = auth.uid()) AND (user_roles.role = 'admin'::text))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "b2b_sales_reps",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admin all access sales_reps",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_roles\n  WHERE ((user_roles.user_id = auth.uid()) AND (user_roles.role = 'admin'::text))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "b2b_company_contacts",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admin all access contacts",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_roles\n  WHERE ((user_roles.user_id = auth.uid()) AND (user_roles.role = 'admin'::text))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "b2b_company_addresses",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admin all access addresses",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_roles\n  WHERE ((user_roles.user_id = auth.uid()) AND (user_roles.role = 'admin'::text))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "b2b_documents",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admin all access documents",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_roles\n  WHERE ((user_roles.user_id = auth.uid()) AND (user_roles.role = 'admin'::text))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "b2b_product_pricing",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admin all access product_pricing",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_roles\n  WHERE ((user_roles.user_id = auth.uid()) AND (user_roles.role = 'admin'::text))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "b2b_category_discounts",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admin all access category_discounts",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_roles\n  WHERE ((user_roles.user_id = auth.uid()) AND (user_roles.role = 'admin'::text))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "b2b_brand_discounts",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admin all access brand_discounts",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_roles\n  WHERE ((user_roles.user_id = auth.uid()) AND (user_roles.role = 'admin'::text))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "b2b_order_rules",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admin all access order_rules",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_roles\n  WHERE ((user_roles.user_id = auth.uid()) AND (user_roles.role = 'admin'::text))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "b2b_payment_rules",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admin all access payment_rules",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_roles\n  WHERE ((user_roles.user_id = auth.uid()) AND (user_roles.role = 'admin'::text))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "b2b_support_tickets",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admin all access support_tickets",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "ALL",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_roles\n  WHERE ((user_roles.user_id = auth.uid()) AND (user_roles.role = 'admin'::text))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "b2b_notifications",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admin all access notifications",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(auth.uid() = user_id)",
+      "roles": [
+        "public"
+      ],
+      "tablename": "user_roles",
+      "permissive": "PERMISSIVE",
+      "policyname": "Users can read own role",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "INSERT",
+      "qual": null,
+      "roles": [
+        "public"
+      ],
+      "tablename": "user_roles",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins can insert roles",
+      "schemaname": "public",
+      "with_check": "(EXISTS ( SELECT 1\n   FROM user_roles user_roles_1\n  WHERE ((user_roles_1.user_id = auth.uid()) AND (user_roles_1.role = 'admin'::text))))"
+    },
+    {
+      "cmd": "UPDATE",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_roles user_roles_1\n  WHERE ((user_roles_1.user_id = auth.uid()) AND (user_roles_1.role = 'admin'::text))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "user_roles",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins can update roles",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "DELETE",
+      "qual": "(EXISTS ( SELECT 1\n   FROM user_roles user_roles_1\n  WHERE ((user_roles_1.user_id = auth.uid()) AND (user_roles_1.role = 'admin'::text))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "user_roles",
+      "permissive": "PERMISSIVE",
+      "policyname": "Admins can delete roles",
+      "schemaname": "public",
+      "with_check": null
+    },
+    {
+      "cmd": "SELECT",
+      "qual": "(EXISTS ( SELECT 1\n   FROM b2b_companies bc\n  WHERE ((bc.id = orders.b2b_company_id) AND (bc.user_id = auth.uid()))))",
+      "roles": [
+        "public"
+      ],
+      "tablename": "orders",
+      "permissive": "PERMISSIVE",
+      "policyname": "b2b_users_view_company_orders",
+      "schemaname": "public",
+      "with_check": null
+    }
+  ],
+  "extensions": [
+    "plpgsql",
+    "pg_stat_statements",
+    "uuid-ossp",
+    "pgcrypto",
+    "supabase_vault"
+  ],
+  "constraints": [
+    {
+      "name": "b2b_applications_company_id_fkey",
+      "type": "f",
+      "table": "b2b_applications",
+      "definition": "FOREIGN KEY (company_id) REFERENCES b2b_companies(id) ON DELETE SET NULL"
+    },
+    {
+      "name": "b2b_applications_reviewer_id_fkey",
+      "type": "f",
+      "table": "b2b_applications",
+      "definition": "FOREIGN KEY (reviewer_id) REFERENCES auth.users(id) ON DELETE SET NULL"
+    },
+    {
+      "name": "b2b_applications_pkey",
+      "type": "p",
+      "table": "b2b_applications",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "b2b_brand_discounts_company_id_fkey",
+      "type": "f",
+      "table": "b2b_brand_discounts",
+      "definition": "FOREIGN KEY (company_id) REFERENCES b2b_companies(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "b2b_brand_discounts_pricing_tier_id_fkey",
+      "type": "f",
+      "table": "b2b_brand_discounts",
+      "definition": "FOREIGN KEY (pricing_tier_id) REFERENCES b2b_pricing_tiers(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "b2b_brand_discounts_pkey",
+      "type": "p",
+      "table": "b2b_brand_discounts",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "b2b_category_discounts_company_id_fkey",
+      "type": "f",
+      "table": "b2b_category_discounts",
+      "definition": "FOREIGN KEY (company_id) REFERENCES b2b_companies(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "b2b_category_discounts_pricing_tier_id_fkey",
+      "type": "f",
+      "table": "b2b_category_discounts",
+      "definition": "FOREIGN KEY (pricing_tier_id) REFERENCES b2b_pricing_tiers(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "b2b_category_discounts_pkey",
+      "type": "p",
+      "table": "b2b_category_discounts",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "b2b_companies_pricing_tier_id_fkey",
+      "type": "f",
+      "table": "b2b_companies",
+      "definition": "FOREIGN KEY (pricing_tier_id) REFERENCES b2b_pricing_tiers(id) ON DELETE SET NULL"
+    },
+    {
+      "name": "b2b_companies_sales_rep_id_fkey",
+      "type": "f",
+      "table": "b2b_companies",
+      "definition": "FOREIGN KEY (sales_rep_id) REFERENCES b2b_sales_reps(id) ON DELETE SET NULL"
+    },
+    {
+      "name": "b2b_companies_user_id_fkey",
+      "type": "f",
+      "table": "b2b_companies",
+      "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE SET NULL"
+    },
+    {
+      "name": "b2b_companies_pkey",
+      "type": "p",
+      "table": "b2b_companies",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "b2b_company_addresses_company_id_fkey",
+      "type": "f",
+      "table": "b2b_company_addresses",
+      "definition": "FOREIGN KEY (company_id) REFERENCES b2b_companies(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "b2b_company_addresses_pkey",
+      "type": "p",
+      "table": "b2b_company_addresses",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "b2b_company_contacts_company_id_fkey",
+      "type": "f",
+      "table": "b2b_company_contacts",
+      "definition": "FOREIGN KEY (company_id) REFERENCES b2b_companies(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "b2b_company_contacts_pkey",
+      "type": "p",
+      "table": "b2b_company_contacts",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "b2b_documents_company_id_fkey",
+      "type": "f",
+      "table": "b2b_documents",
+      "definition": "FOREIGN KEY (company_id) REFERENCES b2b_companies(id) ON DELETE SET NULL"
+    },
+    {
+      "name": "b2b_documents_tier_id_fkey",
+      "type": "f",
+      "table": "b2b_documents",
+      "definition": "FOREIGN KEY (tier_id) REFERENCES b2b_pricing_tiers(id) ON DELETE SET NULL"
+    },
+    {
+      "name": "b2b_documents_pkey",
+      "type": "p",
+      "table": "b2b_documents",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "b2b_invoices_order_id_fkey",
+      "type": "f",
+      "table": "b2b_invoices",
+      "definition": "FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "b2b_invoices_pkey",
+      "type": "p",
+      "table": "b2b_invoices",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "b2b_invoices_invoice_number_key",
+      "type": "u",
+      "table": "b2b_invoices",
+      "definition": "UNIQUE (invoice_number)"
+    },
+    {
+      "name": "b2b_notifications_pkey",
+      "type": "p",
+      "table": "b2b_notifications",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "b2b_order_rules_company_id_fkey",
+      "type": "f",
+      "table": "b2b_order_rules",
+      "definition": "FOREIGN KEY (company_id) REFERENCES b2b_companies(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "b2b_order_rules_pricing_tier_id_fkey",
+      "type": "f",
+      "table": "b2b_order_rules",
+      "definition": "FOREIGN KEY (pricing_tier_id) REFERENCES b2b_pricing_tiers(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "b2b_order_rules_pkey",
+      "type": "p",
+      "table": "b2b_order_rules",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "b2b_payment_rules_company_id_fkey",
+      "type": "f",
+      "table": "b2b_payment_rules",
+      "definition": "FOREIGN KEY (company_id) REFERENCES b2b_companies(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "b2b_payment_rules_pkey",
+      "type": "p",
+      "table": "b2b_payment_rules",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "b2b_payment_rules_company_id_payment_method_key",
+      "type": "u",
+      "table": "b2b_payment_rules",
+      "definition": "UNIQUE (company_id, payment_method)"
+    },
+    {
+      "name": "b2b_pricing_tiers_pkey",
+      "type": "p",
+      "table": "b2b_pricing_tiers",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "b2b_product_pricing_company_id_fkey",
+      "type": "f",
+      "table": "b2b_product_pricing",
+      "definition": "FOREIGN KEY (company_id) REFERENCES b2b_companies(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "b2b_product_pricing_pricing_tier_id_fkey",
+      "type": "f",
+      "table": "b2b_product_pricing",
+      "definition": "FOREIGN KEY (pricing_tier_id) REFERENCES b2b_pricing_tiers(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "b2b_product_pricing_product_id_fkey",
+      "type": "f",
+      "table": "b2b_product_pricing",
+      "definition": "FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "b2b_product_pricing_pkey",
+      "type": "p",
+      "table": "b2b_product_pricing",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "b2b_product_pricing_company_id_pricing_tier_id_product_id_key",
+      "type": "u",
+      "table": "b2b_product_pricing",
+      "definition": "UNIQUE (company_id, pricing_tier_id, product_id)"
+    },
+    {
+      "name": "b2b_sales_reps_pkey",
+      "type": "p",
+      "table": "b2b_sales_reps",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "b2b_support_tickets_company_id_fkey",
+      "type": "f",
+      "table": "b2b_support_tickets",
+      "definition": "FOREIGN KEY (company_id) REFERENCES b2b_companies(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "b2b_support_tickets_pkey",
+      "type": "p",
+      "table": "b2b_support_tickets",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "blog_posts_pkey",
+      "type": "p",
+      "table": "blog_posts",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "blog_posts_slug_key",
+      "type": "u",
+      "table": "blog_posts",
+      "definition": "UNIQUE (slug)"
+    },
+    {
+      "name": "game_sessions_pkey",
+      "type": "p",
+      "table": "game_sessions",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "game_settings_pkey",
+      "type": "p",
+      "table": "game_settings",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "orders_b2b_company_id_fkey",
+      "type": "f",
+      "table": "orders",
+      "definition": "FOREIGN KEY (b2b_company_id) REFERENCES b2b_companies(id) ON DELETE SET NULL"
+    },
+    {
+      "name": "orders_pkey",
+      "type": "p",
+      "table": "orders",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "orders_order_number_key",
+      "type": "u",
+      "table": "orders",
+      "definition": "UNIQUE (order_number)"
+    },
+    {
+      "name": "orders_stripe_session_id_key",
+      "type": "u",
+      "table": "orders",
+      "definition": "UNIQUE (stripe_session_id)"
+    },
+    {
+      "name": "products_pkey",
+      "type": "p",
+      "table": "products",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "products_slug_key",
+      "type": "u",
+      "table": "products",
+      "definition": "UNIQUE (slug)"
+    },
+    {
+      "name": "reviews_rating_check",
+      "type": "c",
+      "table": "reviews",
+      "definition": "CHECK (((rating >= 1) AND (rating <= 5)))"
+    },
+    {
+      "name": "reviews_text_check",
+      "type": "c",
+      "table": "reviews",
+      "definition": "CHECK ((char_length(text) <= 1000))"
+    },
+    {
+      "name": "reviews_pkey",
+      "type": "p",
+      "table": "reviews",
+      "definition": "PRIMARY KEY (id)"
+    },
+    {
+      "name": "user_roles_user_id_fkey",
+      "type": "f",
+      "table": "user_roles",
+      "definition": "FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE"
+    },
+    {
+      "name": "user_roles_pkey",
+      "type": "p",
+      "table": "user_roles",
+      "definition": "PRIMARY KEY (user_id)"
+    }
+  ],
+  "sequence_grants": [
+    {
+      "name": "products_id_seq",
+      "role": "authenticated",
+      "usage": true,
+      "select": true,
+      "update": true
+    },
+    {
+      "name": "blog_posts_id_seq",
+      "role": "authenticated",
+      "usage": true,
+      "select": true,
+      "update": true
+    },
+    {
+      "name": "products_id_seq",
+      "role": "anon",
+      "usage": true,
+      "select": true,
+      "update": true
+    },
+    {
+      "name": "blog_posts_id_seq",
+      "role": "anon",
+      "usage": true,
+      "select": true,
+      "update": true
+    },
+    {
+      "name": "products_id_seq",
+      "role": "service_role",
+      "usage": true,
+      "select": true,
+      "update": true
+    },
+    {
+      "name": "blog_posts_id_seq",
+      "role": "service_role",
+      "usage": true,
+      "select": true,
+      "update": true
+    }
+  ],
+  "triggers": [],
+  "captured_at": "2026-10-08T16:28:00Z",
+  "source_project": "quqlovoiwgqfmgjumpgd",
+  "description": "Public-schema metadata only; no production rows, user identifiers, credentials, or secrets. Auth functions/users are stubbed locally by the audit harness. This is not a deployable baseline."
+}

@@ -30,7 +30,7 @@ export default function AdminPage() {
     }
   }, [isAdmin]);
 
-  const fetchProducts = () => load(async () => checkedData(await supabase.from('products').select('*').order('created_at', { ascending: false })) as Product[], setProducts);
+  const fetchProducts = () => load(async () => checkedData(await supabase.rpc('admin_products')) as Product[], setProducts);
 
   const handleDeleteProduct = async (id: string | number) => {
     if (action.pending || !confirm('Сигурни ли сте, че искате да изтриете този продукт?')) return;

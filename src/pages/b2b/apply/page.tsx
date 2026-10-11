@@ -11,6 +11,7 @@ export default function B2BApplyPage() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
   const topRef = useRef<HTMLDivElement>(null);
+  const submitLock = useRef(false);
 
   const [formData, setFormData] = useState({
     company_name: '',
@@ -78,18 +79,21 @@ export default function B2BApplyPage() {
   };
 
   const handleSubmit = async () => {
+    if (submitLock.current) return;
     setError('');
     if (!formData.accept_terms || !formData.accept_privacy || !formData.confirm_accurate) {
       setError('Моля, приемете всички условия и потвърдете точността на информацията.');
       return;
     }
 
+    submitLock.current = true;
     setSubmitting(true);
+    const signal = AbortSignal.timeout(20_000);
     try {
-      // Check how many applications exist for this email (uses RPC to bypass RLS)
+      // The database enforces the limit atomically; this is only early feedback.
       const userEmail = formData.contact_email || formData.email;
       const { data: appCount, error: countError } = await supabase
-        .rpc('check_b2b_application_limit', { user_email: userEmail });
+        .rpc('check_b2b_application_limit', { user_email: userEmail }).abortSignal(signal);
 
       if (countError) {
         setError('Грешка при проверка на заявките. Моля, опитайте отново.');
@@ -135,12 +139,13 @@ export default function B2BApplyPage() {
         status: 'pending',
       };
 
-      const { error: insertError } = await supabase.from('b2b_applications').insert(payload);
+      const { error: insertError } = await supabase.from('b2b_applications').insert(payload).abortSignal(signal);
       if (insertError) throw insertError;
       setSubmitted(true);
     } catch (err: any) {
       setError(err.message || 'Грешка при изпращане. Моля, опитайте отново.');
     } finally {
+      submitLock.current = false;
       setSubmitting(false);
     }
   };

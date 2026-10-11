@@ -27,3 +27,16 @@ verify_jwt = false
 [functions.generate-b2b-invoice]
 # Retired endpoint keeps its existing JWT gateway setting and performs no database operations.
 verify_jwt = true
+
+[functions.approve-b2b]
+# Confirmed Auth user and administrator role are verified inside the handlers.
+verify_jwt = false
+
+[functions.review-b2b-order]
+verify_jwt = false
+
+[functions.send-cod-order-notification]
+verify_jwt = false
+
+[functions.create-cod-order]
+verify_jwt = false
