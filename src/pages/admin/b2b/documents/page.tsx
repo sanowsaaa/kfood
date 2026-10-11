@@ -8,12 +8,14 @@ import { supabase } from '@/utils/supabase';
 import { Navigate } from 'react-router-dom';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import AdminAccess from '@/pages/admin/components/AdminAccess';
+import { DOCUMENT_BUCKET, downloadB2BDocument } from '@/utils/b2bDocuments';
 
 interface Document {
   id: string;
   title: string;
   description: string;
   file_url: string;
+  storage_path?: string | null;
   file_type: string;
   category: string;
   visibility: string;
@@ -57,13 +59,34 @@ export default function AdminB2BDocumentsPage() {
     const file = fileInputRef.current?.files?.[0];
     if (!file || !form.title) return;
     return action.run('upload', async () => {
-      const ext = file.name.split('.').pop() || 'pdf';
-      const filePath = `b2b-documents/${Date.now()}-${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-      const { error: uploadErr } = await supabase.storage.from('public').upload(filePath, file);
+      const ext = file.name.split('.').pop()?.toLowerCase() || '';
+      if (!['pdf', 'xlsx', 'xls', 'docx', 'doc', 'jpg', 'jpeg', 'png', 'webp'].includes(ext) || file.size > 10 * 1024 * 1024) {
+        throw new Error('Изберете поддържан документ до 10 MB.');
+      }
+      if ((form.visibility === 'company' && !form.company_id) || (form.visibility === 'tier' && !form.tier_id)) {
+        throw new Error('Изберете компания или ценово ниво за документа.');
+      }
+      const bucket = await supabase.storage.getBucket(DOCUMENT_BUCKET);
+      if (bucket.error) {
+        if (!/not found/i.test(bucket.error.message)) throw bucket.error;
+        const created = await supabase.storage.createBucket(DOCUMENT_BUCKET, {
+          public: false, fileSizeLimit: 10 * 1024 * 1024,
+          allowedMimeTypes: ['application/pdf', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'application/msword', 'image/jpeg', 'image/png', 'image/webp'],
+        });
+        if (created.error) {
+          const existing = await supabase.storage.getBucket(DOCUMENT_BUCKET);
+          if (existing.error || existing.data?.public !== false) throw created.error;
+        }
+      } else if (bucket.data?.public !== false) {
+        throw new Error('Хранилището за B2B документи трябва да е частно.');
+      }
+      const filePath = `${crypto.randomUUID()}/${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+      const { error: uploadErr } = await supabase.storage.from(DOCUMENT_BUCKET).upload(filePath, file);
       if (uploadErr) throw uploadErr;
-      const { data: urlData } = supabase.storage.from('public').getPublicUrl(filePath);
       const metadata = await supabase.from('b2b_documents').insert({
-        title: form.title, description: form.description, file_url: urlData.publicUrl,
+        title: form.title, description: form.description, file_url: '', storage_path: filePath,
         file_type: ext.toLowerCase(), category: form.category, visibility: form.visibility,
         tier_id: form.visibility === 'tier' ? form.tier_id : null,
         company_id: form.visibility === 'company' ? form.company_id : null,
@@ -200,10 +223,10 @@ export default function AdminB2BDocumentsPage() {
                     <td className="px-4 py-3 text-xs text-gray-400">{new Date(doc.created_at).toLocaleDateString('bg-BG')}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-1">
-                        <a href={doc.file_url} target="_blank" rel="noopener noreferrer"
+                        <button type="button" onClick={() => action.run(`download:${doc.id}`, () => downloadB2BDocument(doc))}
                           className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg cursor-pointer" title="Изтегли">
                           <i aria-hidden="true" className="ri-download-line"></i>
-                        </a>
+                        </button>
                         <button onClick={() => handleDelete(doc.id)}
                           className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg cursor-pointer" title="Изтрий">
                           <i aria-hidden="true" className="ri-delete-bin-line"></i>

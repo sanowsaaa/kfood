@@ -1,7 +1,7 @@
 export interface StoreProduct {
   id: number; name: string; description: string; price: number; image: string; category: string;
   badge?: string; rating: number; reviews: number; in_stock: boolean; stock: number;
-  slug?: string; weight?: string; volume?: string;
+  slug?: string; weight?: string; volume?: string; visibility?: string;
 }
 
 export interface StoredCartItem {
@@ -42,8 +42,8 @@ export function subtotalMinor(items: { price: number; quantity: number }[]): num
 export function discountedMinor(subtotal: number, percent: number): number {
   return Math.round(subtotal * (100 - percent) / 100);
 }
-export function productAvailable(product: { in_stock?: boolean; stock?: number }): boolean {
-  return product.in_stock === true && (product.stock == null || product.stock > 0);
+export function productAvailable(product: { in_stock?: boolean; stock?: number; visibility?: string }): boolean {
+  return product.visibility !== 'wholesale' && product.in_stock === true && (product.stock == null || product.stock > 0);
 }
 export function validateCartForCheckout(items: StoredCartItem[]): void {
   if (items.length === 0) throw new Error('Количката е празна.');

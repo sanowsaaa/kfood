@@ -1,10 +1,13 @@
 import type Stripe from "stripe";
+import { deliverNotifications } from '../_shared/notifications.ts';
 import {
   applySession,
   bodyJson,
   checkRequest,
   type Dependencies,
-  dependencies,
+  workerDependencies,
+  type WorkerDependencies,
+  type DatabaseDependencies,
   failure,
   HttpError,
   json,
@@ -37,7 +40,7 @@ function html(value: unknown): string {
       "'": "&#39;",
     })[c]!);
 }
-async function authorize(req: Request, deps: Dependencies): Promise<"worker" | "admin"> {
+async function authorize(req: Request, deps: DatabaseDependencies): Promise<"worker" | "admin"> {
   const supplied = req.headers.get("x-checkout-worker-secret");
   if (supplied && await sha256(supplied) === await sha256(deps.config.workerSecret)) {
     return "worker";
@@ -142,11 +145,11 @@ async function reconcile(
   return (await applySession(deps, session, eventId, type)).decision;
 }
 
-async function sendEmails(deps: Dependencies) {
-  const key = Deno.env.get("RESEND_API");
-  const domain = Deno.env.get("RESEND_FROM_DOMAIN");
-  const recipient = Deno.env.get("ORDER_NOTIFICATION_EMAIL");
-  if (!key || !domain || !recipient) throw new Error("Order email configuration missing");
+async function sendEmails(deps: DatabaseDependencies) {
+  const key = Deno.env.get("RESEND_API") || Deno.env.get("RESEND_API_KEY");
+  const domain = Deno.env.get("RESEND_FROM_DOMAIN") || "k-foodvelikotarnovo.com";
+  const recipient = Deno.env.get("ORDER_NOTIFICATION_EMAIL") || "kfoodstore.bg@gmail.com";
+  if (!key) return 0;
   const { data, error } = await deps.db.rpc("checkout_claim_emails", { p_limit: 5 });
   if (error) throw new Error("Email claim failed");
   let sent = 0;
@@ -193,7 +196,7 @@ async function sendEmails(deps: Dependencies) {
   return sent;
 }
 
-export async function handleReconcile(req: Request, deps: Dependencies): Promise<Response> {
+export async function handleReconcile(req: Request, deps: WorkerDependencies): Promise<Response> {
   try {
     const early = checkRequest(req, deps.config);
     if (early) return early;
@@ -205,11 +208,12 @@ export async function handleReconcile(req: Request, deps: Dependencies): Promise
       throw new HttpError(400, "Invalid order ID");
     }
     if (role === "admin" && !body.orderId) throw new HttpError(400, "Select one order");
+    if (role === "admin" && !deps.stripe) throw new HttpError(503, "Плащанията още не са конфигурирани.");
     let query = deps.db.from("checkout_payments").select("*").eq("livemode", deps.config.live);
     if (body.orderId) query = query.eq("order_id", body.orderId);
     else {query = query.in("state", ["pending", "awaiting_payment"])
         .order("last_reconciled_at", { nullsFirst: true }).order("created_at").limit(10);}
-    const { data, error } = await query;
+    const { data, error } = deps.stripe ? await query : { data: [], error: null };
     if (error) throw new Error("Reconciliation query failed");
     if (body.orderId && !data?.length) {
       throw new HttpError(
@@ -223,7 +227,7 @@ export async function handleReconcile(req: Request, deps: Dependencies): Promise
     for (const payment of (data || []) as (Payment & { created_at: string })[]) {
       if (Date.now() > deadline - 20_000) break;
       try {
-        const decision = await reconcile(deps, payment, deadline);
+        const decision = await reconcile(deps as Dependencies, payment, deadline);
         checked++;
         if (decision === "review") reviews++;
       } catch {
@@ -235,12 +239,17 @@ export async function handleReconcile(req: Request, deps: Dependencies): Promise
       if (touchError) throw new Error("Reconciliation cursor update failed");
     }
     const emailsSent = role === "worker" ? await sendEmails(deps) : 0;
+    const notificationsSent = role === 'worker' ? await deliverNotifications({
+      db: deps.db, mail: fetch,
+      resendKey: Deno.env.get('RESEND_API') || Deno.env.get('RESEND_API_KEY') || '',
+      resendDomain: Deno.env.get('RESEND_FROM_DOMAIN') || '',
+    }) : 0;
     if (role === "worker") {
       const { error: cleanupError } = await deps.db.from("checkout_rate_limits").delete()
         .lt("expires_at", new Date(Date.now() - 86_400_000).toISOString());
       if (cleanupError) throw new Error("Rate limit cleanup failed");
     }
-    return json({ checked, reviews, emailsSent }, 200, req, deps.config);
+    return json({ checked, reviews, emailsSent, notificationsSent, paymentsConfigured: !!deps.stripe }, 200, req, deps.config);
   } catch (error) {
     return failure(error, req, deps.config);
   }
@@ -248,7 +257,7 @@ export async function handleReconcile(req: Request, deps: Dependencies): Promise
 export default {
   fetch: async (req: Request) => {
     try {
-      return await handleReconcile(req, dependencies());
+      return await handleReconcile(req, await workerDependencies());
     } catch (error) {
       return failure(error);
     }

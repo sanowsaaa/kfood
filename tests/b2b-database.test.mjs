@@ -26,9 +26,9 @@ before(async () => {
   await db.exec(await readFile(new URL('tests/fixtures/b2b-schema.sql',root),'utf8'));
   const unaffected = async () => (await db.query("select tablename,policyname,cmd,qual,with_check from pg_policies where schemaname='public' and tablename in ('orders','b2b_companies') order by tablename,policyname")).rows;
   invoiceScopeBefore=await unaffected();
-  await db.exec(await readFile(new URL('supabase/migrations/20261008045000_retire_web_invoices.sql',root),'utf8'));
+  await db.exec(await readFile(new URL('supabase/migrations/20261008045147_retire_web_invoices.sql',root),'utf8'));
   invoiceScopeAfter=await unaffected();
-  await db.exec(await readFile(new URL('supabase/migrations/20261008050000_b2b_access_and_requests.sql',root),'utf8'));
+  await db.exec(await readFile(new URL('supabase/migrations/20261011164713_b2b_access_and_requests.sql',root),'utf8'));
 });
 after(async () => { await db?.close(); });
 async function reset() {
@@ -97,7 +97,7 @@ test('another partner, inactive company and invalid products do not create order
   await db.query("update public.b2b_companies set status='suspended' where id=$1",[company]);
   await assert.rejects(request(),/COMPANY_ACCESS_DENIED/);
   await db.query("update public.b2b_companies set status='active' where id=$1",[company]);
-  await assert.rejects(request({items:[{id:3,quantity:1}]}),/PRODUCT_UNAVAILABLE/);
+  await assert.rejects(request({items:[{id:999,quantity:1}]}),/PRODUCT_UNAVAILABLE/);
   await assert.rejects(request({items:[{id:1,quantity:13}]}),/WHOLE_CARTONS_REQUIRED/);
   await assert.rejects(request({items:[{id:2,quantity:1},{id:2,quantity:1}]}),/INVALID_CART/);
   await assert.rejects(request({items:[{id:2,quantity:-1}]}),/INVALID_CART/);
@@ -162,4 +162,12 @@ test('B2B schema and request stay compatible with the separate retail payment mi
   await db.exec(await readFile(new URL('supabase/migrations/'+migrations.find(n=>n.endsWith('_checkout_payment_integrity.sql')),root),'utf8'));
   assert.equal(Number((await request()).order.total_amount),39.98);
   assert.equal((await db.query("select has_table_privilege('anon','public.orders','INSERT') allowed")).rows[0].allowed,false);
+});
+
+test('preorder products remain requests for admin review without changing inventory',async()=>{
+  await reset();
+  const order=await request({items:[{id:3,quantity:2}]});
+  assert.equal(order.order.status,'pending_review');
+  assert.equal(Number(order.order.total_amount),8);
+  assert.equal((await db.query('select stock from products where id=3')).rows[0].stock,100);
 });

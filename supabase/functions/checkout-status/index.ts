@@ -1,8 +1,8 @@
 import {
   bodyJson,
   checkRequest,
-  type Dependencies,
-  dependencies,
+  type DatabaseDependencies,
+  databaseDependencies,
   failure,
   HttpError,
   json,
@@ -11,7 +11,7 @@ import {
   TOKEN,
 } from "../_shared/checkout.ts";
 
-export async function handleStatus(req: Request, deps: Dependencies): Promise<Response> {
+export async function handleStatus(req: Request, deps: DatabaseDependencies): Promise<Response> {
   try {
     const early = checkRequest(req, deps.config);
     if (early) return early;
@@ -50,7 +50,7 @@ export async function handleStatus(req: Request, deps: Dependencies): Promise<Re
 
 // Existing guest tracking belongs on the server: an email filter in the browser
 // cannot satisfy ownership RLS. Keep the proof-only payment contract unchanged.
-async function tracking(req: Request, body: Record<string, unknown>, deps: Dependencies): Promise<Response> {
+async function tracking(req: Request, body: Record<string, unknown>, deps: DatabaseDependencies): Promise<Response> {
   await limited(req, deps, "tracking", 10, 600);
   if (typeof body.orderNumber !== "string" || !/^[a-z0-9-]{3,100}$/i.test(body.orderNumber.trim()) ||
       typeof body.email !== "string" || body.email.trim().length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email.trim())) {
@@ -80,7 +80,7 @@ async function tracking(req: Request, body: Record<string, unknown>, deps: Depen
       price: typeof item.unit_minor === "number" ? item.unit_minor / 100 : Number(item.price) || 0,
     })) : [],
     shipping_address: order.shipping_address ? {
-      full_name: order.shipping_address.full_name, address: order.shipping_address.address,
+      full_name: order.shipping_address.full_name || order.shipping_address.name, address: order.shipping_address.address,
       city: order.shipping_address.city, postal_code: order.shipping_address.postal_code,
     } : null,
     customer_phone: order.customer_phone, tracking_notes: order.tracking_notes,
@@ -91,7 +91,7 @@ async function tracking(req: Request, body: Record<string, unknown>, deps: Depen
 export default {
   fetch: async (req: Request) => {
     try {
-      return await handleStatus(req, dependencies());
+      return await handleStatus(req, await databaseDependencies());
     } catch (error) {
       return failure(error);
     }

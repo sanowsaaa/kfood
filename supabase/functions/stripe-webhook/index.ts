@@ -49,7 +49,7 @@ export async function handleWebhook(req: Request, deps: Dependencies): Promise<R
 export default {
   fetch: async (req: Request) => {
     try {
-      return await handleWebhook(req, dependencies());
+      return await handleWebhook(req, await dependencies());
     } catch (error) {
       return failure(error);
     }

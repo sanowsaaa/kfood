@@ -55,7 +55,7 @@ export default function ProductDetail() {
     const raw = result.data as unknown as Product;
     const found = { ...raw, in_stock: productAvailable(raw) };
     const related = await supabase.from('products').select(PUBLIC_PRODUCT_FIELDS)
-      .eq('category', found.category).neq('id', found.id).limit(4).abortSignal(signal);
+      .eq('category', found.category).eq('visibility', 'retail').neq('id', found.id).limit(4).abortSignal(signal);
     const relatedProducts = related.error ? [] : (related.data || []) as unknown as Product[];
     return { product: found, related: relatedProducts.map(item => ({ ...item, in_stock: productAvailable(item) })) };
   }, [slugOrId]);

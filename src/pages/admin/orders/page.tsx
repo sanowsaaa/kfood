@@ -14,6 +14,7 @@ const REVIEW_ORDER_URL = `${import.meta.env.VITE_PUBLIC_SUPABASE_URL}/functions/
 
 interface ShippingAddress {
   full_name?: string;
+  name?: string;
   address?: string;
   city?: string;
   postal_code?: string;
@@ -161,7 +162,7 @@ export default function OrdersManagement() {
           quantity: item.quantity || 0,
           pieces_per_carton: item.pieces_per_carton || 0,
           unit_price: String((item.price || 0).toFixed(2)),
-          carton_price: String((item.carton_price || 0).toFixed(2)),
+          carton_price: String((item.carton_price || (item.price || 0) * Math.max(item.pieces_per_carton || 0, 1)).toFixed(2)),
           sku: item.sku || null,
         })));
         setUseCustomPrices(false);
@@ -178,7 +179,7 @@ export default function OrdersManagement() {
   };
 
   const getStatusInfo = (status: string) => statusOptions.find(o => o.value === status) || { label: status, color: 'bg-gray-100 text-gray-800', dot: 'bg-gray-400' };
-  const isStripe = (order: Order) => !!order.stripe_session_id;
+  const isStripe = (order: Order) => order.payment_method === 'stripe' || !!order.stripe_session_id;
   const isB2B = (order: Order) => !!(order.b2b_company_id || order.is_b2b_order || order.payment_method === 'b2b_invoice');
 
   const retryB2BNotification = (order: Order) => mutation.run('notification', async () => {
@@ -205,13 +206,13 @@ export default function OrdersManagement() {
           body.discount_percent = 0;
         } else {
           const disc = parseFloat(discountPercent) || 0;
-          if (disc < 0 || disc > 100) throw new Error('Отстъпката трябва да е между 0% и 100%');
+          if (disc < 0 || disc >= 100) throw new Error('Отстъпката трябва да е от 0% до под 100%');
           body.discount_percent = disc;
         }
       }
       body.discount_notes = discountNotes;
       const response = await fetch(REVIEW_ORDER_URL, {
-        method: 'POST', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+        method: 'POST', signal: AbortSignal.timeout(20_000), headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body),
       });
       const result = await response.json();
       if (!response.ok || result.success !== true) throw new Error(result.error || 'Обработката не е потвърдена. Обновете данните преди нов опит.');
@@ -252,7 +253,7 @@ export default function OrdersManagement() {
       || order.order_number?.toLowerCase().includes(q)
       || order.customer_email?.toLowerCase().includes(q)
       || order.customer_phone?.includes(q)
-      || order.shipping_address?.full_name?.toLowerCase().includes(q);
+      || (order.shipping_address?.full_name || order.shipping_address?.name)?.toLowerCase().includes(q);
     return matchesStatus && matchesType && matchesSearch;
   });
 
@@ -399,7 +400,7 @@ export default function OrdersManagement() {
                         </td>
                         <td className="px-5 py-4">
                           <div className="text-sm font-medium text-gray-900">
-                            {order.shipping_address?.full_name || '—'}
+                            {order.shipping_address?.full_name || order.shipping_address?.name || '—'}
                           </div>
                           <div className="text-xs text-gray-500">{order.customer_email}</div>
                           <div className="text-xs text-gray-500">{order.customer_phone}</div>
@@ -474,7 +475,7 @@ export default function OrdersManagement() {
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                {isStripe(selectedOrder) && (!selectedOrder.customer_email || !selectedOrder.shipping_address?.full_name) && (
+                {isStripe(selectedOrder) && (!selectedOrder.customer_email || !(selectedOrder.shipping_address?.full_name || selectedOrder.shipping_address?.name)) && (
                   <button
                     disabled={!!mutation.pending} onClick={() => refreshStripeOrder(selectedOrder)}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors whitespace-nowrap cursor-pointer"
@@ -654,9 +655,8 @@ export default function OrdersManagement() {
                               </thead>
                               <tbody className="divide-y divide-gray-50">
                                 {lineItems.map((li, idx) => {
-                                  const unitPrice = parseFloat(li.unit_price) || 0;
                                   const hasCarton = li.pieces_per_carton > 0;
-                                  const lineTotal = unitPrice * li.quantity;
+                                  const lineTotal = Math.round((parseFloat(li.carton_price) || 0) * 100) * (li.quantity / Math.max(li.pieces_per_carton, 1)) / 100;
                                   return (
                                     <tr key={idx} className="hover:bg-gray-50">
                                       <td className="px-3 py-2">
@@ -677,9 +677,11 @@ export default function OrdersManagement() {
                                           min="0"
                                           step="0.01"
                                           value={li.unit_price}
+                                          aria-label={`Цена за брой: ${li.name}`}
                                           onChange={e => {
                                             const updated = [...lineItems];
-                                            updated[idx] = { ...updated[idx], unit_price: e.target.value };
+                                            updated[idx] = { ...updated[idx], unit_price: e.target.value,
+                                              carton_price: e.target.value === '' ? '' : (Number(e.target.value) * Math.max(li.pieces_per_carton, 1)).toFixed(2) };
                                             setLineItems(updated);
                                           }}
                                           className="w-full px-2 py-1.5 border border-gray-200 rounded-md text-xs font-mono text-right focus:ring-2 focus:ring-teal-500 focus:border-transparent"
@@ -691,9 +693,11 @@ export default function OrdersManagement() {
                                           min="0"
                                           step="0.01"
                                           value={li.carton_price}
+                                          aria-label={`Цена за кашон: ${li.name}`}
                                           onChange={e => {
                                             const updated = [...lineItems];
-                                            updated[idx] = { ...updated[idx], carton_price: e.target.value };
+                                            updated[idx] = { ...updated[idx], carton_price: e.target.value,
+                                              unit_price: e.target.value === '' ? '' : (Number(e.target.value) / Math.max(li.pieces_per_carton, 1)).toFixed(2) };
                                             setLineItems(updated);
                                           }}
                                           className={`w-full px-2 py-1.5 border rounded-md text-xs font-mono text-right focus:ring-2 focus:ring-teal-500 focus:border-transparent ${!hasCarton ? 'bg-gray-100 text-gray-400' : 'border-gray-200'}`}
@@ -712,7 +716,7 @@ export default function OrdersManagement() {
                                 <tr>
                                   <td colSpan={4} className="px-3 py-2.5 text-right text-xs font-bold text-gray-700">Общо с персонализирани цени:</td>
                                   <td className="px-3 py-2.5 text-right text-sm font-black text-teal-700 font-mono">
-                                    €{lineItems.reduce((sum, li) => sum + (parseFloat(li.unit_price) || 0) * li.quantity, 0).toFixed(2)}
+                                    €{(lineItems.reduce((sum, li) => sum + Math.round((parseFloat(li.carton_price) || 0) * 100) * (li.quantity / Math.max(li.pieces_per_carton, 1)), 0) / 100).toFixed(2)}
                                   </td>
                                 </tr>
                               </tfoot>
@@ -864,7 +868,7 @@ export default function OrdersManagement() {
                   <div className="space-y-2 text-sm">
                     <div className="flex items-start gap-2">
                       <i aria-hidden="true" className="ri-user-line text-gray-400 mt-0.5"></i>
-                      <span className="font-medium text-gray-900">{selectedOrder.shipping_address?.full_name || '—'}</span>
+                      <span className="font-medium text-gray-900">{selectedOrder.shipping_address?.full_name || selectedOrder.shipping_address?.name || '—'}</span>
                     </div>
                     <div className="flex items-start gap-2">
                       <i aria-hidden="true" className="ri-phone-line text-gray-400 mt-0.5"></i>

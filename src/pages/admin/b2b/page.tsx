@@ -97,13 +97,14 @@ export default function AdminB2BPage() {
     if (error || !session) throw new Error('Няма активна сесия. Влезте отново.');
     const response = await fetch(`${import.meta.env.VITE_PUBLIC_SUPABASE_URL}/functions/v1/approve-b2b`, {
       method: 'POST',
+      signal: AbortSignal.timeout(20_000),
       headers: { 'Authorization': `Bearer ${session.access_token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({ application_id: app.id, review_notes: reviewNotes }),
     });
     const result = await response.json();
     if (!response.ok || result.success !== true) throw new Error(result.error || 'Одобрението не е потвърдено. Обновете данните преди нов опит.');
     action.setMessage(result.email_sent
-      ? { type: 'success', text: `Кандидатурата е одобрена. Имейлът е приет за изпращане на ${app.contact_email || app.email}.` }
+      ? { type: 'success', text: `Кандидатурата е одобрена. Имейлът е приет за изпращане на ${result.email || app.email}.` }
       : { type: 'info', text: 'Кандидатурата е одобрена, но изпращането на имейла не е потвърдено. Не одобрявайте повторно — проверете изпращането.' });
     setSelectedApp(null); setReviewNotes('');
     await fetchData();
@@ -116,7 +117,7 @@ export default function AdminB2BPage() {
       if (error || !user) throw new Error('Няма активна сесия. Влезте отново.');
       confirmedRecord(await supabase.from('b2b_applications').update({
         status, reviewer_id: user.id, review_notes: reviewNotes, reviewed_at: new Date().toISOString(),
-      }).eq('id', appId).select('id').single(), appId);
+      }).eq('id', appId).neq('status', 'approved').select('id').single(), appId);
       setSelectedApp(null); setReviewNotes('');
       if (status === 'rejected') {
         const notification = await supabase.from('b2b_notifications').insert({

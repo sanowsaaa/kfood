@@ -52,7 +52,9 @@
     "preview": "vite preview",
     "test:admin": "node --test tests/admin-operations.test.mjs",
     "check:admin": "tsc --project tsconfig.admin.json",
-    "test:client": "node --test tests/customer-operations.test.mjs tests/customer-service-worker.test.mjs tests/customer-colors.test.mjs",
+    "test:client": "node --test tests/customer-operations.test.mjs tests/customer-service-worker.test.mjs",
+    "check:security": "deno check --frozen --node-modules-dir=manual --config supabase/functions/deno.json supabase/functions/approve-b2b/index.ts supabase/functions/review-b2b-order/index.ts supabase/functions/create-cod-order/index.ts supabase/functions/send-cod-order-notification/index.ts",
+    "test:security": "node --test tests/security-database.test.mjs && deno test --frozen --node-modules-dir=manual --config supabase/functions/deno.json --allow-read --allow-env tests/security-handlers.test.ts tests/launch-configuration.test.ts && deno run --frozen --node-modules-dir=manual --config supabase/functions/deno.json --allow-read --allow-env tests/prelaunch-contract-audit.ts",
     "test:seo": "node --test tests/product-seo.test.mjs tests/editorial-seo.test.mjs"
   },
   "type": "module",

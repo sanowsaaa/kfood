@@ -125,7 +125,7 @@ export async function handleCheckout(req: Request, deps: Dependencies): Promise<
 export default {
   fetch: async (req: Request) => {
     try {
-      return await handleCheckout(req, dependencies());
+      return await handleCheckout(req, await dependencies());
     } catch (error) {
       return failure(error);
     }
