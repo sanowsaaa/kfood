@@ -64,7 +64,7 @@ payload и същия Resend idempotency key. Изчерпани/твърде с
 | CHECKOUT_ALLOWED_ORIGINS | Допълнителни точни origins, ако са нужни |
 | RESEND_API или RESEND_API_KEY | Съществуващият mail provider ключ |
 | RESEND_FROM_DOMAIN | Провереният изпращащ домейн |
-| ORDER_NOTIFICATION_EMAIL | Служебният получател за платени поръчки |
+| ORDER_NOTIFICATION_EMAIL | Служебният получател за платени поръчки; по подразбиране съществуващият магазинен адрес |
 
 Snapshot webhook използва checkout.session.completed,
 checkout.session.async_payment_succeeded, checkout.session.async_payment_failed
@@ -90,3 +90,6 @@ import map. Запазвайте verify_jwt=true на retired invoice endpoint. 
 изтегли актуалния main. Публикуването на клиентския сайт следва Stripe настройката
 и проверката на реалния платежен поток. При връщане назад не отваряйте старите
 публични права и не изтривайте платежни/складови записи.
+
+Имената на миграционните файлове следват проверените версии в основния проект.
+Историята на продукционните миграции се запазва; не се редактират системните записи.

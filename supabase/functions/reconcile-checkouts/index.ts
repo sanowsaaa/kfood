@@ -147,9 +147,9 @@ async function reconcile(
 
 async function sendEmails(deps: DatabaseDependencies) {
   const key = Deno.env.get("RESEND_API") || Deno.env.get("RESEND_API_KEY");
-  const domain = Deno.env.get("RESEND_FROM_DOMAIN");
-  const recipient = Deno.env.get("ORDER_NOTIFICATION_EMAIL");
-  if (!key || !domain || !recipient) return 0;
+  const domain = Deno.env.get("RESEND_FROM_DOMAIN") || "k-foodvelikotarnovo.com";
+  const recipient = Deno.env.get("ORDER_NOTIFICATION_EMAIL") || "kfoodstore.bg@gmail.com";
+  if (!key) return 0;
   const { data, error } = await deps.db.rpc("checkout_claim_emails", { p_limit: 5 });
   if (error) throw new Error("Email claim failed");
   let sent = 0;

@@ -95,8 +95,8 @@ export async function asRole(db, role, actor, fn) {
 }
 
 export async function migrate(db, first = 'payment') {
-  const payment = await readFile(new URL('../../supabase/migrations/20261007174910_checkout_payment_integrity.sql', import.meta.url),'utf8');
-  const b2b = await readFile(new URL('../../supabase/migrations/20261008050000_b2b_access_and_requests.sql', import.meta.url),'utf8');
+  const payment = await readFile(new URL('../../supabase/migrations/20261011164628_checkout_payment_integrity.sql', import.meta.url),'utf8');
+  const b2b = await readFile(new URL('../../supabase/migrations/20261011164713_b2b_access_and_requests.sql', import.meta.url),'utf8');
   await db.exec(first === 'payment' ? payment : b2b);
   await db.exec(first === 'payment' ? b2b : payment);
 }

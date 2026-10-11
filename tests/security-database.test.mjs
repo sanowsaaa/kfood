@@ -11,13 +11,13 @@ const anon=fn=>asRole(db,'anon',null,fn);
 const member=fn=>asRole(db,'authenticated',partner,fn);
 before(async()=>{
   db=await database(); await migrate(db);
-  await db.exec(await readFile('supabase/migrations/20261008205724_security_reliability.sql','utf8'));
+  await db.exec(await readFile('supabase/migrations/20261011165307_security_reliability.sql','utf8'));
   await db.exec(`create schema storage; grant usage on schema storage to authenticated;
     create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
     create table storage.objects(id uuid default gen_random_uuid(),bucket_id text,name text);
     alter table storage.objects enable row level security; alter table storage.buckets enable row level security; grant select,insert,update,delete on storage.objects to authenticated; grant select,insert on storage.buckets to authenticated;`);
-  await db.exec(await readFile('supabase/migrations/20261008210314_b2b_document_storage.sql','utf8'));
-  await db.exec(await readFile('supabase/migrations/20261011154840_launch_compatibility.sql','utf8'));
+  await db.exec(await readFile('supabase/migrations/20261011165345_b2b_document_storage.sql','utf8'));
+  await db.exec(await readFile('supabase/migrations/20261011165407_launch_compatibility.sql','utf8'));
   await adminCall(tx=>tx.query("insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types) values('b2b-documents','b2b-documents',false,10485760,array['application/pdf'])"));
 });
 after(async()=>{await db?.close();});

@@ -28,7 +28,7 @@ before(async () => {
   invoiceScopeBefore=await unaffected();
   await db.exec(await readFile(new URL('supabase/migrations/20261008045147_retire_web_invoices.sql',root),'utf8'));
   invoiceScopeAfter=await unaffected();
-  await db.exec(await readFile(new URL('supabase/migrations/20261008050000_b2b_access_and_requests.sql',root),'utf8'));
+  await db.exec(await readFile(new URL('supabase/migrations/20261011164713_b2b_access_and_requests.sql',root),'utf8'));
 });
 after(async () => { await db?.close(); });
 async function reset() {
