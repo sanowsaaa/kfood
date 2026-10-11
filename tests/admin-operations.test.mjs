@@ -2,6 +2,26 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createClient } from '@supabase/supabase-js';
 import { confirmedRecord, checkedData, adminErrorMessage, verifyAdminAccess, createActionLock } from '../src/utils/admin.ts';
+import { canFulfillOrder, decodeAdminOrders, paymentPresentation } from '../src/utils/orderPayments.ts';
+
+test('payment display rejects missing, malformed or sandbox proof regardless of fulfillment status', () => {
+  const card = { payment_method: 'stripe', status: 'delivered' };
+  for (const proof of [{}, { payment_state: 'pending' }, { payment_state: 'paid', payment_livemode: true },
+    { payment_state: 'paid', payment_livemode: true, payment_paid_at: 'invalid' },
+    { payment_state: 'paid', payment_livemode: false, payment_paid_at: '2026-10-11T19:00:00Z' }]) {
+    const value = { ...card, ...proof }; assert.equal(canFulfillOrder(value), false);
+    assert.notEqual(paymentPresentation(value).label, 'Платена');
+  }
+  assert.equal(canFulfillOrder({ ...card, payment_state: 'paid', payment_livemode: true, payment_paid_at: '2026-10-11T19:00:00Z' }), true);
+});
+
+test('missing payment projection cannot silently fall back to treating an order as paid', () => {
+  for (const row of [{ order_data: { id: 'fixture' } },
+    { order_data: { id: 'fixture' }, payment_state: 'paid', payment_livemode: 'true', payment_paid_at: null },
+    { order_data: { id: 'fixture' }, payment_state: 'paid', payment_livemode: true, payment_paid_at: 'invalid' }]) {
+    assert.throws(() => decodeAdminOrders([row]));
+  }
+});
 
 function database(reply) {
   const requests = [];

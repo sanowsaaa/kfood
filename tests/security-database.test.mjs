@@ -18,6 +18,7 @@ before(async()=>{
     alter table storage.objects enable row level security; alter table storage.buckets enable row level security; grant select,insert,update,delete on storage.objects to authenticated; grant select,insert on storage.buckets to authenticated;`);
   await db.exec(await readFile('supabase/migrations/20261011165345_b2b_document_storage.sql','utf8'));
   await db.exec(await readFile('supabase/migrations/20261011165407_launch_compatibility.sql','utf8'));
+  await db.exec(await readFile('supabase/migrations/20261011190834_admin_payment_truth.sql','utf8'));
   await adminCall(tx=>tx.query("insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types) values('b2b-documents','b2b-documents',false,10485760,array['application/pdf'])"));
 });
 after(async()=>{await db?.close();});
@@ -26,10 +27,67 @@ async function application(){return (await db.query(`insert into public.b2b_appl
   contact_first_name,contact_last_name,business_type,address,city,status) values('Synthetic Firm','activation@example.invalid','contact@example.invalid',
   'Synthetic','Partner','retail','Test address','Sofia','pending') returning id`)).rows[0].id;}
 const approve=id=>service(async tx=>(await tx.query('select public.b2b_approve_application($1,$2,$3) r',[id,admin,'Approved'])).rows[0].r);
-const prepare=(id=1,qty=4)=>service(async tx=>(await tx.query('select public.checkout_prepare($1,$2,$3,$4::jsonb,$5,$6,$7,$8,$9) r',
-  [randomUUID(),hash('request'),hash('token'),JSON.stringify([{id,quantity:qty}]),'buyer@example.invalid','0899000000',400*qty,false,'https://example.invalid'])).rows[0].r);
+const prepare=(id=1,qty=4,live=false)=>service(async tx=>(await tx.query('select public.checkout_prepare($1,$2,$3,$4::jsonb,$5,$6,$7,$8,$9) r',
+  [randomUUID(),hash('request'),hash('token'),JSON.stringify([{id,quantity:qty}]),'buyer@example.invalid','0899000000',400*qty,live,'https://example.invalid'])).rows[0].r);
 const apply=p=>service(async tx=>(await tx.query('select public.checkout_apply_event($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12::jsonb,$13::jsonb,$14,$15,$16) r',
-  [randomUUID(),'checkout.session.completed','cs_test_'+p.order_id,p.order_id,p.attempt_id,p.order_number,false,p.total_minor,'eur','complete','paid',null,null,'succeeded',0,false])).rows[0].r);
+  [randomUUID(),'checkout.session.completed',`cs_${p.livemode?'live':'test'}_${p.order_id}`,p.order_id,p.attempt_id,p.order_number,p.livemode,p.total_minor,'eur','complete','paid',null,null,'succeeded',0,false])).rows[0].r);
+
+test('payment projection is administrator-only and never exposes checkout tokens',async()=>{
+  await denied(()=>anon(tx=>tx.query('select * from admin_orders()')));
+  await denied(()=>member(tx=>tx.query('select * from admin_orders()')));
+  await denied(()=>asRole(db,'authenticated',stranger,tx=>tx.query('select * from admin_orders()')));
+  await denied(()=>adminCall(tx=>tx.query('select status_token_hash from checkout_payments')));
+  const rows=(await adminCall(tx=>tx.query('select * from admin_orders()'))).rows;
+  assert.ok(rows.some(row=>row.order_data.order_number==='HISTORICAL-SYNTHETIC' && row.payment_state===null));
+  assert.ok(rows.every(row=>!('status_token_hash' in row) && !('status_token_hash' in row.order_data)));
+});
+
+test('unpaid card statuses and legacy records cannot be fulfilled, even by a direct admin update',async()=>{
+  await db.exec("insert into products(id,name,price,category,stock,in_stock,visibility) values(99,'Payment guard fixture',4,'Test',1000,true,'retail')");
+  for(const state of ['pending','awaiting_payment','failed','expired','review']) {
+    const p=await prepare(99,4,true);
+    await db.query('update checkout_payments set state=$1 where order_id=$2',[state,p.order_id]);
+    for(const status of ['approved','confirmed','processing','shipped','delivered']) {
+      await assert.rejects(()=>adminCall(tx=>tx.query('update orders set status=$1 where id=$2',[status,p.order_id])),/няма потвърдено плащане/);
+    }
+    await adminCall(tx=>tx.query("update orders set tracking_notes='Preserved note' where id=$1",[p.order_id]));
+    await assert.rejects(()=>adminCall(tx=>tx.query("update orders set status='processing',payment_method='cod',stripe_session_id=null where id=$1",[p.order_id])),/няма потвърдено плащане/);
+    await adminCall(tx=>tx.query("update orders set status='cancelled' where id=$1",[p.order_id]));
+  }
+  const legacy=(await db.query("insert into orders(order_number,customer_email,payment_method,stripe_session_id,total_amount,currency,status,items) values('LEGACY-CARD','legacy@example.invalid','stripe','cs_test_legacy',12,'EUR','confirmed','[]') returning id")).rows[0];
+  await assert.rejects(()=>adminCall(tx=>tx.query("update orders set status='shipped' where id=$1",[legacy.id])),/няма потвърдено плащане/);
+  await adminCall(tx=>tx.query("update orders set tracking_notes='Legacy note' where id=$1",[legacy.id]));
+  const row=(await adminCall(tx=>tx.query("select * from admin_orders() where order_data->>'id'=$1",[legacy.id]))).rows[0];
+  assert.equal(row.order_data.status,'confirmed'); assert.equal(row.payment_state,null);
+});
+
+test('a verified live payment still confirms once, reserves stock and queues the same email before fulfillment',async()=>{
+  const p=await prepare(99,4,true);
+  assert.equal((await apply(p)).decision,'applied');
+  const row=(await adminCall(tx=>tx.query("select * from admin_orders() where order_data->>'id'=$1",[p.order_id]))).rows[0];
+  assert.equal(row.payment_state,'paid'); assert.equal(row.payment_livemode,true); assert.ok(row.payment_paid_at);
+  assert.equal(row.order_data.status,'confirmed');
+  for(const status of ['processing','shipped','delivered']) await adminCall(tx=>tx.query('update orders set status=$1 where id=$2',[status,p.order_id]));
+  assert.equal((await apply(p)).decision,'ignored');
+  assert.equal((await db.query('select * from checkout_outbox where order_id=$1',[p.order_id])).rows.length,1);
+  assert.equal((await db.query("select sum(quantity)::integer quantity from checkout_stock_holds where order_id=$1 and state='consumed'",[p.order_id])).rows[0].quantity,4);
+});
+
+test('sandbox webhooks can be tested, but administrators cannot ship a test payment as a live order',async()=>{
+  const p=await prepare(99,4,false);
+  assert.equal((await apply(p)).decision,'applied');
+  for(const status of ['approved','processing','shipped','delivered']) await assert.rejects(()=>adminCall(tx=>tx.query('update orders set status=$1 where id=$2',[status,p.order_id])),/Тестовото Stripe плащане/);
+});
+
+test('COD fulfillment, B2B approval and recorded review warnings retain their existing meaning',async()=>{
+  const cod=(await db.query("insert into orders(order_number,customer_email,payment_method,total_amount,currency,status,items) values('COD-GUARD','cod@example.invalid','cod',12,'EUR','pending','[]') returning id")).rows[0];
+  await adminCall(tx=>tx.query("update orders set status='processing' where id=$1",[cod.id]));
+  const b2b=(await db.query("insert into orders(order_number,customer_email,payment_method,is_b2b_order,b2b_company_id,total_amount,currency,status,items) values('B2B-GUARD','partner@example.invalid','b2b_request',true,$1,12,'EUR','pending_review','[]') returning id",[company])).rows[0];
+  await adminCall(tx=>tx.query("update orders set status='approved' where id=$1",[b2b.id]));
+  const p=await prepare(99,4,true);
+  await db.query("insert into stripe_webhook_events(event_id,event_type,session_id,order_id,livemode,decision,reason) values($1,'checkout.session.completed','cs_live_review',$2,true,'review','AMOUNT_MISMATCH')",[randomUUID(),p.order_id]);
+  assert.equal((await adminCall(tx=>tx.query("select payment_state from admin_orders() where order_data->>'id'=$1",[p.order_id]))).rows[0].payment_state,'review');
+});
 
 test('catalog remains readable; cost is denied to visitors and partners, available only through checked admin RPC',async()=>{
   assert.equal((await anon(tx=>tx.query('select id,name,price,stock,slug from products where id=1'))).rows.length,1);
@@ -78,8 +136,8 @@ test('late approval failure rolls back the company, linked records and applicati
   assert.deepEqual((await db.query('select company_id,status from b2b_applications where id=$1',[id])).rows[0],{company_id:null,status:'pending'});
 });
 test('B2B review rejects negative/unknown prices and missing rows; carton totals retain exact cents',async()=>{
-  const id=(await db.query(`insert into orders(order_number,customer_email,total_amount,is_b2b_order,b2b_company_id,status,items)
-    values('B2B-SYNTHETIC-REVIEW','test@example.invalid',7,true,$1,'pending_review',$2::jsonb) returning id`,[company,JSON.stringify([{id:1,name:'Carton',quantity:12,pieces_per_carton:12,price:7/12,carton_price:7,line_total_minor:700}])])).rows[0].id;
+  const id=(await db.query(`insert into orders(order_number,customer_email,total_amount,is_b2b_order,b2b_company_id,payment_method,status,items)
+    values('B2B-SYNTHETIC-REVIEW','test@example.invalid',7,true,$1,'b2b_request','pending_review',$2::jsonb) returning id`,[company,JSON.stringify([{id:1,name:'Carton',quantity:12,pieces_per_carton:12,price:7/12,carton_price:7,line_total_minor:700}])])).rows[0].id;
   const review=(lines,order=id,discount=0)=>service(async tx=>(await tx.query('select b2b_review_order($1,$2,$3,$4,$5,$6::jsonb) r',[order,admin,'approve',discount,'',lines===null?null:JSON.stringify(lines)])).rows[0].r);
   await assert.rejects(()=>review([{id:1,unit_price:-1,carton_price:-12}]),/INVALID_PRICES/);
   await assert.rejects(()=>review([{id:999,unit_price:1,carton_price:12}]),/INVALID_PRICES/);
