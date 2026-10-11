@@ -30,13 +30,15 @@ export default function BlogDetailPage() {
   const [post, setPost] = useState<BlogPost | null>(null);
   const [relatedPosts, setRelatedPosts] = useState<Pick<BlogPost, 'id' | 'title' | 'slug' | 'excerpt' | 'cover_image' | 'category' | 'read_time' | 'created_at' | 'views'>[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadedSlug, setLoadedSlug] = useState<string>();
+  const articleLoading = loading || loadedSlug !== slug;
 
   const seoPost = post?.slug === slug ? post : null;
   useSEO(seoPost ? getArticleSEO(seoPost) : {
-    title: loading ? 'Зареждане на статия | K-FOOD' : 'Статията не е намерена | K-FOOD',
+    title: articleLoading ? 'Зареждане на статия | K-FOOD' : 'Статията не е намерена | K-FOOD',
     description: 'Истории, рецепти и нови вкусове от K-FOOD.',
     canonical: `/blog/${slug}`,
-    robots: !loading && !seoPost ? 'noindex, follow' : undefined,
+    robots: !articleLoading && !seoPost ? 'noindex, follow' : undefined,
   });
 
   useLayoutEffect(() => {
@@ -46,57 +48,77 @@ export default function BlogDetailPage() {
   }, [slug]);
 
   useEffect(() => {
-    if (slug) {
-      fetchPost(slug);
-    }
-  }, [slug]);
+    const controller = new AbortController();
+    let active = true;
+    setPost(null);
+    setRelatedPosts([]);
+    setLoading(true);
 
-  const fetchPost = async (postSlug: string) => {
-    try {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('blog_posts')
-        .select('*')
-        .eq('slug', postSlug)
-        .eq('published', true)
-        .maybeSingle();
-
-      if (error) throw error;
-      if (data) {
-        setPost(withBlogCover(data));
-        // Increment views — skip bots and repeated views in same session
-        const ua = navigator.userAgent.toLowerCase();
-        const isBot = /bot|crawler|spider|crawling|googlebot|bingbot|slurp|duckduckbot|facebot|ia_archiver|facebookexternalhit|linkedinbot|twitterbot|rogerbot|embedly|quora|outbrain|showyoubot|outbrain|pinterest|developers\.google/i.test(ua);
-        const sessionKey = `viewed_post_${data.id}`;
-        const alreadyViewed = sessionStorage.getItem(sessionKey);
-        if (!isBot && !alreadyViewed) {
-          sessionStorage.setItem(sessionKey, '1');
-          // Use Edge Function to increment views securely (avoids direct table writes)
-          try {
-            await supabase.functions.invoke('sitemap-blog', {
-              body: { action: 'increment_view', post_id: data.id },
-            });
-          } catch {
-            // Silently fail — views are not critical
-          }
-        }
-
-        // Fetch related posts
-        const { data: related } = await supabase
+    const fetchPost = async () => {
+      try {
+        if (!slug) return;
+        const { data, error } = await supabase
           .from('blog_posts')
-          .select('id, title, slug, excerpt, cover_image, category, read_time, created_at, views')
+          .select('*')
+          .eq('slug', slug)
           .eq('published', true)
-          .eq('category', data.category)
-          .neq('id', data.id)
-          .limit(3);
-        setRelatedPosts((related || []).map(withBlogCover));
+          .abortSignal(controller.signal)
+          .maybeSingle();
+
+        if (error) throw error;
+        if (!active) return;
+        if (data) {
+          setPost(withBlogCover(data));
+
+          // Secondary requests must never delay the article itself.
+          const incrementView = async () => {
+            try {
+              const ua = navigator.userAgent.toLowerCase();
+              const isBot = /bot|crawler|spider|crawling|slurp|facebot|ia_archiver|facebookexternalhit|linkedinbot|twitterbot|rogerbot|embedly|quora|outbrain|showyoubot|pinterest|developers\.google|google-inspectiontool/i.test(ua);
+              const sessionKey = `viewed_post_${data.id}`;
+              if (isBot || sessionStorage.getItem(sessionKey)) return;
+              sessionStorage.setItem(sessionKey, '1');
+              await supabase.functions.invoke('sitemap-blog', {
+                body: { action: 'increment_view', post_id: data.id },
+              });
+            } catch {
+              // Storage restrictions and a failed counter are not reading failures.
+            }
+          };
+          const fetchRelated = async () => {
+            try {
+              const { data: related, error: relatedError } = await supabase
+                .from('blog_posts')
+                .select('id, title, slug, excerpt, cover_image, category, read_time, created_at, views')
+                .eq('published', true)
+                .eq('category', data.category)
+                .neq('id', data.id)
+                .limit(3)
+                .abortSignal(controller.signal);
+              if (active && !relatedError) setRelatedPosts((related || []).map(withBlogCover));
+            } catch {
+              // Related reading is optional; keep the primary article available.
+            }
+          };
+          void incrementView();
+          void fetchRelated();
+        }
+      } catch {
+        // Silently handle error — don't leak details.
+      } finally {
+        if (active) {
+          setLoadedSlug(slug);
+          setLoading(false);
+        }
       }
-    } catch {
-      // Silently handle error — don't leak details
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
+
+    void fetchPost();
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [slug]);
 
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('bg-BG', {
@@ -105,7 +127,7 @@ export default function BlogDetailPage() {
       year: 'numeric',
     });
 
-  if (loading) {
+  if (articleLoading) {
     return (
       <>
         <Header />
@@ -146,18 +168,18 @@ export default function BlogDetailPage() {
       <Header />
 
       {/* Cover Image */}
-      <div className="w-full h-[420px] md:h-[520px] overflow-hidden relative">
+      <div className="w-full min-h-[420px] md:min-h-[520px] overflow-hidden relative flex items-end">
         <img
           src={post.cover_image}
           alt={post.title}
-          className="w-full h-full object-cover object-top"
+          className="absolute inset-0 w-full h-full object-cover object-top"
         />
         <div className="brand-article-shade absolute inset-0"></div>
-        <div className="absolute bottom-0 left-0 right-0 p-8 md:p-12 max-w-4xl mx-auto">
+        <div className="relative w-full px-5 py-8 sm:p-8 md:p-12 max-w-4xl mx-auto">
           <span className="inline-block bg-brand-primary text-white text-xs font-bold px-3 py-1.5 rounded-full mb-3 whitespace-nowrap">
             {post.category}
           </span>
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight break-words text-balance">
             {post.title}
           </h1>
         </div>
@@ -202,7 +224,7 @@ export default function BlogDetailPage() {
 
         {/* Content — SANITIZED to prevent XSS */}
         <article
-          className="prose prose-lg max-w-none prose-headings:font-bold prose-headings:text-gray-900 prose-h2:text-2xl prose-h2:mt-10 prose-h2:mb-4 prose-h3:text-xl prose-h3:mt-6 prose-h3:mb-3 prose-p:text-gray-700 prose-p:leading-relaxed prose-p:mb-4 prose-ul:text-gray-700 prose-li:mb-1"
+          className="kfood-article"
           dangerouslySetInnerHTML={{ __html: sanitizedContent }}
         />
 

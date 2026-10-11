@@ -2,6 +2,82 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Article-only typography: the project does not install the prose plugin. */
+.kfood-article {
+  max-width: 72ch;
+  margin-inline: auto;
+  color: #2b0b22;
+  font-size: 1.0625rem;
+  line-height: 1.85;
+  overflow-wrap: anywhere;
+}
+.kfood-article > :first-child { margin-top: 0; }
+.kfood-article p { margin-block: 0 1.25em; }
+.kfood-article h2, .kfood-article h3, .kfood-article h4 {
+  color: #2b0b22;
+  font-weight: 700;
+  line-height: 1.35;
+  text-wrap: balance;
+}
+.kfood-article h2 {
+  margin-block: 2em .75em;
+  padding-left: .65em;
+  border-left: 4px solid #c90073;
+  font-size: clamp(1.4rem, 2.5vw, 1.8rem);
+}
+.kfood-article h3 { margin-block: 1.6em .6em; font-size: 1.25rem; }
+.kfood-article h4 { margin-block: 1.5em .6em; font-size: 1.125rem; }
+.kfood-article ul, .kfood-article ol { margin-block: .75em 1.5em; padding-left: 1.5em; }
+.kfood-article ul { list-style: disc; }
+.kfood-article ol { list-style: decimal; }
+.kfood-article li { padding-left: .2em; margin-block: .5em; }
+.kfood-article li::marker { color: #ab005d; font-weight: 700; }
+.kfood-article strong { font-weight: 700; }
+.kfood-article a {
+  color: #ab005d;
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: .2em;
+}
+.kfood-article a:hover { color: #2b0b22; }
+.kfood-article a:focus-visible { outline: 3px solid #c90073; outline-offset: 4px; border-radius: 2px; }
+.kfood-article blockquote {
+  margin-block: 1.75em;
+  padding: 1.1em 1.25em;
+  background: #fff0f7;
+  border-left: 4px solid #c90073;
+  border-radius: 0 .75rem .75rem 0;
+}
+.kfood-article blockquote p:last-child { margin-bottom: 0; }
+.kfood-article table {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  margin-block: 1.5em;
+  border-collapse: collapse;
+  font-size: .9375rem;
+  line-height: 1.6;
+}
+.kfood-article caption { text-align: left; padding-bottom: .75em; font-weight: 600; color: #5b3b50; }
+.kfood-article th, .kfood-article td {
+  min-width: 9rem;
+  padding: .85em 1em;
+  vertical-align: top;
+  text-align: left;
+  border: 1px solid #f3a6cb;
+}
+.kfood-article th { background: #ffe2ef; color: #2b0b22; font-weight: 700; }
+.kfood-article tbody tr:nth-child(even) { background: #fffafc; }
+.kfood-article img { max-width: 100%; height: auto; border-radius: .75rem; }
+.kfood-article figure { margin-block: 1.75em; }
+.kfood-article figcaption { margin-top: .6em; color: #5b3b50; font-size: .875rem; }
+.kfood-article hr { margin-block: 2em; border-color: #f3a6cb; }
+@media (min-width: 640px) {
+  .kfood-article { font-size: 1.125rem; }
+}
+
 @layer base {
   *,
   ::before,
