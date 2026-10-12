@@ -11,7 +11,7 @@ const env = await readFile(new URL('../.env', import.meta.url), 'utf8').catch(()
 const project = (process.env.VITE_PUBLIC_SUPABASE_URL || env.match(/VITE_PUBLIC_SUPABASE_URL=["']?([^\s"']+)/)?.[1] || 'https://quqlovoiwgqfmgjumpgd.supabase.co').split('//')[1].split('.')[0];
 const company = { id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb', user_id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa', company_name: 'Тестов B2B партньор', email: 'partner@example.invalid', phone: '0899123456', city: 'София', address: 'Тестов адрес 12', postal_code: '1000', business_type: 'restaurant', status: 'active', created_at: '2026-01-01T00:00:00Z', credit_limit: 0 };
 const img = 'https://static.readdy.ai/offline-b2b-product.svg';
-const common = { description: 'Описание на продукта за локална проверка.', image: img, category: 'Нудъли и Рамен', badge: '', rating: 4.8, reviews: 12, in_stock: true, stock: 1200, moq: 1, moq_unit: 'кашон' };
+const common = { description: 'Описание на продукта за локална проверка.', image: img, category: 'Нудъли и Рамен', visibility: 'retail', badge: '', rating: 4.8, reviews: 12, in_stock: true, stock: 1200, moq: 1, moq_unit: 'кашон' };
 const products = [
   { ...common, id: 17, name: 'Рамен без текстов адрес', slug: null, sku: 'KR-017', price: 2, wholesale_price: 7, carton_price: 7, pieces_per_carton: 12 },
   { ...common, id: 18, name: 'Кимчи традиционно', slug: 'kimchi', sku: 'KR-018', category: 'Продукти за готвене', price: 8, wholesale_price: 5, carton_price: 48, pieces_per_carton: 0 },
@@ -33,7 +33,8 @@ async function setup(options = {}) {
     if (sessionStorage.getItem('offline-b2b-seeded')) return;
     localStorage.setItem('cookieConsent', 'declined');
     localStorage.setItem('slugGenDone1', 'true');
-    localStorage.setItem(`sb-${project}-auth-token`, JSON.stringify({ access_token: token, refresh_token: 'offline-refresh', token_type: 'bearer', expires_in: 3600, expires_at: exp, user }));
+    if (!options.guest) localStorage.setItem(`sb-${project}-auth-token`, JSON.stringify({ access_token: token, refresh_token: 'offline-refresh', token_type: 'bearer', expires_in: 3600, expires_at: exp, user }));
+    if (options.forgedCompany) localStorage.setItem('b2b_company_id', profile.id);
     if (options.cart !== undefined) {
       localStorage.setItem('b2b_cart_owner', options.cartOwner || profile.id);
       localStorage.setItem('b2b_cart', typeof options.cart === 'string' ? options.cart : JSON.stringify(options.cart));
@@ -62,7 +63,10 @@ async function setup(options = {}) {
     if (url.pathname.includes('/auth/v1/')) return reply(user);
     if (url.pathname.includes('/functions/v1/')) {
       const name = url.pathname.split('/').at(-1), body = request.postDataJSON(); requests.push({ name, body });
-      if (name === 'b2b-auth' && body.mode === 'profile') return failedProfile ? reply({ success: false, error: 'Offline profile unavailable' }, 503) : reply({ success: true, company: profile });
+      if (name === 'b2b-auth' && body.mode === 'profile') {
+        if (options.profileDelay) await new Promise(resolve => setTimeout(resolve, options.profileDelay));
+        return failedProfile ? reply({ success: false, error: 'Offline profile unavailable' }, 503) : reply({ success: true, company: options.nonpartner ? null : profile });
+      }
       if (name === 'create-b2b-checkout') {
         if (options.delay) await new Promise(resolve => setTimeout(resolve, options.delay));
         if (failedCreate) return reply({ error: 'Временна грешка. Опитайте отново.' }, 503);
@@ -72,11 +76,12 @@ async function setup(options = {}) {
     }
     if (url.pathname.includes('/rest/v1/')) {
       const table = url.pathname.split('/').at(-1); requests.push({ table, url: url.href, method: request.method() });
-      if (request.method() !== 'GET') return reply({ error: 'Unexpected browser write' }, 403);
+      const catalog = table === 'b2b_catalog' && url.pathname.includes('/rpc/');
+      if (request.method() !== 'GET' && !catalog) return reply({ error: 'Unexpected browser write' }, 403);
       if (options.readDelay) await new Promise(resolve => setTimeout(resolve, options.readDelay));
-      if (failedRead === table || failedRead === true) return reply({ message: 'offline read failure', code: '42501' }, 403);
-      let data = table === 'products' ? [...rows] : table === 'orders' ? structuredClone(options.orders || [order]) : table === 'b2b_documents' ? structuredClone(documents) : [];
-      for (const field of ['id', 'slug', 'b2b_company_id']) {
+      if (failedRead === table || (catalog && failedRead === 'products') || failedRead === true) return reply({ message: 'offline read failure', code: '42501' }, 403);
+      let data = table === 'products' || catalog ? [...rows] : table === 'orders' ? structuredClone(options.orders || [order]) : table === 'b2b_documents' ? structuredClone(documents) : [];
+      for (const field of ['id', 'slug', 'b2b_company_id', 'visibility']) {
         const filter = url.searchParams.get(field);
         if (filter?.startsWith('eq.')) data = data.filter(row => String(row[field]) === filter.slice(3));
       }
@@ -102,6 +107,53 @@ async function shot(page, name) { if (artifacts) { await mkdir(artifacts, { recu
 async function savedCart(page) { return page.evaluate(() => JSON.parse(localStorage.getItem('b2b_cart') || '[]')); }
 const creates = qa => qa.requests.filter(r => r.name === 'create-b2b-checkout');
 async function noOverflow(page) { assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true, `Horizontal overflow at ${page.url()}`); }
+
+for (const options of [{ guest: true, forgedCompany: true }, { nonpartner: true, forgedCompany: true }, { company: { status: 'pending' } }, { company: { status: 'suspended' } }]) {
+  test(`private workspace: ${JSON.stringify(options)} sees only login and issues no private requests`, async () => {
+    const qa = await setup(options);
+    try {
+      for (const path of ['/b2b', '/b2b/products', '/b2b/product/17', '/b2b/product/ramen', '/b2b/dashboard', '/b2b/quick-order', '/b2b/cart', '/b2b/checkout', '/b2b/orders', '/b2b/documents']) {
+        await open(qa.page, path);
+        await qa.page.waitForURL(base + '/b2b/login');
+        await qa.page.getByRole('button', { name: 'Вход', exact: true }).waitFor();
+        assert.equal(await qa.page.locator('meta[name="robots"]').getAttribute('content'), 'noindex, follow');
+      }
+      assert.equal(qa.requests.some(r => r.table || r.storage || r.name === 'create-b2b-checkout'), false);
+      assert.equal(await qa.page.getByText(products[0].name, { exact: true }).count(), 0);
+      assert.deepEqual(qa.errors, []);
+    } finally { await qa.close(); }
+  });
+}
+
+test('private workspace: no catalog read starts while server approval verification is pending', async () => {
+  const qa = await setup({ profileDelay: 600 });
+  try {
+    await open(qa.page, '/b2b/products');
+    await qa.page.getByText('Проверка на достъпа…', { exact: true }).waitFor();
+    assert.equal(qa.requests.some(r => r.table), false);
+    await qa.page.getByRole('heading', { name: 'Продуктов каталог', exact: true }).waitFor();
+    await qa.page.getByRole('link', { name: products[0].name, exact: true }).waitFor();
+    assert.ok(qa.requests.some(r => r.table === 'b2b_catalog' && new URL(r.url).pathname.includes('/rpc/')));
+    assert.equal(qa.requests.some(r => r.table === 'products'), false);
+  } finally { await qa.close(); }
+});
+
+test('public retail route cannot publish a wholesale product even in an approved partner session', async () => {
+  const privateProduct = { ...products[0], id: 30, slug: 'private-carton', name: 'Private catalog fixture', visibility: 'wholesale' };
+  const qa = await setup({ products: [...products, privateProduct] });
+  try {
+    for (const path of ['/product/private-carton', '/product/30']) {
+      await open(qa.page, path, 'Продуктът не е намерен');
+      assert.equal(await qa.page.getByText(privateProduct.name, { exact: true }).count(), 0);
+      assert.equal(await qa.page.locator('meta[name="robots"]').getAttribute('content'), 'noindex, follow');
+      assert.equal(await qa.page.locator('script[type="application/ld+json"]').evaluateAll(scripts => scripts.some(script => script.textContent.includes('"@type":"Product"'))), false);
+    }
+    await open(qa.page, '/product/ramen');
+    await qa.page.getByRole('heading', { name: products[2].name, exact: true, level: 1 }).waitFor();
+    assert.ok(qa.requests.filter(r => r.table === 'products').every(r => new URL(r.url).searchParams.get('visibility') === 'eq.retail'));
+    assert.deepEqual(qa.errors, []);
+  } finally { await qa.close(); }
+});
 
 test('profile read: temporary failure offers retry and preserves the saved company cart', async () => {
   const qa = await setup({ cart: basket(), failedProfile: true });

@@ -22,8 +22,8 @@ const siteUrl = () => import.meta.env.VITE_SITE_URL || DEFAULT_SITE_URL;
 // proofs or authentication codes from query parameters into metadata.
 export function getRouteSEO(pathname: string): SEOProps {
   const privatePage = /^\/(admin|login|cart|checkout|order-success|track-order|leave-review)(\/|$)/.test(pathname)
-    || /^\/b2b\/(apply|register|login|dashboard|products|product|quick-order|cart|checkout|orders|documents)(\/|$)/.test(pathname);
-  const publicPage = /^\/$|^\/(products|categories|about|faq|blog|shipping|payment|returns|privacy|terms|b2b)\/?$/.test(pathname)
+    || /^\/b2b(\/|$)/.test(pathname);
+  const publicPage = /^\/$|^\/(products|categories|about|faq|blog|shipping|payment|returns|privacy|terms)\/?$/.test(pathname)
     || /^\/(product|category|blog)\/[^/]+\/?$/.test(pathname);
   const title = pathname.startsWith('/admin') ? 'Администратор | K-FOOD'
     : pathname.startsWith('/b2b/') ? 'B2B портал | K-FOOD'

@@ -1,20 +1,16 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { useB2B } from '@/contexts/B2BContext';
 
 export default function B2BLoginPage() {
-  const { loginB2B, companyId: alreadyLoggedIn } = useB2B();
-  const navigate = useNavigate();
+  const { loginB2B, company } = useB2B();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  if (alreadyLoggedIn) {
-    navigate('/b2b/dashboard', { replace: true });
-    return null;
-  }
+  if (company?.status === 'active') return <Navigate to="/b2b/dashboard" replace />;
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,6 +127,9 @@ export default function B2BLoginPage() {
               <Link to="/b2b/register" className="text-emerald-600 hover:underline font-medium">
                 Активирайте акаунта си
               </Link>
+            </p>
+            <p className="text-xs text-gray-400">
+              <Link to="/b2b/apply" className="text-emerald-600 hover:underline font-medium">Кандидатствайте за B2B партньорство</Link>
             </p>
             <p className="text-xs text-gray-400">
               Забравена парола? Свържете се с вашия акаунт мениджър.

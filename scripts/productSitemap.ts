@@ -38,7 +38,7 @@ export async function fetchSitemapProducts(options: SourceOptions, fetcher: type
   let expectedTotal: number | null = null;
   for (let offset = 0; offset <= 50_000;) {
     const url = new URL('/rest/v1/products', options.supabaseUrl);
-    url.search = new URLSearchParams({ select: 'id,slug,updated_at,created_at', order: 'id.asc', limit: String(pageSize), offset: String(offset) }).toString();
+    url.search = new URLSearchParams({ select: 'id,slug,updated_at,created_at', visibility: 'eq.retail', order: 'id.asc', limit: String(pageSize), offset: String(offset) }).toString();
     const response = await fetcher(url, {
       headers: { apikey: options.anonKey, Authorization: `Bearer ${options.anonKey}`, Accept: 'application/json', Prefer: 'count=exact' }, signal,
     });
