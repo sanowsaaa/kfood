@@ -108,6 +108,7 @@ test('inventory fetching follows pagination and uses public fields only', async 
   const rows = await fetchSitemapProducts({supabaseUrl:'https://example.supabase.co',anonKey:'public-test-key'},fetcher);
   assert.equal(rows.length,1001); assert.equal(calls[1].url.searchParams.get('offset'),'1000');
   assert.equal(calls[0].url.searchParams.get('select'),'id,slug,updated_at,created_at');
+  assert.equal(calls[0].url.searchParams.get('visibility'),'eq.retail');
   assert.equal(calls[0].options.headers.apikey,'public-test-key');
   assert.ok(productSitemap(rows).includes('/product/last-product'));
 });

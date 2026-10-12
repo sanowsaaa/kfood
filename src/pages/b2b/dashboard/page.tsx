@@ -56,7 +56,7 @@ export default function B2BDashboardPage() {
     if (!companyId) return { orders: [] as Order[], products: [] as B2BProduct[], orderCount: 0 };
     const [ordersRes, productsRes] = await Promise.all([
       supabase.from('orders').select('id, order_number, total_amount, status, created_at', { count: 'exact' }).eq('b2b_company_id', companyId).order('created_at', { ascending: false }).limit(10).abortSignal(signal),
-      supabase.from('products').select('id, name, price, wholesale_price, carton_price, image, category, sku, stock, in_stock, moq, moq_unit, pieces_per_carton, slug').order('category').order('name').abortSignal(signal),
+      supabase.rpc('b2b_catalog', {}, { get: true }).select('id, name, price, wholesale_price, carton_price, image, category, sku, stock, in_stock, moq, moq_unit, pieces_per_carton, slug').order('category').order('name').abortSignal(signal),
     ]);
     if (ordersRes.error) throw ordersRes.error;
     if (productsRes.error) throw productsRes.error;

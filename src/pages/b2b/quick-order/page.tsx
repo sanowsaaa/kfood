@@ -9,7 +9,7 @@ import B2BFooter from '@/pages/b2b/components/B2BFooter';
 import { maxPacks, packSize } from '@/utils/b2bCart';
 
 async function load(signal: AbortSignal): Promise<B2BProduct[]> {
-  const { data, error } = await supabase.from('products')
+  const { data, error } = await supabase.rpc('b2b_catalog', {}, { get: true })
     .select('id, name, description, price, wholesale_price, carton_price, image, category, badge, rating, reviews, in_stock, stock, weight, volume, sku, slug, moq, moq_unit, pieces_per_carton')
     .order('category').order('name').abortSignal(signal);
   if (error) throw error;

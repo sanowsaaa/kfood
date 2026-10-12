@@ -17,7 +17,6 @@ Allow: /blog
 Allow: /blog/
 Allow: /about
 Allow: /faq
-Allow: /b2b
 Allow: /shipping
 Allow: /payment
 Allow: /returns

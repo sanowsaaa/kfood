@@ -1,5 +1,4 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { createClient } from '@supabase/supabase-js';
 
 const DOMAIN = 'https://k-foodvelikotarnovo.com';
 
@@ -47,7 +46,7 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
-serve(async (req: Request) => {
+Deno.serve(async (req: Request) => {
   const origin = req.headers.get('origin');
   const corsHeaders = getCorsHeaders(origin);
 
@@ -63,12 +62,13 @@ serve(async (req: Request) => {
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     );
 
     const { data: products, error } = await supabase
       .from('products')
       .select('id, name, slug, updated_at, created_at')
+      .eq('visibility', 'retail')
       .order('id', { ascending: true });
 
     if (error) throw error;

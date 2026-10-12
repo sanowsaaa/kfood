@@ -49,6 +49,7 @@ export default function ProductDetail() {
     if (!slugOrId || slugOrId === ':id') return { product: null, related: [] };
     const numeric = /^\d+$/.test(slugOrId) && Number.isSafeInteger(Number(slugOrId));
     const result = await supabase.from('products').select(PUBLIC_PRODUCT_FIELDS)
+      .eq('visibility', 'retail')
       .eq(numeric ? 'id' : 'slug', numeric ? Number(slugOrId) : slugOrId).abortSignal(signal).maybeSingle();
     if (result.error) throw result.error;
     if (!result.data) return { product: null, related: [] };

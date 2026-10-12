@@ -18,7 +18,7 @@ export default function B2BProductDetailPage() {
   const load = useCallback(async (signal: AbortSignal): Promise<B2BProduct | null> => {
     if (!slugOrId) return null;
     const query = () => supabase
-      .from('products')
+      .rpc('b2b_catalog', {}, { get: true })
       .select('id, name, description, price, wholesale_price, carton_price, image, category, badge, rating, reviews, in_stock, stock, weight, volume, sku, slug, moq, moq_unit, pieces_per_carton');
     const bySlug = await query().eq('slug', slugOrId).abortSignal(signal).maybeSingle();
     if (bySlug.error) throw bySlug.error;
