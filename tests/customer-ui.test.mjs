@@ -43,7 +43,7 @@ async function setup(options = {}) {
     }
   }, options);
   const requests = [], errors = [];
-  const rows = structuredClone(options.products || products);
+  const rows = structuredClone(options.products || products).map(product => ({ visibility: 'retail', ...product }));
   let readFailure = options.readFailure;
   let creationFailure = options.creationFailure;
   let stateIndex = 0;
@@ -75,11 +75,12 @@ async function setup(options = {}) {
       if (readFailure && table === 'products') return reply({ code: '42501', message: 'denied' }, 403);
       if (method !== 'GET') return options.writeFailure ? reply({ code: '42501', message: 'denied' }, 403) : reply(null, 201);
       let data = table === 'products' ? rows : table === 'blog_posts' ? structuredClone(blogPosts) : [];
-      for (const field of ['id', 'slug', 'category']) {
+      for (const field of ['id', 'slug', 'category', 'visibility']) {
         const filter = url.searchParams.get(field);
         if (filter?.startsWith('eq.')) data = data.filter(row => String(row[field]) === filter.slice(3));
         if (filter?.startsWith('neq.')) data = data.filter(row => String(row[field]) !== filter.slice(4));
         if (filter?.startsWith('in.(')) data = data.filter(row => filter.slice(4, -1).split(',').includes(String(row[field])));
+        if (filter?.startsWith('not.in.(')) data = data.filter(row => !filter.slice(8, -1).split(',').includes(String(row[field])));
       }
       if (url.searchParams.get('in_stock')) data = data.filter(row => row.in_stock);
       if (url.searchParams.get('stock') === 'gt.0') data = data.filter(row => row.stock > 0);
@@ -668,8 +669,14 @@ test('SEO missing pages/resources are noindex and recover to indexable public pa
       assert.equal(meta.graph.some(item => item['@type'] === 'Product' || item['@type'] === 'Article'), false);
     }
     await spaNavigate(qa.page, '/b2b');
+    await qa.page.waitForURL(base + '/b2b/login');
+    await qa.page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content?.startsWith('noindex,'));
+    assert.equal((await metadata(qa.page)).canonical[0], 'https://k-foodvelikotarnovo.com/b2b/login');
+    assert.equal(qa.requests.some(request => request.table === 'b2b_catalog'), false);
+    await spaNavigate(qa.page, '/products');
+    await qa.page.getByRole('heading', { name: 'Корейска Храна Онлайн', exact: true }).waitFor();
     await qa.page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content?.startsWith('index,'));
-    assert.equal((await metadata(qa.page)).canonical[0], 'https://k-foodvelikotarnovo.com/b2b');
+    assert.equal((await metadata(qa.page)).canonical[0], 'https://k-foodvelikotarnovo.com/products');
     assert.deepEqual(qa.errors, []);
   } finally { await qa.close(); }
 });
@@ -761,6 +768,39 @@ test('catalog: denied reads show a retry instead of a false empty store and reco
     assert.equal(await qa.page.getByText('Няма намерени продукти', { exact: true }).count(), 0);
     qa.recoverRead(); await qa.page.getByRole('button', { name: 'Опитай отново', exact: true }).click();
     await qa.page.getByRole('link', { name: products[0].name, exact: true }).waitFor(); assert.deepEqual(qa.errors, []);
+  } finally { await qa.close(); }
+});
+
+test('retail channels: administrator-visible wholesale and hidden products cannot enter cart recommendations', async () => {
+  const privateProducts = ['wholesale', 'hidden'].map((visibility, index) => ({ ...products[1], id: 91 + index, name: `Private ${visibility} fixture`, slug: `private-${visibility}`, rating: 5, visibility }));
+  const qa = await setup({ products: [...products, ...privateProducts], cart: [{ ...products[0], quantity: 3 }] });
+  try {
+    await ready(qa.page, '/cart', 'Количка');
+    await qa.page.getByText('Проверяваме цените и наличностите…', { exact: true }).waitFor({ state: 'hidden' });
+    await qa.page.getByRole('link', { name: products[1].name, exact: true }).first().waitFor();
+    for (const product of privateProducts) assert.equal(await qa.page.getByText(product.name, { exact: true }).count(), 0);
+    const reads = qa.requests.filter(r => r.table === 'products' && r.method === 'GET');
+    assert(reads.length >= 2);
+    assert(reads.every(r => new URL(r.url).searchParams.get('visibility') === 'eq.retail'));
+    assert.deepEqual(qa.errors, []);
+  } finally { await qa.close(); }
+});
+
+for (const visibility of ['wholesale', 'hidden']) test(`retail channels: an existing cart item changed to ${visibility} cannot proceed in an administrator session`, async () => {
+  const formerRetail = { ...products[0], visibility };
+  const qa = await setup({ products: [formerRetail, ...products.slice(1)], cart: [{ ...products[0], quantity: 3 }] });
+  try {
+    await ready(qa.page, '/cart', 'Количка');
+    await qa.page.getByText('Проверяваме цените и наличностите…', { exact: true }).waitFor({ state: 'hidden' });
+    await qa.page.getByRole('alert').filter({ hasText: 'Някои продукти' }).waitFor();
+    const pay = qa.page.getByRole('button', { name: 'Поръчай и плати', exact: true });
+    for (const button of await pay.all()) assert(await button.isDisabled());
+    const stored = await qa.page.evaluate(() => JSON.parse(localStorage.getItem('cart')));
+    assert.equal(stored[0].in_stock, false);
+    assert.equal(stored[0].stock, 0);
+    assert.equal(stored[0].quantity, 3);
+    assert.equal(qa.requests.filter(r => r.name === 'create-checkout').length, 0);
+    assert.deepEqual(qa.errors, []);
   } finally { await qa.close(); }
 });
 

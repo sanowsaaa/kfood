@@ -285,6 +285,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const { data, error } = await supabase
         .from('products')
         .select('id, price, name, in_stock, stock, slug')
+        .eq('visibility', 'retail')
         .in('id', ids).abortSignal(AbortSignal.timeout(20000));
       if (error || !data) throw new Error('Не успяхме да проверим цените и наличностите. Опитайте отново.');
       if (revision !== priceRevision.current || signature !== cartSignature(itemsRef.current))

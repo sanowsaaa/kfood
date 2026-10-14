@@ -78,7 +78,7 @@ const CartPage = () => {
     let current = true;
     const fetchRecommended = async () => {
       const cartIds = cartItems.map(i => i.id);
-      let query = supabase.from('products').select('id, name, price, image, category, rating, in_stock, stock, slug').eq('in_stock', true).gt('stock', 0).limit(6);
+      let query = supabase.from('products').select('id, name, price, image, category, rating, in_stock, stock, slug').eq('visibility', 'retail').eq('in_stock', true).gt('stock', 0).limit(6);
       if (cartIds.length > 0) query = query.not('id', 'in', `(${cartIds.join(',')})`);
       const { data, error } = await query.order('rating', { ascending: false });
       if (current) setRecommended(error ? [] : (data || []).slice(0, 4));

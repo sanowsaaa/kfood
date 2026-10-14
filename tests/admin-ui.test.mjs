@@ -31,6 +31,7 @@ async function setup(options = {}) {
   const requests = []; const errors = [];
   const rows = { products: [structuredClone(product)], orders: [structuredClone(order)], blog_posts: [structuredClone(post)], reviews: [structuredClone(review)], b2b_companies: [structuredClone(company)], b2b_applications: [structuredClone(application)], b2b_pricing_tiers: [], b2b_company_contacts: [], b2b_company_addresses: [], b2b_order_rules: [], b2b_payment_rules: [], b2b_documents: [], b2b_notifications: [] };
   if (options.orders) rows.orders = structuredClone(options.orders);
+  rows.products.forEach(row => Object.assign(row, { visibility: 'retail', b2b_enabled: true, edit_version: 0 }));
   let authFailure = options.authFailure;
   const page = await context.newPage();
   page.setDefaultTimeout(10000);
@@ -72,6 +73,21 @@ async function setup(options = {}) {
       requests.push({ table: 'products', method: 'GET', body: null, url: url.href });
       if (options.readFailure === 'products') return reply({ code: '42501', message: 'denied' }, 403);
       return reply(rows.products);
+    }
+    if (/\/rest\/v1\/rpc\/admin_(update|delete)_product$/.test(url.pathname)) {
+      const name = url.pathname.split('/').at(-1), body = request.postDataJSON();
+      requests.push({ table: 'products', rpc: name, method: request.method(), body, url: url.href });
+      if (options.delay) await new Promise(resolve => setTimeout(resolve, options.delay));
+      if (options.writeFailure) return reply({ code: 'PGRST116', message: '0 rows' }, 406);
+      const row = rows.products.find(item => item.id === body.p_product_id);
+      if (!row) return reply({ code: 'PT404', message: 'PRODUCT_NOT_FOUND' }, 404);
+      if (body.p_expected_version !== row.edit_version) return reply({ code: 'PT409', message: 'PRODUCT_CHANGED' }, 409);
+      if (name === 'admin_delete_product') {
+        rows.products = rows.products.filter(item => item !== row);
+        return reply({ id: row.id });
+      }
+      Object.assign(row, body.p_changes, { edit_version: row.edit_version + 1 });
+      return reply(row);
     }
     if (url.pathname.includes('/rest/v1/')) {
       const table = url.pathname.split('/').at(-1); const method = request.method();
@@ -217,10 +233,62 @@ test('products: same-tick double clicks submit once and cannot close a pending d
   try {
     await ready(page, '/admin'); await page.getByTitle('Редактирай').first().click();
     const dialog = page.getByRole('dialog');
+    await dialog.locator('input[type="text"]').first().fill('Една потвърдена редакция');
     await sameTickDoubleClick(dialog.getByRole('button', { name: 'Запази промените' }));
     await page.keyboard.press('Escape'); assert.equal(await dialog.count(), 1);
     await page.getByText('Промените са запазени.', { exact: true }).waitFor();
     assert.equal(writes(requests, 'products').length, 1);
+  } finally { await context.close(); }
+});
+
+test('products: a stale editor preserves the draft and never restores stock consumed by a newer update', async () => {
+  const { page, context, requests, rows, errors } = await setup();
+  try {
+    await ready(page, '/admin');
+    await page.getByTitle('Редактирай').first().click();
+    const dialog = page.getByRole('dialog');
+    await dialog.locator('textarea').fill('Запазена чернова при конфликт');
+    Object.assign(rows.products[0], { stock: 96, edit_version: 1 });
+    await dialog.getByRole('button', { name: 'Запази промените', exact: true }).click();
+    await dialog.getByRole('alert').filter({ hasText: 'Продуктът е променен' }).waitFor();
+    assert.equal(await dialog.locator('textarea').inputValue(), 'Запазена чернова при конфликт');
+    assert.equal(rows.products[0].stock, 96);
+    assert.equal(rows.products[0].edit_version, 1);
+    assert.equal(writes(requests, 'products').length, 1);
+    assert.deepEqual(writes(requests, 'products')[0].body, { p_product_id: 17, p_expected_version: 0, p_changes: { description: 'Запазена чернова при конфликт' } });
+    assert.deepEqual(errors, []);
+  } finally { await context.close(); }
+});
+
+test('products: disabling B2B keeps retail publication, alternative price and stock unchanged', async () => {
+  const { page, context, requests, rows, errors } = await setup();
+  try {
+    rows.products[0].price_euro = 7.77;
+    await ready(page, '/admin');
+    await page.getByTitle('Редактирай').first().click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByRole('checkbox', { name: /^Показвай в B2B каталога/ }).uncheck();
+    assert(await dialog.getByRole('checkbox', { name: /^Показвай в магазина на дребно/ }).isChecked());
+    await dialog.getByRole('button', { name: 'Запази промените', exact: true }).click();
+    await page.getByText('Промените са запазени.', { exact: true }).waitFor();
+    assert.deepEqual(writes(requests, 'products')[0].body, { p_product_id: 17, p_expected_version: 0, p_changes: { b2b_enabled: false } });
+    assert.equal(rows.products[0].visibility, 'retail');
+    assert.equal(rows.products[0].price_euro, 7.77);
+    assert.equal(rows.products[0].stock, 100);
+    assert.deepEqual(errors, []);
+  } finally { await context.close(); }
+});
+
+test('products: an unchanged editor closes without sending a write', async () => {
+  const { page, context, requests, errors } = await setup();
+  try {
+    await ready(page, '/admin');
+    await page.getByTitle('Редактирай').first().click();
+    const dialog = page.getByRole('dialog');
+    await dialog.getByRole('button', { name: 'Запази промените', exact: true }).click();
+    await dialog.waitFor({ state: 'hidden' });
+    assert.equal(writes(requests, 'products').length, 0);
+    assert.deepEqual(errors, []);
   } finally { await context.close(); }
 });
 
