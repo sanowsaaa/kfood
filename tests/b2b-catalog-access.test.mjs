@@ -27,7 +27,7 @@ before(async () => {
     values (30,'Synthetic wholesale only','private-carton',9,'Test','wholesale',6,72,1,12,2);
     insert into b2b_pricing_tiers(name) values ('Synthetic partner tier');`);
   await db.exec(await readFile(new URL('../supabase/migrations/20261014134245_catalog_channels_and_admin_concurrency.sql',import.meta.url),'utf8'));
-  await db.exec(await readFile(new URL('../supabase/migrations/20261014134432_finalize_catalog_admin_writes.sql',import.meta.url),'utf8'));
+  await db.exec(await readFile(new URL('../supabase/migrations/20261014201050_finalize_catalog_admin_writes.sql',import.meta.url),'utf8'));
 });
 after(async () => { await db?.close(); });
 
