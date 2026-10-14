@@ -43,7 +43,7 @@ before(async()=>{
     select setval('products_id_seq',30);`);
   baseline=(await db.query('select to_jsonb(p) r from products p order by id')).rows.map(x=>x.r);
   baselineFunctions=(await db.query("select p.oid::regprocedure::text signature,pg_get_functiondef(p.oid) definition from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname in ('public','private')")).rows;
-  await db.exec(await readFile(new URL('../supabase/migrations/20261014130805_catalog_channels_and_admin_concurrency.sql',import.meta.url),'utf8'));
+  await db.exec(await readFile(new URL('../supabase/migrations/20261014134245_catalog_channels_and_admin_concurrency.sql',import.meta.url),'utf8'));
   await assert.rejects(staff(async tx=>{
     await tx.query("update products set description='Legacy editor',stock=100 where id=1 returning id");
     await tx.query("insert into products(name,price,category) values('Legacy Add',4,'Test') returning id");
@@ -58,7 +58,7 @@ before(async()=>{
         'partner@example.invalid','0899000000',JSON.stringify({city:'Sofia',address:'Test'}),'']);
   }),/PRODUCT_UNAVAILABLE/);
 
-  await db.exec(await readFile(new URL('../supabase/migrations/20261014131812_finalize_catalog_admin_writes.sql',import.meta.url),'utf8'));
+  await db.exec(await readFile(new URL('../supabase/migrations/20261014134432_finalize_catalog_admin_writes.sql',import.meta.url),'utf8'));
 });
 after(async()=>{await db?.close();});
 
