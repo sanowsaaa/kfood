@@ -50,6 +50,14 @@ before(async()=>{
     compatibilityChecked=true;
     throw new Error('ROLLBACK_COMPATIBILITY_PROBE');
   }),/ROLLBACK_COMPATIBILITY_PROBE/);
+  // During the compatible phase a legacy nullable visibility must still fail closed.
+  await assert.rejects(db.transaction(async tx=>{
+    await tx.query('update products set visibility=null where id=1');
+    await tx.query('select b2b_create_request($1,$2,$3,$4,$5::jsonb,$6,$7,$8::jsonb,$9)',
+      [partner,company,randomUUID(),hash('null-visibility'),JSON.stringify([{id:1,quantity:1}]),
+        'partner@example.invalid','0899000000',JSON.stringify({city:'Sofia',address:'Test'}),'']);
+  }),/PRODUCT_UNAVAILABLE/);
+
   await db.exec(await readFile(new URL('../supabase/migrations/20261014131812_finalize_catalog_admin_writes.sql',import.meta.url),'utf8'));
 });
 after(async()=>{await db?.close();});

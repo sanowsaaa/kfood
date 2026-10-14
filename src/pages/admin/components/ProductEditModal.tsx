@@ -51,7 +51,15 @@ export default function ProductEditModal({ product, onClose, onSuccess }: Produc
   const submitLock = useRef(createActionLock());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const errorRef = useRef<HTMLParagraphElement>(null);
   const dialogRef = useAdminDialog(true, saving, onClose);
+
+  useEffect(() => {
+    if (error) {
+      errorRef.current?.focus({ preventScroll: true });
+      errorRef.current?.scrollIntoView({ block: 'center' });
+    }
+  }, [error]);
 
   useEffect(() => {
     scrollToTop();
@@ -99,7 +107,7 @@ export default function ProductEditModal({ product, onClose, onSuccess }: Produc
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
           <fieldset disabled={saving} className="min-w-0">
-          {error && <p role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</p>}
+          {error && <p ref={errorRef} tabIndex={-1} role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</p>}
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>

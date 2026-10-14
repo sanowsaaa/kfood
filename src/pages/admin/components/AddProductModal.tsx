@@ -52,7 +52,15 @@ export default function AddProductModal({ onClose, onSuccess }: AddProductModalP
   const submitLock = useRef(createActionLock());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const errorRef = useRef<HTMLDivElement>(null);
   const dialogRef = useAdminDialog(true, saving, onClose);
+
+  useEffect(() => {
+    if (error) {
+      errorRef.current?.focus({ preventScroll: true });
+      errorRef.current?.scrollIntoView({ block: 'center' });
+    }
+  }, [error]);
 
   useEffect(() => {
     scrollToTop();
@@ -123,7 +131,7 @@ export default function AddProductModal({ onClose, onSuccess }: AddProductModalP
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
           <fieldset disabled={saving} className="min-w-0">
           {error && (
-            <div role="alert" className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+            <div ref={errorRef} tabIndex={-1} role="alert" className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
               <i aria-hidden="true" className="ri-error-warning-fill text-red-600 text-xl flex-shrink-0 mt-0.5"></i>
               <p className="text-sm text-red-800">{error}</p>
             </div>
