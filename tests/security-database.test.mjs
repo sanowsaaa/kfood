@@ -21,7 +21,7 @@ before(async()=>{
   await db.exec(await readFile('supabase/migrations/20261011190834_admin_payment_truth.sql','utf8'));
   await db.exec(await readFile('supabase/migrations/20261012104200_b2b_catalog_privacy.sql','utf8'));
   await db.exec(await readFile('supabase/migrations/20261014134245_catalog_channels_and_admin_concurrency.sql','utf8'));
-  await db.exec(await readFile('supabase/migrations/20261014134432_finalize_catalog_admin_writes.sql','utf8'));
+  await db.exec(await readFile('supabase/migrations/20261014201050_finalize_catalog_admin_writes.sql','utf8'));
   await adminCall(tx=>tx.query("insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types) values('b2b-documents','b2b-documents',false,10485760,array['application/pdf'])"));
 });
 after(async()=>{await db?.close();});
