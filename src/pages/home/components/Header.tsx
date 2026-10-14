@@ -51,7 +51,7 @@ export default function Header() {
       <div className="bg-brand-primary text-white text-center py-1.5 sm:py-2 md:py-2.5 text-[11px] md:text-[13px] font-medium tracking-wide overflow-hidden">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 flex items-center justify-center gap-2 animate-pulse-slow">
           <i aria-hidden="true" className="ri-percent-line text-sm md:text-base"></i>
-          <span>Намаление 5% за поръчки над 50€</span>
+          <span>5% от €50 · 10% от €100</span>
           <span className="hidden sm:inline text-white/70">|</span>
           <span className="hidden sm:inline">Намаление 10% за поръчки над 100€</span>
         </div>

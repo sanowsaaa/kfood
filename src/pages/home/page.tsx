@@ -6,7 +6,6 @@ import RecentlyViewed from './components/RecentlyViewed';
 import AboutSection from './components/AboutSection';
 import KoreanCulture from './components/KoreanCulture';
 import ReviewsSection from './components/ReviewsSection';
-import PartnersSection from './components/PartnersSection';
 import FAQSection from './components/FAQSection';
 import Newsletter from './components/Newsletter';
 import Footer from './components/Footer';
@@ -39,7 +38,6 @@ export default function Home() {
       <AboutSection />
       <KoreanCulture />
       <ReviewsSection />
-      <PartnersSection />
       <FAQSection />
       <Newsletter />
       </main>

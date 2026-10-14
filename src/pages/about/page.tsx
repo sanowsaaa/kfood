@@ -10,7 +10,7 @@ export default function AboutPage() {
   useSEO({
     title: 'За K-FOOD | Корейска Храна България — Вносител, Доставчик и B2B Партньор',
     description: 'Запознай се с K-FOOD — магазин за корейска храна и азиатски вкусове във Велико Търново, с онлайн поръчки и B2B партньорства в България.',
-    keywords: 'K-FOOD за нас, корейска храна България вносител, корейски продукти доставчик, B2B корейска храна България, корейски ресторант доставчик, корейски супермаркет партньор, азиатски храни дистрибуция, Sunrise Food гъби',
+    keywords: 'K-FOOD за нас, корейска храна България вносител, корейски продукти доставчик, B2B корейска храна България, корейски ресторант доставчик, корейски супермаркет партньор, азиатски храни дистрибуция',
     canonical: '/about',
     ogType: 'website',
     schema: {
@@ -164,12 +164,12 @@ export default function AboutPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-12">
             {[
-              { icon: 'ri-heart-3-fill', color: 'emerald', title: 'Нашата Мисия', text: 'Да донесем най-доброто от корейската кулинарна традиция до българските домове и бизнеси, като запазим автентичността и качеството на всеки продукт.' },
-              { icon: 'ri-eye-fill', color: 'teal', title: 'Нашата Визия', text: 'Да бъдем утвърденият специализиран магазин и вносител на корейска храна в България, като изградим доверителни отношения с нашите клиенти и партньори.' },
+              { icon: 'ri-heart-3-fill', gradientClass: 'from-emerald-100 to-emerald-200', textClass: 'text-emerald-600', backgroundClass: 'bg-emerald-100', title: 'Нашата Мисия', text: 'Да донесем най-доброто от корейската кулинарна традиция до българските домове и бизнеси, като запазим автентичността и качеството на всеки продукт.' },
+              { icon: 'ri-eye-fill', gradientClass: 'from-teal-100 to-teal-200', textClass: 'text-teal-600', backgroundClass: 'bg-teal-100', title: 'Нашата Визия', text: 'Да бъдем утвърденият специализиран магазин и вносител на корейска храна в България, като изградим доверителни отношения с нашите клиенти и партньори.' },
             ].map(item => (
               <div key={item.title} className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-lg">
-                <div className={`w-12 h-12 sm:w-16 sm:h-16 bg-${item.color}-100 rounded-full flex items-center justify-center mb-4 sm:mb-6`}>
-                  <i className={`${item.icon} text-${item.color}-600 text-xl sm:text-2xl`}></i>
+                <div className={`w-12 h-12 sm:w-16 sm:h-16 ${item.backgroundClass} rounded-full flex items-center justify-center mb-4 sm:mb-6`}>
+                  <i className={`${item.icon} ${item.textClass} text-xl sm:text-2xl`}></i>
                 </div>
                 <h3 className="text-lg sm:text-2xl font-bold text-gray-900 mb-2 sm:mb-4">{item.title}</h3>
                 <p className="text-gray-600 text-sm sm:text-base leading-relaxed">{item.text}</p>
@@ -189,13 +189,13 @@ export default function AboutPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8">
             {[
-              { icon: 'ri-shield-check-fill', color: 'emerald', title: 'Качество', text: 'Всеки продукт е внимателно подбран и тестован, за да гарантираме най-високото качество.' },
-              { icon: 'ri-star-fill', color: 'teal', title: 'Автентичност', text: 'Предлагаме само автентични корейски продукти от утвърдени брандове.' },
-              { icon: 'ri-customer-service-2-fill', color: 'cyan', title: 'Обслужване', text: 'Нашите клиенти и партньори са в центъра на всичко, което правим.' },
+              { icon: 'ri-shield-check-fill', gradientClass: 'from-emerald-100 to-emerald-200', textClass: 'text-emerald-600', backgroundClass: 'bg-emerald-100', title: 'Качество', text: 'Всеки продукт е внимателно подбран и тестован, за да гарантираме най-високото качество.' },
+              { icon: 'ri-star-fill', gradientClass: 'from-teal-100 to-teal-200', textClass: 'text-teal-600', backgroundClass: 'bg-teal-100', title: 'Автентичност', text: 'Подбираме корейски и азиатски продукти от утвърдени брандове.' },
+              { icon: 'ri-customer-service-2-fill', gradientClass: 'from-cyan-100 to-cyan-200', textClass: 'text-cyan-600', backgroundClass: 'bg-cyan-100', title: 'Обслужване', text: 'Нашите клиенти и партньори са в центъра на всичко, което правим.' },
             ].map(item => (
               <div key={item.title} className="text-center group">
-                <div className={`w-14 h-14 sm:w-20 sm:h-20 bg-gradient-to-br from-${item.color}-100 to-${item.color}-200 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                  <i className={`${item.icon} text-${item.color}-600 text-xl sm:text-3xl`}></i>
+                <div className={`w-14 h-14 sm:w-20 sm:h-20 bg-gradient-to-br ${item.gradientClass} rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-6 group-hover:scale-110 transition-transform duration-300`}>
+                  <i className={`${item.icon} ${item.textClass} text-xl sm:text-3xl`}></i>
                 </div>
                 <h3 className="text-base sm:text-xl font-bold text-gray-900 mb-2 sm:mb-4">{item.title}</h3>
                 <p className="text-gray-600 text-xs sm:text-base leading-relaxed">{item.text}</p>
@@ -215,16 +215,16 @@ export default function AboutPage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8">
             {[
-              { icon: 'ri-user-3-fill', color: 'emerald', name: 'Атанас Атанасов', role: 'Управител', text: 'Атанас е визионерът зад K-FOOD — специализирания онлайн магазин и B2B доставчик на корейска храна в България.' },
-              { icon: 'ri-user-2-fill', color: 'teal', name: 'Росица Атанасова', role: 'Касиер', text: 'Росица отговаря за финансовото обслужване и плащанията в нашия корейски магазин онлайн.' },
-              { icon: 'ri-truck-fill', color: 'cyan', name: 'Мирослав Атанасов', role: 'Логистика', text: 'Мирослав управлява цялата логистика и доставките на нашия магазин за корейска храна.' },
+              { icon: 'ri-user-3-fill', gradientClass: 'from-emerald-100 to-emerald-200', textClass: 'text-emerald-600', backgroundClass: 'bg-emerald-100', name: 'Атанас Атанасов', role: 'Управител', text: 'Атанас е визионерът зад K-FOOD — специализирания онлайн магазин и B2B доставчик на корейска храна в България.' },
+              { icon: 'ri-user-2-fill', gradientClass: 'from-teal-100 to-teal-200', textClass: 'text-teal-600', backgroundClass: 'bg-teal-100', name: 'Росица Атанасова', role: 'Касиер', text: 'Росица отговаря за финансовото обслужване и плащанията в нашия корейски магазин онлайн.' },
+              { icon: 'ri-truck-fill', gradientClass: 'from-cyan-100 to-cyan-200', textClass: 'text-cyan-600', backgroundClass: 'bg-cyan-100', name: 'Мирослав Атанасов', role: 'Логистика', text: 'Мирослав управлява цялата логистика и доставките на нашия магазин за корейска храна.' },
             ].map(person => (
               <div key={person.name} className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 text-center hover:shadow-lg transition-shadow duration-300 border border-gray-100">
-                <div className={`w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-br from-${person.color}-100 to-${person.color}-200 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-6`}>
-                  <i className={`${person.icon} text-${person.color}-600 text-2xl sm:text-3xl`}></i>
+                <div className={`w-16 h-16 sm:w-24 sm:h-24 bg-gradient-to-br ${person.gradientClass} rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-6`}>
+                  <i className={`${person.icon} ${person.textClass} text-2xl sm:text-3xl`}></i>
                 </div>
                 <h3 className="text-base sm:text-xl font-bold text-gray-900 mb-1 sm:mb-2">{person.name}</h3>
-                <p className={`text-${person.color}-600 font-semibold mb-2 sm:mb-4 text-xs sm:text-sm`}>{person.role}</p>
+                <p className={`${person.textClass} font-semibold mb-2 sm:mb-4 text-xs sm:text-sm`}>{person.role}</p>
                 <p className="text-gray-600 text-xs sm:text-sm leading-relaxed">{person.text}</p>
               </div>
             ))}
@@ -242,14 +242,14 @@ export default function AboutPage() {
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-8">
             {[
-              { icon: 'ri-truck-fill', color: 'cyan', title: 'Бърза доставка', text: 'Доставяме в цялата страна с Econt и Speedy.' },
-              { icon: 'ri-price-tag-3-fill', color: 'teal', title: 'Конкурентни цени', text: 'Най-добрите цени на пазара благодарение на внимателния ни подбор.' },
-              { icon: 'ri-award-fill', color: 'emerald', title: 'Гарантирано качество', text: 'Всички продукти са сертифицирани и отговарят на европейските стандарти.' },
+              { icon: 'ri-truck-fill', gradientClass: 'from-cyan-100 to-cyan-200', textClass: 'text-cyan-600', backgroundClass: 'bg-cyan-100', title: 'Бърза доставка', text: 'Доставяме в цялата страна с Econt и Speedy.' },
+              { icon: 'ri-price-tag-3-fill', gradientClass: 'from-teal-100 to-teal-200', textClass: 'text-teal-600', backgroundClass: 'bg-teal-100', title: 'Конкурентни цени', text: 'Най-добрите цени на пазара благодарение на внимателния ни подбор.' },
+              { icon: 'ri-award-fill', gradientClass: 'from-emerald-100 to-emerald-200', textClass: 'text-emerald-600', backgroundClass: 'bg-emerald-100', title: 'Гарантирано качество', text: 'Всички продукти са сертифицирани и отговарят на европейските стандарти.' },
               { icon: 'ri-customer-service-fill', color: 'purple', title: '24/7 Поддръжка', text: 'Нашият екип е винаги на разположение за въпроси и консултации.' },
             ].map(item => (
               <div key={item.title} className="text-center">
-                <div className={`w-12 h-12 sm:w-16 sm:h-16 bg-${item.color}-100 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-4`}>
-                  <i className={`${item.icon} text-${item.color}-600 text-lg sm:text-2xl`}></i>
+                <div className={`w-12 h-12 sm:w-16 sm:h-16 ${item.backgroundClass} rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-4`}>
+                  <i className={`${item.icon} ${item.textClass} text-lg sm:text-2xl`}></i>
                 </div>
                 <h3 className="text-sm sm:text-lg font-bold text-gray-900 mb-1 sm:mb-2">{item.title}</h3>
                 <p className="text-gray-600 text-xs sm:text-sm">{item.text}</p>
@@ -259,79 +259,11 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Sunrise Food Partnership */}
-      <section className="py-10 sm:py-14 md:py-20 bg-white" id="partnerships">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-6 sm:mb-12">
-            <span className="inline-block bg-brand-blush text-brand-hover text-xs sm:text-sm font-semibold px-3 sm:px-4 py-1 sm:py-1.5 rounded-full mb-2 sm:mb-3 uppercase tracking-wide">
-              Официално Партньорство
-            </span>
-            <h2 className="text-xl sm:text-2xl md:text-4xl font-bold text-gray-900 mb-2 sm:mb-4">Нашите Партньори</h2>
-            <p className="text-base sm:text-xl text-gray-600 max-w-3xl mx-auto">Работим с проверени български производители</p>
-          </div>
-
-          <div className="bg-gradient-to-br from-brand-blush to-brand-blush rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 border border-brand-border">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-12 items-center">
-              <div>
-                <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
-                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-brand-primary rounded-xl sm:rounded-2xl flex items-center justify-center flex-shrink-0">
-                    <i className="ri-plant-fill text-white text-xl sm:text-3xl"></i>
-                  </div>
-                  <div>
-                    <h3 className="text-lg sm:text-2xl font-bold text-gray-900">Sunrise Food</h3>
-                    <p className="text-brand-primary font-semibold text-xs sm:text-sm">HACCP Сертифицирана Ферма</p>
-                  </div>
-                </div>
-                <p className="text-gray-700 text-sm sm:text-lg leading-relaxed mb-4 sm:mb-6">
-                  K-FOOD си сътрудничи пряко с <a href="https://sunrisefood.eu/" target="_blank" rel="noopener noreferrer" className="text-brand-primary font-bold hover:text-brand-hover underline">Sunrise Food</a> за доставка на прясна гъба кладница и шийтаке.
-                </p>
-
-                <div className="grid grid-cols-2 gap-2 sm:gap-4 mb-4 sm:mb-8">
-                  {[
-                    { icon: 'ri-award-fill', title: 'HACCP Сертифицирано', desc: 'Производство по най-високи стандарти' },
-                    { icon: 'ri-leaf-fill', title: 'Без Химикали', desc: 'Отглеждане без пестициди' },
-                    { icon: 'ri-time-fill', title: 'Доставка 24 часа', desc: 'От фермата до вас за максимална свежест' },
-                    { icon: 'ri-snowflake-fill', title: 'Хладилна Верига', desc: 'Постоянна температура 0–4°C' },
-                  ].map(item => (
-                    <div key={item.title} className="bg-white rounded-xl p-2.5 sm:p-4 border border-brand-border">
-                      <div className="w-7 h-7 sm:w-10 sm:h-10 bg-brand-petal rounded-lg flex items-center justify-center mb-1.5 sm:mb-3">
-                        <i className={`${item.icon} text-brand-primary text-sm sm:text-xl`}></i>
-                      </div>
-                      <h4 className="font-bold text-gray-900 text-[10px] sm:text-sm mb-0.5 sm:mb-1">{item.title}</h4>
-                      <p className="text-[10px] sm:text-xs text-gray-600">{item.desc}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex flex-wrap gap-2 sm:gap-3">
-                  <a href="tel:+359899897566" className="flex items-center gap-2 bg-brand-primary text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold hover:bg-brand-hover transition-colors whitespace-nowrap cursor-pointer text-xs sm:text-sm touch-target">
-                    <i className="ri-phone-fill text-sm sm:text-base"></i>Обади се
-                  </a>
-                  <a href="https://sunrisefood.eu/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 bg-white text-brand-primary px-4 sm:px-6 py-2.5 sm:py-3 rounded-xl font-semibold border-2 border-brand-primary hover:bg-brand-blush transition-colors whitespace-nowrap cursor-pointer text-xs sm:text-sm touch-target">
-                    <i className="ri-external-link-line text-sm sm:text-base"></i>Виж Sunrise Food
-                  </a>
-                </div>
-              </div>
-
-              <div className="relative">
-                <div className="rounded-xl sm:rounded-2xl overflow-hidden h-48 sm:h-80 lg:h-96">
-                  <img src="https://static.readdy.ai/image/658b459fcf05a7723f8029c45615de2f/c9006c7c1a57b2e203512e7966da42f2.png" alt="Прясна гъба кладница и шийтаке" className="w-full h-full object-cover object-center" />
-                </div>
-                <div className="absolute -bottom-2 -right-2 sm:-bottom-4 sm:-right-4 bg-brand-primary text-white rounded-xl sm:rounded-2xl p-2.5 sm:p-4 shadow-xl">
-                  <div className="text-lg sm:text-2xl font-bold">100%</div>
-                  <div className="text-[10px] sm:text-sm text-brand-petal">Прясно от фермата</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* CTA Section */}
       <section className="py-10 sm:py-14 md:py-20 bg-gradient-to-br from-brand-primary to-brand-primary text-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-xl sm:text-2xl md:text-4xl font-bold mb-3 sm:mb-6">Готови да опитате автентичната корейска храна?</h2>
-          <p className="text-sm sm:text-xl mb-4 sm:mb-8 opacity-90">Разгледайте нашата богата колекция от над 200 корейски продукта</p>
+          <p className="text-sm sm:text-xl mb-4 sm:mb-8 opacity-90">Разгледай корейските и азиатските вкусове в нашия каталог</p>
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 justify-center">
             <Link to="/products" className="bg-white text-brand-primary px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-bold hover:bg-gray-50 transition-colors cursor-pointer whitespace-nowrap inline-flex items-center justify-center text-sm sm:text-base touch-target">
               <i className="ri-shopping-bag-fill mr-2"></i>Разгледайте продуктите

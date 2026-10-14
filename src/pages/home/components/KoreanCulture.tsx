@@ -10,9 +10,9 @@ const CONTENT = {
     description:
       'K-pop (корейска поп музика) е глобален феномен, роден в Южна Корея. Групи като BTS, BLACKPINK, EXO и TWICE имат милиони фенове по целия свят. Корейската поп индустрия е известна с перфектните хореографии, визуалните концепции и дедикираните фен общности.',
     facts: [
-      { label: 'BTS', value: 'Над 40 млн. последователи в Twitter' },
-      { label: 'BLACKPINK', value: 'Първата K-pop група в Coachella' },
-      { label: 'Hallyu', value: 'Корейската култура в 100+ страни' },
+      { label: 'BTS', value: 'Музика и хореография' },
+      { label: 'BLACKPINK', value: 'Музика и визуален стил' },
+      { label: 'Hallyu', value: 'Корейската културна вълна' },
     ],
     image: 'https://readdy.ai/api/search-image?query=K-pop%20concert%20stage%20with%20colorful%20lights%20and%20energetic%20performance%2C%20Korean%20pop%20music%20aesthetic%2C%20vibrant%20neon%20colors%2C%20dynamic%20stage%20design%2C%20crowd%20atmosphere%2C%20modern%20entertainment%2C%20South%20Korean%20music%20culture%2C%20spectacular%20visual%20show&width=600&height=400&seq=kpop-culture-001&orientation=landscape',
     imageAlt: 'K-pop концерт',
@@ -23,9 +23,9 @@ const CONTENT = {
     description:
       'Корейските сериали (K-drama) са известни с емоционалните си истории, невероятната продукция и незабравимите герои. От романтични комедии до трилъри и исторически епоси — K-drama предлага нещо за всеки.',
     facts: [
-      { label: 'Squid Game', value: '#1 в Netflix в 94 страни' },
-      { label: 'Crash Landing', value: 'Най-гледан K-drama в историята' },
-      { label: 'Netflix', value: 'Инвестира $2.5 млрд. в K-content' },
+      { label: 'Squid Game', value: 'Трилър и социална драма' },
+      { label: 'Crash Landing', value: 'Романтична история' },
+      { label: 'Жанрове', value: 'Романтика, трилър, исторически' },
     ],
     image: 'https://readdy.ai/api/search-image?query=Korean%20drama%20filming%20set%20with%20beautiful%20cinematography%2C%20romantic%20Korean%20drama%20scene%2C%20elegant%20Korean%20actors%20in%20traditional%20and%20modern%20settings%2C%20cinematic%20lighting%2C%20emotional%20storytelling%20atmosphere%2C%20South%20Korean%20television%20production&width=600&height=400&seq=kdrama-culture-001&orientation=landscape',
     imageAlt: 'K-drama снимачна площадка',
@@ -34,10 +34,10 @@ const CONTENT = {
     icon: 'ri-ancient-gate-line',
     title: 'Корейски Традиции — Богато Наследство',
     description:
-      'Корейската култура е дълбоко вкоренена в конфуциански ценности — уважение към по-възрастните, семейни връзки и общностен дух. Традиционни празници като Чусок и Сеол се отбелязват с ритуали и специални ястия.',
+      'Корейската култура е дълбоко вкоренена в конфуциански ценности — уважение към по-възрастните, семейни връзки и общностен дух. Традиционни празници като Чусок и Сеоллал се отбелязват с ритуали и специални ястия.',
     facts: [
       { label: 'Чусок', value: 'Фестивал на реколтата — 3 дни' },
-      { label: 'Ханбок', value: 'Традиционно облекло 1600+ год.' },
+      { label: 'Ханбок', value: 'Традиционно корейско облекло' },
       { label: 'Тхеквондо', value: 'Олимпийски спорт от Корея' },
     ],
     image: 'https://readdy.ai/api/search-image?query=Traditional%20Korean%20culture%20with%20hanbok%20clothing%2C%20ancient%20Korean%20palace%20architecture%2C%20traditional%20Korean%20ceremony%2C%20colorful%20traditional%20costumes%2C%20Gyeongbokgung%20palace%20Seoul%2C%20cultural%20heritage%2C%20historical%20Korean%20traditions%2C%20vibrant%20ceremonial%20colors&width=600&height=400&seq=korean-tradition-001&orientation=landscape',
@@ -47,11 +47,11 @@ const CONTENT = {
     icon: 'ri-restaurant-2-line',
     title: 'Корейска Кухня — Вкус с Хиляди Години История',
     description:
-      'Корейската кухня е балансирана, ароматна и изключително разнообразна. Основана на ферментирали храни (кимчи, доенджан), пресни зеленчуци и пикантни подправки, тя е призната от UNESCO за нематериално културно наследство.',
+      'Корейската кухня е балансирана, ароматна и изключително разнообразна. Сред характерните ѝ вкусове са ферментирали храни като кимчи и доенджан, зеленчуци и пикантни подправки.',
     facts: [
-      { label: 'Кимчи', value: 'Над 200 вида — UNESCO' },
+      { label: 'Кимчи', value: 'Ферментирали зеленчуци' },
       { label: 'Корейско BBQ', value: 'Традиция за споделено хранене' },
-      { label: 'Рамен', value: '73+ вида само в K-FOOD' },
+      { label: 'Рамен', value: 'Нудли с различна лютивина' },
     ],
     image: 'https://readdy.ai/api/search-image?query=Authentic%20Korean%20cuisine%20spread%20with%20kimchi%2C%20bibimbap%2C%20Korean%20BBQ%2C%20tteokbokki%2C%20various%20banchan%20side%20dishes%2C%20colorful%20traditional%20Korean%20food%20presentation%2C%20wooden%20table%20setting%2C%20appetizing%20food%20photography%2C%20rich%20flavors%20and%20textures&width=600&height=400&seq=korean-cuisine-001&orientation=landscape',
     imageAlt: 'Автентична корейска кухня',

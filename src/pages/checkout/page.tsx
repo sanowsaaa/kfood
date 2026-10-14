@@ -131,7 +131,7 @@ export default function Checkout() {
       <main id="main-content" className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-10 pb-40 lg:pb-10">
         <Link to="/cart" className="mb-5 inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-red-700">← Обратно към количката</Link>
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-4 sm:mb-6">Завършване на поръчка</h1>
-        <p className="mb-5 text-sm leading-relaxed text-gray-600">Поръчвате без регистрация. В Stripe ще въведете адреса за доставка и ще изберете начин на плащане.</p>
+        <p className="mb-5 text-sm leading-relaxed text-gray-600">Поръчвате без регистрация. В Stripe ще въведете адреса за доставка и ще изберете начин на плащане. За Велико Търново поръчвайте само през Takeaway; поръчките през този сайт са за адреси извън града.</p>
         {checkingCart && <p role="status" className="mb-4 rounded-xl bg-white p-4 text-sm text-gray-700">Проверяваме цените и наличностите…</p>}
         {cartError && <div role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-900"><p>{cartError}</p><button type="button" onClick={() => setRevision(value => value + 1)} className="mt-2 min-h-11 font-semibold underline">Провери отново</button></div>}
 

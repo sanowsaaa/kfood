@@ -45,7 +45,7 @@ export default function PaymentPage() {
                     Всички цени се показват и плащат в <strong className="text-emerald-600">Евро (€)</strong>
                   </p>
                   <p className="text-gray-600 mt-2">
-                    Валутният курс се актуализира автоматично при плащането
+                    Преди потвърждение Stripe показва крайната сума за плащане в евро.
                   </p>
                 </div>
               </div>
