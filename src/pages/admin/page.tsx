@@ -1,3 +1,4 @@
+import { requireProductVersion, type ProductChannelFilter } from '@/utils/productAdmin';
 import { useAdminAction } from '@/hooks/useAdminAction';
 import { useAdminRead } from '@/hooks/useAdminRead';
 import { checkedData, confirmedRecord } from '@/utils/admin';
@@ -22,6 +23,7 @@ export default function AdminPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [channelFilter, setChannelFilter] = useState<ProductChannelFilter>('all');
   const [catalogFilter, setCatalogFilter] = useState<'all' | 'missing' | 'duplicate'>('all');
 
   useEffect(() => {
@@ -35,15 +37,24 @@ export default function AdminPage() {
   const handleDeleteProduct = async (id: string | number) => {
     if (action.pending || !confirm('Сигурни ли сте, че искате да изтриете този продукт?')) return;
     await action.run(`delete:${id}`, async () => {
-      confirmedRecord(await supabase.from('products').delete().eq('id', id).select('id').single(), id);
+      const product = products.find(p => String(p.id) === String(id));
+      if (!product) throw new Error('Продуктът не е в актуалния списък. Обновете данните.');
+      confirmedRecord(await supabase.rpc('admin_delete_product', {
+        p_product_id: id, p_expected_version: requireProductVersion(product),
+      }).single(), id);
       setProducts(current => current.filter(p => String(p.id) !== String(id)));
     }, 'Продуктът е изтрит.');
   };
 
   const handleToggleStock = async (id: string | number, currentStock: boolean) => {
     await action.run(`stock:${id}`, async () => {
-      confirmedRecord(await supabase.from('products').update({ in_stock: !currentStock }).eq('id', id).select('id').single(), id);
-      setProducts(current => current.map(p => String(p.id) === String(id) ? { ...p, in_stock: !currentStock } : p));
+      const product = products.find(p => String(p.id) === String(id));
+      if (!product) throw new Error('Продуктът не е в актуалния списък. Обновете данните.');
+      const updated = confirmedRecord<Product>(await supabase.rpc('admin_update_product', {
+        p_product_id: id, p_expected_version: requireProductVersion(product),
+        p_changes: { in_stock: !currentStock },
+      }).single(), id);
+      setProducts(current => current.map(p => String(p.id) === String(id) ? updated : p));
     }, 'Наличността е обновена.');
   };
 
@@ -64,6 +75,8 @@ export default function AdminPage() {
             <p className="text-gray-600 mt-1">Добавяйте, редактирайте и изтривайте продукти</p>
           </div>
           <div className="flex flex-wrap items-center gap-3">
+            <button type="button" disabled={!!action.pending || loading} onClick={fetchProducts}
+              className="rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-gray-800 disabled:opacity-50">Обнови списъка</button>
             <button disabled={!!action.pending || loading || !!loadError} onClick={() => setIsAddModalOpen(true)} className="bg-teal-600 hover:bg-teal-700 text-white px-6 py-3 rounded-lg font-medium transition-colors flex items-center gap-2 whitespace-nowrap cursor-pointer">
               <i aria-hidden="true" className="ri-add-line text-xl"></i> Добави продукт
             </button>
@@ -96,6 +109,17 @@ export default function AdminPage() {
           </div>
         </div>
 
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <label htmlFor="catalog-channel-filter" className="text-sm font-medium text-gray-700">Канал</label>
+          <select id="catalog-channel-filter" value={channelFilter} onChange={e => setChannelFilter(e.target.value as ProductChannelFilter)}
+            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900">
+            <option value="all">Всички канали</option>
+            <option value="both">Магазин + B2B</option>
+            <option value="retail">Само магазин</option>
+            <option value="b2b">Само B2B</option>
+            <option value="hidden">Скрити от двата каталога</option>
+          </select>
+        </div>
         <div className="mb-6 flex flex-wrap items-center gap-2">
           <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider mr-1">Каталожен №:</span>
           {([
@@ -131,6 +155,7 @@ export default function AdminPage() {
           loading={loading}
           searchQuery={searchQuery}
           catalogFilter={catalogFilter}
+          channelFilter={channelFilter}
           onToggleStock={handleToggleStock}
           onEdit={handleEditProduct}
           onDelete={handleDeleteProduct}

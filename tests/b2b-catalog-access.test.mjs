@@ -9,6 +9,10 @@ const member = fn => asRole(db, 'authenticated', partner, fn);
 const outsider = fn => asRole(db, 'authenticated', stranger, fn);
 const staff = fn => asRole(db, 'authenticated', admin, fn);
 const denied = fn => assert.rejects(fn, { code: '42501' });
+async function staffPatch(id,changes) {
+  const version=(await db.query('select edit_version from products where id=$1',[id])).rows[0].edit_version;
+  return staff(tx=>tx.query('select id from admin_update_product($1,$2,$3::jsonb)',[id,version,JSON.stringify(changes)]));
+}
 before(async () => {
   db = await database();
   await migrate(db);
@@ -22,6 +26,8 @@ before(async () => {
     insert into products(id,name,slug,price,category,visibility,wholesale_price,carton_price,moq,pieces_per_carton,cost_price)
     values (30,'Synthetic wholesale only','private-carton',9,'Test','wholesale',6,72,1,12,2);
     insert into b2b_pricing_tiers(name) values ('Synthetic partner tier');`);
+  await db.exec(await readFile(new URL('../supabase/migrations/20261014134245_catalog_channels_and_admin_concurrency.sql',import.meta.url),'utf8'));
+  await db.exec(await readFile(new URL('../supabase/migrations/20261014134432_finalize_catalog_admin_writes.sql',import.meta.url),'utf8'));
 });
 after(async () => { await db?.close(); });
 
@@ -96,13 +102,14 @@ test('pricing tiers are private, while existing approved-partner and administrat
 test('administrator product editing, visibility changes and deletion retain their existing permissions', async () => {
   assert.equal((await staff(tx => tx.query('select cost_price from admin_products() where id=30'))).rows.length, 1);
   assert.equal((await staff(tx => tx.query('select id from products where id=30'))).rows.length, 1);
-  assert.equal((await staff(tx => tx.query('update products set wholesale_price=7,cost_price=3 where id=30 returning id'))).rows.length, 1);
-  await staff(tx => tx.query("update products set visibility='retail' where id=30 returning id"));
+  assert.equal((await staffPatch(30,{wholesale_price:7,cost_price:3})).rows.length, 1);
+  await staffPatch(30,{visibility:'retail'});
   assert.equal((await anon(tx => tx.query('select id from products where id=30'))).rows.length, 1);
-  await staff(tx => tx.query("update products set visibility='wholesale' where id=30 returning id"));
+  await staffPatch(30,{visibility:'wholesale'});
   assert.equal((await anon(tx => tx.query('select id from products where id=30'))).rows.length, 0);
   await denied(() => member(tx => tx.query('select * from admin_products()')));
-  assert.equal((await staff(tx => tx.query('delete from products where id=30 returning id'))).rows.length, 1);
+  const version=(await db.query('select edit_version from products where id=30')).rows[0].edit_version;
+  assert.equal((await staff(tx => tx.query('select * from admin_delete_product(30,$1)',[version]))).rows.length, 1);
 });
 
 test('the exposed wrapper uses invoker privileges; privileged helpers are outside the Data API', async () => {

@@ -39,6 +39,7 @@ jobs:
       - run: npm run test:security
       - run: npm run check:admin
       - run: npm run test:admin
+      - run: npm run test:catalog
       - run: npm run typecheck
       - run: npm run test:client
       - run: npm run test:seo

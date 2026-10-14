@@ -1,3 +1,5 @@
+import ProductChannelCheckbox from './ProductChannelCheckbox';
+import { productPatch, productVisibility, requireProductVersion } from '@/utils/productAdmin';
 import { useAdminDialog } from '@/hooks/useAdminDialog';
 import { adminErrorMessage, confirmedRecord, createActionLock } from '@/utils/admin';
 import { useState, useEffect, useRef } from 'react';
@@ -26,7 +28,9 @@ export interface Product {
   moq: number;
   moq_unit: string;
   pieces_per_carton: number;
-  visibility?: string;
+  visibility: string;
+  b2b_enabled: boolean;
+  edit_version: number;
 }
 
 interface ProductEditModalProps {
@@ -36,17 +40,26 @@ interface ProductEditModalProps {
 }
 
 export default function ProductEditModal({ product, onClose, onSuccess }: ProductEditModalProps) {
-  const [formData, setFormData] = useState(() => ({
+  const initialDraft = useRef({
     ...product,
     price_euro: product.price || 0,
     cost_price: product.cost_price || 0,
     wholesale_price: product.wholesale_price || 0,
     carton_price: product.carton_price || 0,
-  }));
+  });
+  const [formData, setFormData] = useState(initialDraft.current);
   const submitLock = useRef(createActionLock());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const errorRef = useRef<HTMLParagraphElement>(null);
   const dialogRef = useAdminDialog(true, saving, onClose);
+
+  useEffect(() => {
+    if (error) {
+      errorRef.current?.focus({ preventScroll: true });
+      errorRef.current?.scrollIntoView({ block: 'center' });
+    }
+  }, [error]);
 
   useEffect(() => {
     scrollToTop();
@@ -66,32 +79,15 @@ export default function ProductEditModal({ product, onClose, onSuccess }: Produc
     setSaving(true);
 
     try {
-      const result = await supabase.from('products').update({
-        name: formData.name,
-        description: formData.description,
-        price: formData.price,
-        price_euro: formData.price_euro,
-        wholesale_price: formData.wholesale_price || 0,
-        carton_price: formData.carton_price || 0,
-        image: formData.image,
-        category: formData.category,
-        badge: formData.badge,
-        rating: formData.rating,
-        reviews: formData.reviews,
-        in_stock: formData.in_stock,
-        stock: formData.stock,
-        weight: formData.weight || null,
-        volume: formData.volume || null,
-        sku: formData.sku || null,
-        cost_price: formData.cost_price || 0,
-        moq: formData.moq || 1,
-        moq_unit: formData.moq_unit || 'бр.',
-        pieces_per_carton: formData.pieces_per_carton || 0,
-        visibility: formData.visibility || 'retail',
-        updated_at: new Date().toISOString()
-      }).eq('id', product.id).select('id').single();
-
-      confirmedRecord(result, product.id);
+      const changes = productPatch(initialDraft.current, formData);
+      if (Object.keys(changes).length > 0) {
+        const result = await supabase.rpc('admin_update_product', {
+          p_product_id: product.id,
+          p_expected_version: requireProductVersion(product),
+          p_changes: changes,
+        }).single<Product>();
+        confirmedRecord(result, product.id);
+      }
       onSuccess();
       onClose();
     } catch (cause) {
@@ -111,7 +107,7 @@ export default function ProductEditModal({ product, onClose, onSuccess }: Produc
 
         <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
           <fieldset disabled={saving} className="min-w-0">
-          {error && <p role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</p>}
+          {error && <p ref={errorRef} tabIndex={-1} role="alert" className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">{error}</p>}
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -131,7 +127,9 @@ export default function ProductEditModal({ product, onClose, onSuccess }: Produc
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Цена (€) <span className="text-red-500">*</span></label>
+              <ProductChannelCheckbox channel="retail" checked={formData.visibility === 'retail'}
+                onChange={retail => setFormData(f => ({ ...f, visibility: productVisibility(retail, f.b2b_enabled) }))} />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Цена на дребно (€) <span className="text-red-500">*</span></label>
               <input type="number" step="0.01" min="0" value={formData.price_euro || ''} onChange={(e) => updatePriceEuro(e.target.value)} required className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
             </div>
 
@@ -141,6 +139,8 @@ export default function ProductEditModal({ product, onClose, onSuccess }: Produc
                 <i aria-hidden="true" className="ri-briefcase-line text-teal-600"></i>
                 B2B / Цени на едро
               </h3>
+              <ProductChannelCheckbox channel="b2b" checked={formData.b2b_enabled}
+                onChange={b2b => setFormData(f => ({ ...f, b2b_enabled: b2b, visibility: productVisibility(f.visibility === 'retail', b2b) }))} />
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Доставна цена (€) <span className="text-red-500">*</span></label>
@@ -174,18 +174,7 @@ export default function ProductEditModal({ product, onClose, onSuccess }: Produc
                   <input type="number" min="0" value={formData.pieces_per_carton || ''} onChange={(e) => setFormData({ ...formData, pieces_per_carton: parseInt(e.target.value) || 0 })} placeholder="напр. 24" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
                 </div>
               </div>
-              <div className="mt-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Видимост</label>
-                <select value={(formData as any).visibility || 'retail'} onChange={(e) => setFormData({ ...formData, visibility: e.target.value } as any)} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm cursor-pointer">
-                  <option value="retail">Retail (на дребно)</option>
-                  <option value="wholesale">Wholesale (на едро)</option>
-                  <option value="restaurant">Restaurant (ресторанти)</option>
-                  <option value="distributor">Distributor (дистрибутори)</option>
-                  <option value="vip">VIP (вип партньори)</option>
-                  <option value="hidden">Hidden (скрит)</option>
-                </select>
-                <p className="text-xs text-gray-400 mt-1">Определя в кои канали продуктът е видим. Hidden = само админ.</p>
-              </div>
+              <p className="mt-3 text-xs text-gray-600">Цените, SKU и наличността се запазват при изключване на канал. Изключете и двата канала, за да скриете продукта от двата каталога.</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -232,7 +221,7 @@ export default function ProductEditModal({ product, onClose, onSuccess }: Produc
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Количество</label>
-                <input type="number" value={formData.stock} onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
+                <input type="number" min="0" step="1" required value={formData.stock} onChange={(e) => setFormData({ ...formData, stock: parseInt(e.target.value) })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
               </div>
             </div>
 

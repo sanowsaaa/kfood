@@ -1,3 +1,4 @@
+import { matchesProductChannel, type ProductChannelFilter } from '@/utils/productAdmin';
 import { useState } from 'react';
 
 import type { Product } from './ProductEditModal';
@@ -8,12 +9,13 @@ interface ProductListProps {
   busy?: boolean;
   searchQuery: string;
   catalogFilter: 'all' | 'missing' | 'duplicate';
+  channelFilter: ProductChannelFilter;
   onToggleStock: (id: string | number, currentStock: boolean) => void;
   onEdit: (product: Product) => void;
   onDelete: (id: string | number) => void;
 }
 
-export default function ProductList({ products, loading, busy, searchQuery, catalogFilter, onToggleStock, onEdit, onDelete }: ProductListProps) {
+export default function ProductList({ products, loading, busy, searchQuery, catalogFilter, channelFilter, onToggleStock, onEdit, onDelete }: ProductListProps) {
   const [sortField, setSortField] = useState<'name' | 'price' | 'stock'>('name');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
@@ -39,7 +41,7 @@ export default function ProductList({ products, loading, busy, searchQuery, cata
       catalogFilter === 'all' ||
       (catalogFilter === 'missing' && !s) ||
       (catalogFilter === 'duplicate' && duplicateSkus.has(s));
-    return matchesSearch && matchesCatalog;
+    return matchesSearch && matchesCatalog && matchesProductChannel(p, channelFilter);
   });
 
   const sorted = [...filtered].sort((a, b) => {
@@ -82,7 +84,7 @@ export default function ProductList({ products, loading, busy, searchQuery, cata
     return (
       <div className="text-center py-16">
         <i aria-hidden="true" className="ri-search-line text-6xl text-gray-300 mb-4"></i>
-        <p className="text-gray-500 text-lg">Няма резултати за „{searchQuery}"</p>
+        <p className="text-gray-500 text-lg">Няма продукти за избраните филтри{searchQuery ? ` и „${searchQuery}“` : ''}</p>
       </div>
     );
   }
@@ -129,6 +131,11 @@ export default function ProductList({ products, loading, busy, searchQuery, cata
                   <div className="max-w-xs">
                     <p className="font-medium text-gray-900 text-sm">{product.name}</p>
                     <p className="text-xs text-gray-500 truncate mt-1">{product.description}</p>
+                    <div className="mt-2 flex flex-wrap gap-1 text-xs font-semibold">
+                      {product.visibility === 'retail' && <span className="rounded bg-pink-100 px-2 py-1 text-pink-900">Магазин</span>}
+                      {product.b2b_enabled && <span className="rounded bg-teal-100 px-2 py-1 text-teal-900">B2B</span>}
+                      {product.visibility !== 'retail' && !product.b2b_enabled && <span className="rounded bg-gray-100 px-2 py-1 text-gray-700">Скрит</span>}
+                    </div>
                     {product.badge && (
                       <span className="inline-block mt-1 px-2 py-0.5 bg-teal-100 text-teal-800 text-xs rounded whitespace-nowrap">
                         {product.badge}

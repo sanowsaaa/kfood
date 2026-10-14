@@ -20,10 +20,16 @@ before(async()=>{
   await db.exec(await readFile('supabase/migrations/20261011165407_launch_compatibility.sql','utf8'));
   await db.exec(await readFile('supabase/migrations/20261011190834_admin_payment_truth.sql','utf8'));
   await db.exec(await readFile('supabase/migrations/20261012104200_b2b_catalog_privacy.sql','utf8'));
+  await db.exec(await readFile('supabase/migrations/20261014134245_catalog_channels_and_admin_concurrency.sql','utf8'));
+  await db.exec(await readFile('supabase/migrations/20261014134432_finalize_catalog_admin_writes.sql','utf8'));
   await adminCall(tx=>tx.query("insert into storage.buckets(id,name,public,file_size_limit,allowed_mime_types) values('b2b-documents','b2b-documents',false,10485760,array['application/pdf'])"));
 });
 after(async()=>{await db?.close();});
 const denied=fn=>assert.rejects(fn,{code:'42501'});
+async function adminProductPatch(id,changes) {
+  const version=(await db.query('select edit_version from products where id=$1',[id])).rows[0].edit_version;
+  return adminCall(tx=>tx.query('select id from admin_update_product($1,$2,$3::jsonb)',[id,version,JSON.stringify(changes)]));
+}
 async function application(){return (await db.query(`insert into public.b2b_applications(company_name,email,contact_email,
   contact_first_name,contact_last_name,business_type,address,city,status) values('Synthetic Firm','activation@example.invalid','contact@example.invalid',
   'Synthetic','Partner','retail','Test address','Sofia','pending') returning id`)).rows[0].id;}
@@ -96,7 +102,7 @@ test('catalog remains readable; cost is denied to visitors and partners, availab
   await denied(()=>member(tx=>tx.query('select cost_price from products')));
   await denied(()=>member(tx=>tx.query('select * from admin_products()')));
   assert.equal(Number((await adminCall(tx=>tx.query('select * from admin_products() where id=1'))).rows[0].cost_price),1);
-  assert.equal((await adminCall(tx=>tx.query('update products set cost_price=2 where id=1 returning id'))).rows.length,1);
+  assert.equal((await adminProductPatch(1,{cost_price:2})).rows.length,1);
 });
 test('public order forging and internal company reads are denied',async()=>{
   await denied(()=>anon(tx=>tx.query("insert into orders(total_amount,status) values(0,'confirmed')")));
@@ -164,7 +170,7 @@ test('partner metadata and Storage permissions agree; suspension revokes both',a
 });
 test('administrators cannot erase held stock; fulfillment consumes only its own hold, once',async()=>{
   const last=await prepare(2);
-  await assert.rejects(()=>adminCall(tx=>tx.query('update products set stock=0 where id=2')),{code:'23514'});
+  await assert.rejects(()=>adminProductPatch(2,{stock:0}),{code:'23514'});
   const a=await prepare(1), b=await prepare(1);
   assert.equal((await apply(a)).decision,'applied'); await apply(a); assert.equal((await apply(b)).decision,'applied');
   assert.equal((await db.query('select stock from products where id=1')).rows[0].stock,92);
