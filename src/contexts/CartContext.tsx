@@ -32,8 +32,8 @@ export interface DiscountTier {
 }
 
 export const DISCOUNT_TIERS: DiscountTier[] = [
-  { minEur: 100, percent: 10, label: '10% отстъпка над €100' },
-  { minEur: 50, percent: 5, label: '5% отстъпка над €50' },
+  { minEur: 100, percent: 10, label: '10% отстъпка от €100' },
+  { minEur: 50, percent: 5, label: '5% отстъпка от €50' },
 ];
 
 export const MIN_ORDER_EUR = 10;

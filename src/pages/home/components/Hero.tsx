@@ -38,7 +38,7 @@ export default function Hero() {
 
             {/* Description - tighter on mobile */}
             <p className="text-base md:text-lg text-white leading-relaxed mb-6 md:mb-7 max-w-xl animate-fade-up delay-200 opacity-0">
-              Люто, сладко или нещо съвсем ново? Открий рамен Samyang и Buldak, кимчи, сосове и снакове. Избери своя вкус — доставяме в цяла България.
+              Люто, сладко или нещо съвсем ново? Открий рамен Samyang и Buldak, кимчи, сосове и снакове. Избери своя вкус — доставяме с куриер в България, извън Велико Търново. За града поръчвай само през Takeaway.
             </p>
 
             {/* CTAs - full width on very small screens */}
