@@ -1,3 +1,5 @@
+import ProductChannelCheckbox from './ProductChannelCheckbox';
+import { productVisibility } from '@/utils/productAdmin';
 import { useAdminDialog } from '@/hooks/useAdminDialog';
 import { adminErrorMessage, confirmedRecord, createActionLock } from '@/utils/admin';
 import { useState, useEffect, useRef } from 'react';
@@ -35,8 +37,10 @@ export default function AddProductModal({ onClose, onSuccess }: AddProductModalP
     badge: '',
     rating: '4.5',
     reviews: '0',
-    in_stock: true,
-    stock: '100',
+    in_stock: false,
+    stock: '',
+    retail_enabled: false,
+    b2b_enabled: false,
     weight: '',
     volume: '',
     sku: '',
@@ -92,7 +96,9 @@ export default function AddProductModal({ onClose, onSuccess }: AddProductModalP
         cost_price: parseFloat(formData.cost_price) || 0,
         moq: parseInt(formData.moq) || 1,
         moq_unit: formData.moq_unit || 'бр.',
-        pieces_per_carton: parseInt(formData.pieces_per_carton) || 0
+        pieces_per_carton: parseInt(formData.pieces_per_carton) || 0,
+        visibility: productVisibility(formData.retail_enabled, formData.b2b_enabled),
+        b2b_enabled: formData.b2b_enabled
       };
 
       confirmedRecord(await supabase.from('products').insert([productData]).select('id').single());
@@ -123,6 +129,7 @@ export default function AddProductModal({ onClose, onSuccess }: AddProductModalP
             </div>
           )}
 
+          <p className="mb-4 text-sm text-gray-600">Новият продукт е скрит, докато не изберете канал. Въведете реалното количество и отбележете наличност, когато може да се поръчва.</p>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -142,7 +149,9 @@ export default function AddProductModal({ onClose, onSuccess }: AddProductModalP
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Цена (€) <span className="text-red-500">*</span></label>
+              <ProductChannelCheckbox channel="retail" checked={formData.retail_enabled}
+                onChange={retail => setFormData(f => ({ ...f, retail_enabled: retail }))} />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Цена на дребно (€) <span className="text-red-500">*</span></label>
               <input type="number" step="0.01" min="0" value={formData.price_euro} onChange={(e) => updatePriceEuro(e.target.value)} placeholder="0.00" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
             </div>
 
@@ -152,6 +161,8 @@ export default function AddProductModal({ onClose, onSuccess }: AddProductModalP
                 <i aria-hidden="true" className="ri-briefcase-line text-teal-600"></i>
                 B2B / Цени на едро
               </h3>
+              <ProductChannelCheckbox channel="b2b" checked={formData.b2b_enabled}
+                onChange={b2b => setFormData(f => ({ ...f, b2b_enabled: b2b }))} />
               <div className="grid grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Доставна цена (€) <span className="text-red-500">*</span></label>
@@ -222,7 +233,7 @@ export default function AddProductModal({ onClose, onSuccess }: AddProductModalP
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Количество</label>
-                <input type="number" min="0" value={formData.stock} onChange={(e) => setFormData({ ...formData, stock: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
+                <input type="number" min="0" step="1" required value={formData.stock} onChange={(e) => setFormData({ ...formData, stock: e.target.value })} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm" />
               </div>
             </div>
 

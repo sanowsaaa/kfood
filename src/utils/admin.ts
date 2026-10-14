@@ -17,6 +17,9 @@ export function checkedData<T>(result: Result<T>): T {
 
 export function adminErrorMessage(error: unknown, fallback = 'Действието не беше потвърдено. Обновете данните преди нов опит.'): string {
   const detail = error && typeof error === 'object' ? error as { code?: string; message?: string } : null;
+  if (detail?.code === 'PT409') return 'Продуктът е променен след зареждането — възможна е нова поръчка или друга редакция. Затворете прозореца, обновете списъка и прегледайте актуалните стойности. Промените ви не са записани.';
+  if (detail?.code === 'PT404') return 'Продуктът вече не съществува. Обновете списъка.';
+  if (detail?.code === '22023') return 'Проверете стойностите на продукта и избраните канали. Промяната не е записана.';
   if (detail?.code === '42501' || detail?.code === 'PGRST116') return 'Няма потвърден запис. Проверете правата си и обновете данните преди нов опит.';
   if (detail?.code === '23505') return 'Вече съществува запис с тези данни. Проверете ги преди нов опит.';
   if (detail?.code === '23503') return 'Записът е свързан с други данни и не може да бъде премахнат.';
