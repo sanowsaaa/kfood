@@ -5,6 +5,16 @@
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; img-src 'self' https://*.supabase.co https://api.qrserver.com https://readdy.ai https://*.readdy.ai https://res.cloudinary.com https://www.facebook.com data: blob:; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; connect-src 'self' https://readdy.ai https://*.supabase.co https://api.stripe.com https://connect.facebook.net; frame-src https://js.stripe.com https://www.facebook.com; media-src 'self' https://readdy.ai https://*.readdy.ai https://res.cloudinary.com; form-action 'self' https://api.stripe.com; base-uri 'self'; frame-ancestors 'self'; upgrade-insecure-requests;" />
     <link rel="icon" type="image/webp" href="https://static.readdy.ai/image/658b459fcf05a7723f8029c45615de2f/5f528752b53eacb04e7b1d8959de8155.webp" sizes="32x32" />
     <link rel="apple-touch-icon" href="https://static.readdy.ai/image/658b459fcf05a7723f8029c45615de2f/5f528752b53eacb04e7b1d8959de8155.webp" />
+    <script>
+      // Supporting renderers wait for the actual public product and its SEO.
+      if (/^\/product\/[^/]+\/?$/.test(window.location.pathname)) {
+        window.__kfoodProductPrerender = {
+          hadFlag: Object.prototype.hasOwnProperty.call(window, 'prerenderReady'),
+          previous: window.prerenderReady
+        };
+        window.prerenderReady = false;
+      }
+    </script>
     <meta name="theme-color" content="#703b62" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />

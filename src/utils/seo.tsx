@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { absoluteSiteUrl, DEFAULT_SITE_URL } from './urls';
+import { beginProductPrerender, finishProductPrerender } from './productPrerender';
 
 interface SEOProps {
   title: string;
@@ -46,6 +47,7 @@ function updateMetaTag(name: string, content: string, isProperty = false) {
 }
 
 export const updateSEO = (data: SEOProps) => {
+  beginProductPrerender(window.location.pathname);
   const url = absoluteSiteUrl(data.canonical || window.location.pathname, siteUrl());
   const image = absoluteSiteUrl(data.ogImage || SITE_LOGO, siteUrl());
   const robots = data.robots || getRouteSEO(window.location.pathname).robots!;
@@ -88,8 +90,10 @@ export const updateSEO = (data: SEOProps) => {
     script.setAttribute(MANAGED_SCHEMA_ATTR, 'true');
     script.textContent = JSON.stringify(data.schema);
     document.head.appendChild(script);
+    finishProductPrerender();
     return () => script.remove();
   }
+  finishProductPrerender();
 };
 
 export const useSEO = ({ title, description, keywords, canonical, ogType, ogImage, robots, article, schema }: SEOProps) => {
