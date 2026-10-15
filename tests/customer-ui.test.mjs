@@ -142,6 +142,37 @@ for (const path of ['/product/ramen-buldak', '/product/17']) {
 }
 function visiblePay(page) { return page.getByRole('button', { name: /Към плащане/ }).filter({ visible: true }); }
 
+for (const width of [360,1440]) {
+  test(`editorial SEO and readable paragraphs preserve product identity, price and buy controls at ${width}px`,async()=>{
+    const qa=await setup({width});
+    try {
+      const original=qa.rows[0].name;
+      qa.rows[0].seo_title='Индивидуално SEO заглавие | K-FOOD';
+      qa.rows[0].seo_description='Индивидуално SEO описание без цена или наличност.';
+      qa.rows[0].description='Първи полезен абзац за продукта. '.repeat(8)+'\n\nВтори абзац с идея за сервиране. <script>window.__badDescription=true</script>';
+      await ready(qa.page,'/product/ramen-buldak',original);
+      await qa.page.waitForFunction(()=>document.title==='Индивидуално SEO заглавие | K-FOOD');
+      assert.equal(await qa.page.locator('meta[name="description"]').getAttribute('content'),qa.rows[0].seo_description);
+      assert.equal(await qa.page.locator('meta[property="og:title"]').getAttribute('content'),qa.rows[0].seo_title);
+      const section=qa.page.locator('section[aria-labelledby="product-description-heading"]');
+      assert.equal(await section.locator('p').count(),2);
+      assert.ok((await section.innerText()).includes('<script>window.__badDescription=true</script>'));
+      assert.equal(await qa.page.evaluate(()=>window.__badDescription),undefined);
+      const meta=await metadata(qa.page),schema=meta.graph.find(item=>item['@type']==='Product');
+      assert.equal(schema.name,original);assert.equal(schema.offers.price,'4.90');
+      assert.equal(await qa.page.getByText('Южна Корея',{exact:true}).count(),0);
+      const add=qa.page.getByRole('button',{name:'Добави в количката',exact:true}).filter({visible:true});
+      assert.equal(await add.count(),1);
+      if(width>=768)assert.ok((await add.boundingBox()).y<(await section.boundingBox()).y);
+      else assert.ok(await qa.page.locator('.customer-mobile-actions').isVisible());
+      const detail=qa.requests.find(r=>r.table==='products'&&new URL(r.url).searchParams.has('slug'));
+      assert.equal(new URL(detail.url).searchParams.get('visibility'),'eq.retail');
+      assert.match(new URL(detail.url).searchParams.get('select'),/seo_title,seo_description/);
+      assert.deepEqual(qa.errors,[]);
+    }finally{await qa.close();}
+  });
+}
+
 test('home selection keeps the existing eight highest ratings and id ties without transferring the catalog', async () => {
   const inventory = Array.from({ length: 24 }, (_, index) => ({ ...products[0], id: 100 + index,
     name: `Продукт ${index}`, slug: `product-${index}`, rating: 4.5 + (index % 4) / 10,

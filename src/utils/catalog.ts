@@ -2,6 +2,8 @@ import { supabase } from './supabase';
 import { productAvailable, type StoreProduct } from './customer';
 
 export const PUBLIC_PRODUCT_FIELDS = 'id,name,description,price,image,category,badge,rating,reviews,in_stock,stock,slug,weight,volume,visibility';
+// Only the detail request needs editorial metadata; cards keep their projection.
+export const PUBLIC_PRODUCT_SEO_FIELDS = `${PUBLIC_PRODUCT_FIELDS},seo_title,seo_description`;
 export async function loadProducts(signal: AbortSignal): Promise<StoreProduct[]> {
   const { data, error } = await supabase.from('products').select(PUBLIC_PRODUCT_FIELDS).eq('visibility', 'retail')
     .order('id', { ascending: true }).abortSignal(signal);

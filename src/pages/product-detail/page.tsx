@@ -7,7 +7,8 @@ import { useSEO, getProductSchema, getBreadcrumbSchema } from '../../utils/seo';
 import { useRecentlyViewed } from '../../hooks/useRecentlyViewed';
 import { supabase } from '../../utils/supabase';
 import { trackViewContent } from '../../utils/metaPixel';
-import { PUBLIC_PRODUCT_FIELDS } from '../../utils/catalog';
+import { PUBLIC_PRODUCT_FIELDS, PUBLIC_PRODUCT_SEO_FIELDS } from '../../utils/catalog';
+import { productSEO, productDescriptionParagraphs } from '../../utils/productSEO';
 import { productAvailable } from '../../utils/customer';
 import { useCustomerRead } from '../../hooks/useCustomerRead';
 import CustomerReadError from '../../components/CustomerReadError';
@@ -28,6 +29,8 @@ interface Product {
   weight?: string;
   volume?: string;
   slug?: string;
+  seo_title?: string | null;
+  seo_description?: string | null;
 }
 
 export default function ProductDetail() {
@@ -48,7 +51,7 @@ export default function ProductDetail() {
   const load = useCallback(async (signal: AbortSignal) => {
     if (!slugOrId || slugOrId === ':id') return { product: null, related: [] };
     const numeric = /^\d+$/.test(slugOrId) && Number.isSafeInteger(Number(slugOrId));
-    const result = await supabase.from('products').select(PUBLIC_PRODUCT_FIELDS)
+    const result = await supabase.from('products').select(PUBLIC_PRODUCT_SEO_FIELDS)
       .eq('visibility', 'retail')
       .eq(numeric ? 'id' : 'slug', numeric ? Number(slugOrId) : slugOrId).abortSignal(signal).maybeSingle();
     if (result.error) throw result.error;
@@ -83,14 +86,11 @@ export default function ProductDetail() {
 
   useSEO({
     title: product
-      ? `${product.name} | Купи Онлайн - K-FOOD Велико Търново`
+      ? productSEO(product).title
       : 'Продукт - K-FOOD',
     description: product
-      ? `${product.name}. ${product.description ? `${product.description.slice(0, 100)} ` : ''}Цена: €${product.price.toFixed(2)}. ${product.in_stock ? 'В наличност. Доставка в България.' : 'Временно изчерпан.'}`
+      ? productSEO(product).description
       : 'Детайли за корейски продукт от K-FOOD',
-    keywords: product
-      ? `${product.name}, купи ${product.name}, ${product.category} онлайн, корейски продукти, K-FOOD`
-      : 'корейски продукти онлайн',
     canonical: productUrl,
     robots: !loading && !readError && !product ? 'noindex, follow' : undefined,
     ogType: 'product',
@@ -281,8 +281,6 @@ export default function ProductDetail() {
               )}
             </div>
 
-            <p className="text-gray-600 text-sm sm:text-base leading-relaxed">{product.description}</p>
-
             {/* Details */}
             <div className="bg-white rounded-xl p-3 sm:p-4 border border-gray-100 text-xs sm:text-sm">
               <div className="space-y-2 text-gray-700">
@@ -302,10 +300,6 @@ export default function ProductDetail() {
                     <span>{product.volume}</span>
                   </div>
                 )}
-                <div className="flex justify-between">
-                  <span className="font-medium text-gray-500">Произход</span>
-                  <span>Южна Корея</span>
-                </div>
               </div>
             </div>
 
@@ -361,6 +355,11 @@ export default function ProductDetail() {
                 Купи сега
               </button>
             </div>
+
+            {product.description && <section aria-labelledby="product-description-heading" className="space-y-3 text-gray-600 text-sm sm:text-base leading-relaxed">
+              <h2 id="product-description-heading" className="text-lg font-semibold text-gray-900">За продукта</h2>
+              {productDescriptionParagraphs(product.description).map((paragraph, index) => <p key={index}>{paragraph}</p>)}
+            </section>}
 
             {/* Trust badges - show compact version on mobile */}
             <div className="grid grid-cols-3 gap-2 sm:gap-3 md:gap-3">
