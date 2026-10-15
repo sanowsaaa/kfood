@@ -168,7 +168,8 @@ test('the existing alcohol verification remains in control and releases the prod
   const qa = await setup({ csr: true, rows: [row] });
   try {
     await qa.page.goto(`${base}/product/${row.slug}`);
-    await qa.page.locator('[data-public-product-state="age"]').waitFor();
+    await qa.page.locator('[data-public-product-state="age"]').waitFor({ state: 'attached' });
+    await qa.page.getByRole('dialog', { name: 'Проверка на възраст' }).waitFor();
     await qa.page.waitForFunction(() => !('prerenderReady' in window));
     assert.equal(await qa.page.getByRole('button', { name: 'Добави в количката', exact: true }).count(), 0);
     assert.deepEqual(qa.errors, []);
