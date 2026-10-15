@@ -39,7 +39,7 @@ async function setup(options = {}) {
     requests.push({ method: req.method(), url: url.href });
     const reply = (data, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(data) });
     if (url.origin === base) {
-      if (req.isNavigationRequest()) {
+      if (req.isNavigationRequest() && !options.csr) {
         const response = await handle(new Request(url, { method: req.method() }));
         if (response) return route.fulfill({ status: response.status, headers: Object.fromEntries(response.headers), body: await response.text() });
       }
@@ -93,6 +93,7 @@ for (const width of [1440, 390]) {
       await qa.page.goto(`${base}/product/${product.slug}`);
       await qa.page.locator('#root [data-public-product-state="ready"]').waitFor();
       await qa.page.waitForFunction(() => !document.getElementById('kfood-product-html') && !document.getElementById('root').hidden);
+      await qa.page.waitForFunction(() => window.prerenderReady === true);
       assert.equal(await qa.page.getByRole('heading', { level: 1, name: product.name, exact: true }).count(), 1);
       assert.ok(await qa.page.getByText('4.9 (34 отзива)', { exact: true }).isVisible());
       await qa.page.getByRole('button', { name: 'Добави в количката', exact: true }).filter({ visible: true }).click();
@@ -113,6 +114,7 @@ test('a product hidden after the HTML read is removed when the public app rechec
     await qa.page.getByRole('heading', { name: 'Продуктът не е намерен', exact: true }).waitFor();
     await qa.page.waitForFunction(() => !document.getElementById('kfood-product-html') && !document.getElementById('root').hidden);
     await qa.page.waitForFunction(() => document.querySelector('meta[name="robots"]')?.content === 'noindex, follow');
+    await qa.page.waitForFunction(() => window.prerenderReady === true);
     assert.equal(await qa.page.getByRole('heading', { name: product.name, exact: true }).count(), 0);
     assert.equal(await qa.page.locator('script[data-seo-managed]').evaluateAll(nodes => nodes.some(node => node.textContent.includes('"@type":"Product"'))), false);
     assert.deepEqual(qa.errors, []);
@@ -126,6 +128,50 @@ test('a failed public refresh replaces the preview with the existing retry inter
     await qa.page.getByRole('button', { name: /Опитай|Опитайте/ }).waitFor();
     await qa.page.waitForFunction(() => !document.getElementById('kfood-product-html') && !document.getElementById('root').hidden);
     assert.equal(await qa.page.getByRole('heading', { name: product.name, exact: true }).count(), 0);
+    assert.equal(await qa.page.evaluate(() => window.prerenderReady), false);
+    assert.deepEqual(qa.errors, []);
+  } finally { await qa.close(); }
+});
+
+test('the ordinary CSR route waits for data and SEO for a product outside the five-product HTML pilot', async () => {
+  const row = { ...product, id: 900, slug: 'independent-public-product', name: 'Друг публичен продукт', category: 'Корейска козметика' };
+  const qa = await setup({ csr: true, rows: [row], delay: 150 });
+  try {
+    await qa.page.goto(`${base}/product/${row.slug}`);
+    assert.equal(await qa.page.evaluate(() => window.prerenderReady), false);
+    await qa.page.getByRole('heading', { name: row.name, exact: true }).waitFor();
+    await qa.page.waitForFunction(() => window.prerenderReady === true);
+    assert.equal(await qa.page.locator('link[rel="canonical"]').getAttribute('href'), `https://k-foodvelikotarnovo.com/product/${row.slug}`);
+    assert.equal(await qa.page.getByRole('button', { name: 'Добави в количката', exact: true }).filter({ visible: true }).count(), 1);
+    assert.deepEqual(qa.errors, []);
+  } finally { await qa.close(); }
+});
+
+test('SPA product navigation resets readiness until the new product matches; cart restores the prior signal', async () => {
+  const row = { ...product, id: 901, slug: 'next-public-product', name: 'Следващ публичен продукт' };
+  const qa = await setup({ csr: true, rows: [product, row], delay: 150 });
+  try {
+    await qa.page.goto(`${base}/product/${product.slug}`);
+    await qa.page.waitForFunction(() => window.prerenderReady === true);
+    await qa.page.locator(`a[href="/product/${row.slug}"]`).first().click();
+    await qa.page.waitForFunction(() => location.pathname.endsWith('/next-public-product') && window.prerenderReady === false);
+    await qa.page.getByRole('heading', { name: row.name, exact: true }).waitFor();
+    await qa.page.waitForFunction(() => window.prerenderReady === true);
+    await qa.page.locator('a[href="/cart"]').filter({ visible: true }).first().click();
+    await qa.page.waitForFunction(() => location.pathname === '/cart' && !('prerenderReady' in window) && !('__kfoodProductPrerender' in window));
+    assert.deepEqual(qa.errors, []);
+  } finally { await qa.close(); }
+});
+
+test('the existing alcohol verification remains in control and releases the product-only readiness gate', async () => {
+  const row = { ...product, id: 902, slug: 'public-age-gated-product', name: 'Тестов алкохолен продукт', category: 'Алкохол' };
+  const qa = await setup({ csr: true, rows: [row] });
+  try {
+    await qa.page.goto(`${base}/product/${row.slug}`);
+    await qa.page.locator('[data-public-product-state="age"]').waitFor({ state: 'attached' });
+    await qa.page.getByRole('dialog', { name: 'Проверка на възраст' }).waitFor();
+    await qa.page.waitForFunction(() => !('prerenderReady' in window));
+    assert.equal(await qa.page.getByRole('button', { name: 'Добави в количката', exact: true }).count(), 0);
     assert.deepEqual(qa.errors, []);
   } finally { await qa.close(); }
 });

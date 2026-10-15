@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="bg">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>K-FOOD — изчакване на диагностично съдържание</title>
+  <script>
+    // Only this diagnostic page simulates asynchronous content with a timer.
+    // The real product signal is based on completed data and matching metadata.
+    const waitForReady = new URLSearchParams(window.location.search).get('mode') === 'wait';
+    if (waitForReady) window.prerenderReady = false;
+  </script>
+</head>
+<body>
+  <main id="probe" data-probe-state="pending">
+    <h1 id="probe-heading">Диагностичното съдържание се зарежда</h1>
+    <p>kfood-render-ready-probe-20261015-v1</p>
+    <p id="probe-result">pending</p>
+    <p>Самостоятелна техническа проверка без продуктови данни, поръчки и външни заявки.</p>
+    <a href="/">Към K-FOOD</a>
+  </main>
+  <script>
+    setTimeout(() => {
+      document.title = 'K-FOOD — диагностичното съдържание е готово';
+      document.getElementById('probe').dataset.probeState = 'complete';
+      document.getElementById('probe-heading').textContent = 'Диагностичното съдържание е готово';
+      document.getElementById('probe-result').textContent = 'complete';
+      if (waitForReady) window.prerenderReady = true;
+    }, 6000);
+  </script>
+</body>
+</html>
