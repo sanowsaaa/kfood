@@ -14,7 +14,7 @@ import { useCustomerRead } from '../../hooks/useCustomerRead';
 import CustomerReadError from '../../components/CustomerReadError';
 import AgeVerification from '../../components/AgeVerification';
 
-interface Product {
+export interface Product {
   id: number;
   name: string;
   description: string;
@@ -33,7 +33,9 @@ interface Product {
   seo_description?: string | null;
 }
 
-export default function ProductDetail() {
+// Only the anonymous HTML renderer supplies this optional initial product.
+// Ordinary browser routes retain their existing reads, cart and auth flow.
+export default function ProductDetail({ serverProduct }: { serverProduct?: Product } = {}) {
   const { id: slugOrId } = useParams();
   const navigate = useNavigate();
   const { addToCart } = useCart();
@@ -63,8 +65,9 @@ export default function ProductDetail() {
     const relatedProducts = related.error ? [] : (related.data || []) as unknown as Product[];
     return { product: found, related: relatedProducts.map(item => ({ ...item, in_stock: productAvailable(item) })) };
   }, [slugOrId]);
-  const { data: result, loading, error: readError, retry } = useCustomerRead<{ product: Product | null; related: Product[] }>(load, { product: null, related: [] });
-  const product = result.product;
+  const { data: result, loading: readLoading, error: readError, retry } = useCustomerRead<{ product: Product | null; related: Product[] }>(load, { product: null, related: [] });
+  const product = serverProduct || result.product;
+  const loading = serverProduct ? false : readLoading;
   const relatedProducts = result.related;
   useEffect(() => {
     setQuantity(1); setAddedToCart(false); setShowNotification(false);
@@ -155,13 +158,13 @@ export default function ProductDetail() {
     );
   }
 
-  if (readError) return <div className="min-h-screen bg-gray-50"><Header /><CustomerReadError message={readError} onRetry={retry} /><Footer /></div>;
+  if (readError) return <div data-public-product-state="error" className="min-h-screen bg-gray-50"><Header /><CustomerReadError message={readError} onRetry={retry} /><Footer /></div>;
 
   if (!product) {
     return (
       <>
         <Header />
-        <div className="min-h-screen flex items-center justify-center px-4">
+        <div data-public-product-state="missing" className="min-h-screen flex items-center justify-center px-4">
           <div className="text-center">
             <h1 id="main-content" tabIndex={-1} className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">Продуктът не е намерен</h1>
             <Link to="/products" className="text-brand-primary font-semibold text-sm">← Виж всички продукти</Link>
@@ -173,12 +176,12 @@ export default function ProductDetail() {
   }
 
   if (product.category === 'Алкохол' && !ageVerified) return <><Header />
-    <AgeVerification onVerified={() => setAgeVerified(true)} onDenied={() => navigate('/products', { replace: true })} /><Footer /></>;
+    <div data-public-product-state="age"><AgeVerification onVerified={() => setAgeVerified(true)} onDenied={() => navigate('/products', { replace: true })} /></div><Footer /></>;
 
   const maxQuantity = product.in_stock ? Math.min(product.stock, 99) : 0;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div data-public-product-state="ready" data-public-product-id={product.id} className="min-h-screen bg-gray-50">
       <Header />
 
       {/* Toast notification */}
