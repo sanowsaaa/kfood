@@ -1,5 +1,6 @@
 node_modules/
 dist/
+.seo-pilot/
 supabase/.temp/
 supabase/.branches/
 *.tsbuildinfo
