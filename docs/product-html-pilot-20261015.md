@@ -12,7 +12,7 @@ This is an opt-in renderer and a neutral hosting probe. A normal Readdy `npm run
 | 243 | `pepero-snezhen-badem-32-g-x-40` |
 | 470 | `ramen-buldak-chasha-karbonara-80-g-x-6` |
 
-The renderer uses the existing React product view, shared SEO helpers and current anonymous Supabase reads. It neither forwards a visitor session nor uses a service-role key. Only explicitly selected public columns are serialized. B2B, administrator, basket, checkout and tracking routes stay outside the renderer. Prices, identifiers, publication flags and database contents are never written by this pilot.
+The renderer uses the existing React product view, shared SEO helpers and current anonymous Supabase reads. It neither forwards a visitor session nor uses a service-role key. Only explicitly selected public columns are serialized. Existing visible catalog ratings are retained in the view; the shared SEO helper continues to omit unverified aggregate ratings from structured data. B2B, administrator, basket, checkout and tracking routes stay outside the renderer. Prices, identifiers, publication flags and database contents are never written by this pilot.
 
 Each request rechecks the product ID, slug and `visibility=retail`. HTML and CDN caching are disabled. A confirmed hidden or missing product returns **200 with noindex**, respecting the hosting constraint. An upstream failure, timeout or invalid product returns **503 with noindex and Retry-After**, without a saved price or offer. Alcohol products are excluded to preserve the existing age verification.
 

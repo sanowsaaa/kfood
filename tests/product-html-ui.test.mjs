@@ -13,7 +13,7 @@ const base = 'http://127.0.0.1:4317';
 const product = { ...PILOT_PRODUCTS[0], name: 'HTML пилот — корейски рамен',
   description: 'Публичен първи абзац за рамен.\n\nВтори абзац с идея за сервиране.',
   price: 3.30, image: 'https://res.cloudinary.com/kfood-test/image/upload/ramen.webp',
-  category: 'Нудъли и Рамен', badge: '', rating: 0, reviews: 0, in_stock: true, stock: 12,
+  category: 'Нудъли и Рамен', badge: '', rating: 4.9, reviews: 34, in_stock: true, stock: 12,
   visibility: 'retail', weight: '130 г', volume: null, seo_title: 'HTML пилот рамен | K-FOOD',
   seo_description: 'Индивидуално описание на рамен в HTML.' };
 
@@ -81,6 +81,7 @@ for (const width of [1440, 390]) {
       assert.equal(await qa.page.locator('#root').textContent(), '');
       assert.equal(await qa.page.locator('#loading-screen').count(), 0);
       assert.ok(await qa.page.getByText('Публичен първи абзац за рамен.', { exact: true }).isVisible());
+      assert.ok(await qa.page.getByText('4.9 (34 отзива)', { exact: true }).isVisible());
       assert.ok(qa.requests.every(request => request.method === 'GET'));
       assert.deepEqual(qa.errors, []);
     } finally { await qa.close(); }
@@ -93,6 +94,7 @@ for (const width of [1440, 390]) {
       await qa.page.locator('#root [data-public-product-state="ready"]').waitFor();
       await qa.page.waitForFunction(() => !document.getElementById('kfood-product-html') && !document.getElementById('root').hidden);
       assert.equal(await qa.page.getByRole('heading', { level: 1, name: product.name, exact: true }).count(), 1);
+      assert.ok(await qa.page.getByText('4.9 (34 отзива)', { exact: true }).isVisible());
       await qa.page.getByRole('button', { name: 'Добави в количката', exact: true }).filter({ visible: true }).click();
       await qa.page.waitForFunction(id => JSON.parse(localStorage.getItem('cart') || '[]').some(item => item.id === id), product.id);
       const saved = await qa.page.evaluate(() => JSON.parse(localStorage.getItem('cart')));

@@ -8,7 +8,7 @@ export const PILOT_PRODUCTS = Object.freeze([
   { id: 243, slug: 'pepero-snezhen-badem-32-g-x-40' },
   { id: 470, slug: 'ramen-buldak-chasha-karbonara-80-g-x-6' },
 ]);
-export const HTML_PRODUCT_FIELDS = 'id,name,description,price,image,category,badge,in_stock,stock,slug,weight,volume,visibility,seo_title,seo_description';
+export const HTML_PRODUCT_FIELDS = 'id,name,description,price,image,category,badge,rating,reviews,in_stock,stock,slug,weight,volume,visibility,seo_title,seo_description';
 const SITE_URL = 'https://k-foodvelikotarnovo.com';
 const INDEX = 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1';
 const NOINDEX = 'noindex, follow';
@@ -36,7 +36,9 @@ export function checkedPublicProduct(row, expected) {
     || typeof row.category !== 'string' || typeof row.in_stock !== 'boolean'
     || typeof row.price !== 'number' || !Number.isFinite(row.price) || row.price < 0
     || Math.abs(row.price * 100 - Math.round(row.price * 100)) > 1e-7
-    || !Number.isSafeInteger(row.stock) || row.stock < 0) throw Error('Invalid public product');
+    || !Number.isSafeInteger(row.stock) || row.stock < 0
+    || typeof row.rating !== 'number' || !Number.isFinite(row.rating) || row.rating < 0 || row.rating > 5
+    || !Number.isSafeInteger(row.reviews) || row.reviews < 0) throw Error('Invalid public product');
   const image = new URL(row.image);
   if (image.protocol !== 'https:' || image.username || image.password || image.searchParams.has('token')
     || !['static.readdy.ai', 'readdy.ai', 'res.cloudinary.com'].includes(image.hostname)
@@ -46,7 +48,7 @@ export function checkedPublicProduct(row, expected) {
   }
   // Project explicitly even if the upstream accidentally returns extra fields.
   const allowed = Object.fromEntries(HTML_PRODUCT_FIELDS.split(',').map(key => [key, row[key]]));
-  return { ...allowed, in_stock: productAvailable(row), rating: 0, reviews: 0 };
+  return { ...allowed, in_stock: productAvailable(row) };
 }
 
 function head(template, { title, description, canonical, image, robots, schema }) {

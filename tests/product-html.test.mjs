@@ -8,7 +8,7 @@ const template = await readFile(new URL('../index.html', import.meta.url), 'utf8
 const target = PILOT_PRODUCTS[0];
 const row = { ...target, name: 'Тестов корейски рамен', description: 'Първи абзац за конкретния продукт.\n\nВтори абзац с идея за сервиране.',
   price: 3.30, image: 'https://res.cloudinary.com/kfood-test/image/upload/ramen.webp', category: 'Нудъли и Рамен',
-  badge: '', in_stock: true, stock: 12, visibility: 'retail', weight: '130 г', volume: null,
+  badge: '', rating: 4.9, reviews: 34, in_stock: true, stock: 12, visibility: 'retail', weight: '130 г', volume: null,
   seo_title: 'Индивидуален тестов рамен | K-FOOD', seo_description: 'Точно описание на тестовия рамен.' };
 const request = (path = `/product/${target.slug}`, options) => new Request(`https://k-foodvelikotarnovo.com${path}`, options);
 const schema = html => [...html.matchAll(/<script type="application\/ld\+json" data-seo-managed="true">([\s\S]*?)<\/script>/g)]
@@ -93,7 +93,8 @@ test('catalog strings are escaped in HTML and JSON-LD; bad identity, private row
   assert.ok(!/<script>window\.bad=/.test(html)); assert.match(html, /&lt;script&gt;window.bad=1/);
   assert.equal(schema(html)[0].name, malicious.name); assert.equal(schema(html)[0].description, malicious.description); assert.ok(html.includes('\\u003c/script>'));
   for (const change of [{ image: 'javascript:alert(1)' }, { image: 'https://static.readdy.ai/photo?token=private' },
-    { visibility: 'wholesale' }, { visibility: 'hidden' }, { id: 9999 }, { price: 3.305 }, { stock: -1 }, { category: 'Алкохол' }]) {
+    { visibility: 'wholesale' }, { visibility: 'hidden' }, { id: 9999 }, { price: 3.305 }, { stock: -1 },
+    { rating: 6 }, { reviews: -1 }, { reviews: 1.5 }, { category: 'Алкохол' }]) {
     const body = await (await setup(async () => Response.json([{ ...row, ...change }]))(request())).text(); assert.equal(schema(body).length, 0); assert.ok(!body.includes(row.name));
   }
 });
@@ -108,6 +109,7 @@ test('indexing is explicit and crawler requests receive the same product metadat
 test('projection discards unrequested business columns', () => {
   const projected = checkedPublicProduct({ ...row, wholesale_price: 1.20, cost_price: 0.40, sku: 'private-fixture' }, target);
   assert.equal(projected.wholesale_price, undefined); assert.equal(projected.sku, undefined); assert.equal(projected.cost_price, undefined); assert.equal(projected.price, row.price);
+  assert.equal(projected.rating, row.rating); assert.equal(projected.reviews, row.reviews);
 });
 
 test('source timeout returns a retryable failure without an old offer', async () => {
