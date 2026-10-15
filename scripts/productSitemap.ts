@@ -6,6 +6,7 @@ import { absoluteSiteUrl, DEFAULT_SITE_URL } from '../src/utils/urls.ts';
 export interface SitemapProduct {
   id: number;
   slug: string;
+  image?: string | null;
   updated_at?: string | null;
   created_at?: string | null;
 }
@@ -25,9 +26,15 @@ export function productSitemap(products: SitemapProduct[], siteUrl = DEFAULT_SIT
     const date = product.updated_at || product.created_at;
     const parsed = date ? new Date(date) : null;
     const lastmod = parsed && Number.isFinite(parsed.getTime()) ? `\n    <lastmod>${parsed.toISOString().slice(0, 10)}</lastmod>` : '';
-    return `  <url>\n    <loc>${escapeXml(absoluteSiteUrl(`/product/${product.slug}`, siteUrl))}</loc>${lastmod}\n  </url>`;
+    let image = '';
+    if (product.image) {
+      const url = new URL(product.image);
+      if (url.protocol !== 'https:' || url.username || url.password || url.searchParams.has('token')) throw new Error('Product sitemap requires a public HTTPS image');
+      image = `\n    <image:image><image:loc>${escapeXml(url.href)}</image:loc></image:image>`;
+    }
+    return `  <url>\n    <loc>${escapeXml(absoluteSiteUrl(`/product/${product.slug}`, siteUrl))}</loc>${lastmod}${image}\n  </url>`;
   });
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.join('\n')}\n</urlset>\n`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n${urls.join('\n')}\n</urlset>\n`;
 }
 
 export async function fetchSitemapProducts(options: SourceOptions, fetcher: typeof fetch = fetch): Promise<SitemapProduct[]> {
@@ -38,7 +45,7 @@ export async function fetchSitemapProducts(options: SourceOptions, fetcher: type
   let expectedTotal: number | null = null;
   for (let offset = 0; offset <= 50_000;) {
     const url = new URL('/rest/v1/products', options.supabaseUrl);
-    url.search = new URLSearchParams({ select: 'id,slug,updated_at,created_at', visibility: 'eq.retail', order: 'id.asc', limit: String(pageSize), offset: String(offset) }).toString();
+    url.search = new URLSearchParams({ select: 'id,slug,image,updated_at,created_at', visibility: 'eq.retail', order: 'id.asc', limit: String(pageSize), offset: String(offset) }).toString();
     const response = await fetcher(url, {
       headers: { apikey: options.anonKey, Authorization: `Bearer ${options.anonKey}`, Accept: 'application/json', Prefer: 'count=exact' }, signal,
     });

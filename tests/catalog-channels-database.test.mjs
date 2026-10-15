@@ -59,12 +59,13 @@ before(async()=>{
   }),/PRODUCT_UNAVAILABLE/);
 
   await db.exec(await readFile(new URL('../supabase/migrations/20261014201050_finalize_catalog_admin_writes.sql',import.meta.url),'utf8'));
+  await db.exec(await readFile(new URL('../supabase/migrations/20261015073731_product_editorial_metadata.sql',import.meta.url),'utf8'));
 });
 after(async()=>{await db?.close();});
 
 test('migration preserves every original value and the actual retail and B2B catalogs',async()=>{
   const rows=(await db.query('select to_jsonb(p) r from products p order by id')).rows.map(x=>x.r);
-  assert.deepEqual(rows.map(({b2b_enabled,edit_version,...old})=>old),baseline);
+  assert.deepEqual(rows.map(({b2b_enabled,edit_version,seo_title,seo_description,...old})=>old),baseline);
   assert.ok(rows.every(p=>p.b2b_enabled && Number(p.edit_version)===0));
   assert.deepEqual((await guest(tx=>tx.query('select id from products order by id'))).rows.map(p=>p.id),[1,2]);
   assert.deepEqual((await member(tx=>tx.query('select id from b2b_catalog() order by id'))).rows.map(p=>p.id),[1,2,30]);
@@ -192,6 +193,23 @@ test('retail-only COD still consumes stock and queues recipients once after B2B 
   assert.equal((await product(1)).stock,before.stock-4);
   assert.equal((await db.query('select count(*)::int n from notification_outbox where entity_id=$1',[a.order.id])).rows[0].n,3);
   assert.ok(Number((await product(1)).edit_version)>Number(before.edit_version));
+});
+
+test('editorial metadata survives actual checkout stock consumption and remains private for B2B products',async()=>{
+  await db.query("update products set description='New retail description',seo_title='New retail title',seo_description='New retail snippet' where id=1");
+  await db.query("update products set description='Private partner description',seo_title='Private partner title',seo_description='Private partner snippet' where id=30");
+  const before=await product(1);
+  const p=await quote(1,4);await paid(p);
+  const after=await product(1);
+  assert.equal(after.stock,before.stock-4);
+  assert.equal(after.seo_title,before.seo_title);assert.equal(after.seo_description,before.seo_description);
+  for(const key of ['price','price_euro','wholesale_price','carton_price','cost_price','sku','slug'])assert.deepEqual(after[key],before[key],key);
+  assert.equal((await member(tx=>tx.query('select description from b2b_catalog() where id=30'))).rows[0].description,'Private partner description');
+  assert.deepEqual((await guest(tx=>tx.query('select description,seo_title from products where id=30'))).rows,[]);
+  const b2b=await request({id:30,quantity:24});assert.equal(Number(b2b.order.total_amount),39.98);
+  await patch(1,{description:'Later administrator description'});
+  const edited=await product(1);assert.equal(edited.seo_title,null);assert.equal(edited.seo_description,null);
+  assert.equal(edited.price,after.price);assert.equal(edited.stock,after.stock);
 });
 
 test('a pending card quote stays valid after unpublishing without opening a new public checkout',async()=>{
