@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, Navigate } from 'react-router-dom';
 import Header from '../home/components/Header';
 import Footer from '../home/components/Footer';
@@ -106,12 +106,13 @@ export default function Category() {
   const { addToCart } = useCart();
   const [sortBy, setSortBy] = useState('featured');
   const [addedProducts, setAddedProducts] = useState<Set<number>>(new Set());
-  const { data: products, loading, error: readError, retry } = useCustomerRead<Product[]>(loadProducts, []);
+  const currentCategory = categoryData.find(cat => cat.slug === id);
+  const loadCategory = useCallback((signal: AbortSignal) => currentCategory
+    ? loadProducts(signal, currentCategory.dbCategory) : Promise.resolve([]), [currentCategory]);
+  const { data: products, loading, error: readError, retry } = useCustomerRead<Product[]>(loadCategory, []);
 
   const [ageVerified, setAgeVerified] = useState(() => { try { return sessionStorage.getItem('ageVerified') === 'true'; } catch { return false; } });
   const [ageDenied, setAgeDenied] = useState(false);
-
-  const currentCategory = categoryData.find(cat => cat.slug === id);
 
   useEffect(() => {
     window.scrollTo(0, 0);

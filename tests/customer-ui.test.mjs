@@ -51,7 +51,9 @@ async function setup(options = {}) {
   page.on('pageerror', error => errors.push(error.message));
   await context.route('**/*', async route => {
     const req = route.request(), url = new URL(req.url());
-    const reply = (body, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
+    const reply = (body, status = 200, headers = {}) => route.fulfill({ status,
+      headers: { 'access-control-allow-origin': '*', 'access-control-expose-headers': 'content-range', ...headers },
+      contentType: 'application/json', body: JSON.stringify(body) });
     if (url.origin === base) {
       const file = url.pathname.startsWith('/assets/') ? url.pathname.slice(1) : 'index.html';
       if (file.includes('..')) return route.abort();
@@ -96,9 +98,13 @@ async function setup(options = {}) {
         }
         return 0;
       });
-      const limit = url.searchParams.get('limit');
-      if (limit !== null) data = data.slice(0, Number(limit));
-      return reply(req.headers()['accept']?.includes('vnd.pgrst.object') ? data[0] ?? null : data);
+      const total = data.length, offset = Number(url.searchParams.get('offset') || 0);
+      const limit = Number(url.searchParams.get('limit') || data.length);
+      data = data.slice(offset, offset + Math.min(limit, options.apiRowLimit || Infinity));
+      const selected = url.searchParams.get('select');
+      if (selected === 'category') data = data.map(row => ({ category: row.category }));
+      return reply(req.headers()['accept']?.includes('vnd.pgrst.object') ? data[0] ?? null : data, 200,
+        req.headers()['prefer']?.includes('count=exact') ? { 'content-range': `${offset}-${offset + data.length - 1}/${total}` } : {});
     }
     if (url.pathname.includes('/api/form/')) {
       requests.push({ name: 'newsletter', method: req.method(), body: req.postData() });
@@ -614,6 +620,96 @@ test('home/category/search: existing links resolve and URL search survives a rel
 async function spaNavigate(page, path) {
   await page.evaluate(path => { window.history.pushState({}, '', path); window.dispatchEvent(new PopStateEvent('popstate')); }, path);
 }
+
+for (const width of [360, 1440]) test(`${width}px category artwork stays complete, readable captions remain outside it and age confirmation is preserved`, async () => {
+  const qa = await setup({ width });
+  const categories = [
+    ['cosmetics', 'Корейска козметика'], ['noodles', 'Нудъли и Рамен'], ['cooking', 'Продукти за готвене'],
+    ['desserts', 'Десерти'], ['sauces', 'Сосове и Масла'], ['frozen', 'Замразени продукти'], ['drinks', 'Напитки'],
+    ['non-food', 'Нехранителни стоки'], ['snacks', 'Снакс и Чай'], ['alcohol', 'Алкохол'],
+  ];
+  try {
+    await ready(qa.page, '/categories', 'Категории Корейска Храна');
+    await qa.page.locator('a[href="/category/noodles"]').getByText('1 продукта', { exact: true }).waitFor();
+    for (const [slug, name] of categories) {
+      const card = qa.page.locator(`a[href="/category/${slug}"]`).filter({ has: qa.page.getByRole('heading', { name, exact: true }) });
+      const img = card.getByRole('img', { name, exact: true });
+      await img.scrollIntoViewIfNeeded();
+      await img.evaluate(image => image.decode());
+      assert.match(await img.getAttribute('src'), new RegExp(`/assets/[^ ]*k-food-${slug}-[A-Za-z0-9_-]+\\.webp$`));
+      assert.deepEqual(await img.evaluate(image => [image.naturalWidth, image.naturalHeight, getComputedStyle(image).objectFit]), [1920, 1080, 'contain']);
+      const picture = await img.boundingBox(), heading = await card.getByRole('heading', { name, exact: true }).boundingBox();
+      assert.ok(Math.abs(picture.width / picture.height - 16 / 9) < 0.02);
+      assert.ok(heading.y >= picture.y + picture.height - 1, `${name}: the caption must not cover the artwork`);
+    }
+    assert.equal(await qa.page.locator('.brand-category-shade').count(), 0);
+    assert.equal(await qa.page.evaluate(() => document.documentElement.scrollWidth > innerWidth + 1), false);
+    assert.equal(await qa.page.getByRole('link', { name: 'Свържете се с нас', exact: true }).getAttribute('href'), 'tel:+359899897566');
+    await qa.page.locator('a[href="/category/alcohol"]').click();
+    await qa.page.getByRole('dialog').waitFor();
+    assert.equal(new URL(qa.page.url()).pathname, '/categories');
+    await qa.page.getByRole('button', { name: 'Не, нямам 18 години', exact: true }).click();
+    await qa.page.getByRole('dialog').waitFor({ state: 'hidden' });
+    assert.equal(new URL(qa.page.url()).pathname, '/categories');
+    if (artifacts) { await qa.page.locator('a[href="/category/noodles"]').first().scrollIntoViewIfNeeded(); await shot(qa.page, `categories-artwork-${width}`); }
+    assert.deepEqual(qa.errors, []);
+  } finally { await qa.close(); }
+});
+
+test('category totals include unavailable retail products, exclude private channels and follow a lower API page limit beyond 1000 rows', async () => {
+  const inventory = Array.from({ length: 1005 }, (_, index) => ({ ...products[0], id: index + 100, stock: index % 3 ? 20 : 0,
+    category: index % 2 ? 'Нудъли и Рамен' : 'Продукти за готвене' }));
+  const qa = await setup({ products: [...inventory, { ...products[0], id: 2000, visibility: 'hidden' },
+    { ...products[0], id: 2001, visibility: 'wholesale' }], apiRowLimit: 400 });
+  try {
+    await ready(qa.page, '/categories', 'Категории Корейска Храна');
+    await qa.page.locator('a[href="/category/noodles"]').getByText('502 продукта', { exact: true }).waitFor();
+    assert.equal(await qa.page.locator('a[href="/category/cooking"]').getByText('503 продукта', { exact: true }).count(), 1);
+    const reads = qa.requests.filter(row => row.table === 'products');
+    assert.deepEqual(reads.map(row => new URL(row.url).searchParams.get('offset')), ['0', '400', '800']);
+    assert.ok(reads.every(row => new URL(row.url).searchParams.get('select') === 'category' && new URL(row.url).searchParams.get('visibility') === 'eq.retail'));
+    assert.deepEqual(qa.errors, []);
+  } finally { await qa.close(); }
+});
+
+test('failed category totals keep links usable without false zeroes and refresh on a later visit', async () => {
+  const qa = await setup({ readFailure: true });
+  try {
+    await ready(qa.page, '/categories', 'Категории Корейска Храна');
+    await qa.page.waitForFunction(() => document.querySelectorAll('a[href^="/category/"] img').length === 10);
+    assert.equal(await qa.page.getByText(/^\d+ продукта$/, { exact: true }).count(), 0);
+    await qa.page.locator('a[href="/category/noodles"]').first().click();
+    await qa.page.getByRole('button', { name: 'Опитай отново', exact: true }).waitFor();
+    qa.recoverRead();
+    await qa.page.getByRole('button', { name: 'Опитай отново', exact: true }).click();
+    await qa.page.getByRole('heading', { name: products[0].name, exact: true }).waitFor();
+    await spaNavigate(qa.page, '/categories');
+    await qa.page.locator('a[href="/category/noodles"]').getByText('1 продукта', { exact: true }).waitFor();
+    assert.deepEqual(qa.errors, []);
+  } finally { await qa.close(); }
+});
+
+test('category navigation requests only that public category, preserves sorting and refreshes prices on return', async () => {
+  const second = { ...products[0], id: 22, slug: 'second-ramen', name: 'Втори рамен', price: 9.9, rating: 3 };
+  const qa = await setup({ products: [...products, second] });
+  try {
+    await ready(qa.page, '/category/noodles', 'Нудъли и Рамен');
+    await qa.page.getByRole('heading', { name: products[0].name, exact: true }).waitFor();
+    assert.deepEqual(await qa.page.locator('.customer-product-name').allTextContents(), [products[0].name, second.name]);
+    await qa.page.getByLabel('Сортиране на продуктите').selectOption('price-high');
+    assert.deepEqual(await qa.page.locator('.customer-product-name').allTextContents(), [second.name, products[0].name]);
+    await spaNavigate(qa.page, '/category/cooking');
+    await qa.page.getByRole('heading', { name: products[1].name, exact: true }).waitFor();
+    assert.equal(await qa.page.getByRole('heading', { name: products[0].name, exact: true }).count(), 0);
+    qa.rows.find(row => row.id === products[0].id).price = 6.4;
+    await spaNavigate(qa.page, '/category/noodles');
+    await qa.page.getByRole('heading', { name: products[0].name, exact: true }).waitFor();
+    assert.match(await qa.page.locator('.customer-product-card').filter({ has: qa.page.getByRole('heading', { name: products[0].name, exact: true }) }).textContent(), /€6\.40/);
+    assert.deepEqual(qa.requests.filter(row => row.table === 'products').map(row => new URL(row.url).searchParams.get('category')),
+      ['eq.Нудъли и Рамен', 'eq.Продукти за готвене', 'eq.Нудъли и Рамен']);
+    assert.deepEqual(qa.errors, []);
+  } finally { await qa.close(); }
+});
 async function metadata(page) {
   return page.evaluate(() => ({
     title: document.title, description: document.querySelector('meta[name="description"]')?.content,
@@ -775,7 +871,7 @@ test('overlay bounds: photo text stays inside the verified contrast area at ever
       });
       assert.deepEqual(issues, [], `${width}px: hero text extends outside the high-contrast overlay`);
     }
-    for (const [path, selector, fraction] of [['/categories', '.brand-category-shade', 0.48], ['/blog/top-10-koreiska-hrana', '.brand-article-shade', 0.65]]) {
+    for (const [path, selector, fraction] of [['/blog/top-10-koreiska-hrana', '.brand-article-shade', 0.65]]) {
       await ready(qa.page, path);
       await qa.page.locator(selector).first().waitFor();
       for (const width of [360, 768, 1440]) {

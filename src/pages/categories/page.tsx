@@ -4,16 +4,26 @@ import Header from '../home/components/Header';
 import Footer from '../home/components/Footer';
 import AboutSection from '../home/components/AboutSection';
 import { useSEO, getBreadcrumbSchema } from '../../utils/seo';
-import { loadProducts } from '../../utils/catalog';
+import { loadCategoryCounts } from '../../utils/catalog';
 import { useCustomerRead } from '../../hooks/useCustomerRead';
 import AgeVerification from '../../components/AgeVerification';
+import cosmeticsBanner from '../../assets/categories/k-food-cosmetics.webp';
+import noodlesBanner from '../../assets/categories/k-food-noodles.webp';
+import cookingBanner from '../../assets/categories/k-food-cooking.webp';
+import dessertsBanner from '../../assets/categories/k-food-desserts.webp';
+import saucesBanner from '../../assets/categories/k-food-sauces.webp';
+import frozenBanner from '../../assets/categories/k-food-frozen.webp';
+import drinksBanner from '../../assets/categories/k-food-drinks.webp';
+import nonFoodBanner from '../../assets/categories/k-food-non-food.webp';
+import snacksBanner from '../../assets/categories/k-food-snacks.webp';
+import alcoholBanner from '../../assets/categories/k-food-alcohol.webp';
 
 const categoryData = [
   {
     id: 'cosmetics',
     name: 'Корейска козметика',
     description: 'K-beauty продукти — грижа за кожата, маски, серуми и корейски козметични иновации',
-    image: 'https://readdy.ai/api/search-image?query=Korean%20beauty%20skincare%20products%20K-beauty%20sheet%20masks%20serums%20creams%20arranged%20on%20clean%20white%20marble%20surface%20professional%20product%20photography%20minimalist%20composition%20elegant%20Korean%20cosmetics%20with%20soft%20pink%20and%20white%20tones%20luxurious%20skincare&width=600&height=600&seq=cat-cosmetics-001&orientation=squarish',
+    image: cosmeticsBanner,
     productCount: 0,
     isNew: true
   },
@@ -21,63 +31,63 @@ const categoryData = [
     id: 'noodles',
     name: 'Нудъли и Рамен',
     description: 'Автентични корейски нудъли и рамен за бързо и вкусно ястие',
-    image: 'https://readdy.ai/api/search-image?query=Korean%20instant%20noodles%20ramyeon%20packages%20variety%20colorful%20packaging%20Korean%20ramen%20bowls%20on%20clean%20white%20background%20professional%20product%20photography%20minimalist%20style%20authentic%20Korean%20noodle%20products&width=600&height=600&seq=cat-noodles-002&orientation=squarish',
+    image: noodlesBanner,
     productCount: 39
   },
   {
     id: 'cooking',
     name: 'Продукти за готвене',
     description: 'Оризи, брашна, сосове и всичко необходимо за корейска кухня',
-    image: 'https://readdy.ai/api/search-image?query=Korean%20cooking%20ingredients%20rice%20flour%20sauces%20oils%20arranged%20on%20clean%20white%20marble%20surface%20professional%20product%20photography%20minimalist%20composition%20authentic%20Korean%20pantry%20essentials&width=600&height=600&seq=cat-cooking-003&orientation=squarish',
+    image: cookingBanner,
     productCount: 42
   },
   {
     id: 'desserts',
     name: 'Десерти',
     description: 'Популярни корейски сладкиши, бисквити и десерти',
-    image: 'https://readdy.ai/api/search-image?query=Korean%20snacks%20and%20sweets%20colorful%20packaging%20rice%20cakes%20tteok%20Korean%20candies%20chips%20arranged%20beautifully%20on%20clean%20white%20surface%20professional%20product%20photography%20minimalist%20composition%20authentic%20Korean%20treats&width=600&height=600&seq=cat-snacks-004&orientation=squarish',
+    image: dessertsBanner,
     productCount: 34
   },
   {
     id: 'sauces',
     name: 'Сосове и Масла',
     description: 'Оригинални корейски сосове и масла за автентичен вкус',
-    image: 'https://readdy.ai/api/search-image?query=Korean%20sauces%20and%20condiments%20gochujang%20doenjang%20soy%20sauce%20sesame%20oil%20in%20traditional%20bottles%20and%20jars%20arranged%20on%20white%20marble%20surface%20clean%20background%20professional%20product%20photography%20authentic%20Korean%20cooking%20ingredients&width=600&height=600&seq=cat-sauces-005&orientation=squarish',
+    image: saucesBanner,
     productCount: 30
   },
   {
     id: 'frozen',
     name: 'Замразени продукти',
     description: 'Манду, кнедли и други замразени корейски специалитети',
-    image: 'https://readdy.ai/api/search-image?query=Korean%20frozen%20food%20dumplings%20mandu%20rice%20cakes%20tteokbokki%20in%20packaging%20on%20clean%20white%20surface%20professional%20product%20photography%20minimalist%20composition%20authentic%20Korean%20frozen%20products&width=600&height=600&seq=cat-frozen-006&orientation=squarish',
+    image: frozenBanner,
     productCount: 31
   },
   {
     id: 'drinks',
     name: 'Напитки',
     description: 'Освежаващи корейски напитки, сокове и традиционни чайове',
-    image: 'https://readdy.ai/api/search-image?query=Korean%20beverages%20drinks%20tea%20bottles%20cans%20traditional%20Korean%20drinks%20barley%20tea%20sikhye%20arranged%20on%20clean%20white%20background%20professional%20product%20photography%20minimalist%20style%20authentic%20Korean%20beverages&width=600&height=600&seq=cat-drinks-007&orientation=squarish',
+    image: drinksBanner,
     productCount: 47
   },
   {
     id: 'non-food',
     name: 'Нехранителни стоки',
     description: 'Кухненски принадлежности и аксесоари за корейска кухня',
-    image: 'https://readdy.ai/api/search-image?query=Korean%20kitchen%20utensils%20chopsticks%20bamboo%20tools%20cooking%20accessories%20arranged%20on%20clean%20white%20surface%20professional%20product%20photography%20minimalist%20composition%20authentic%20Korean%20kitchenware&width=600&height=600&seq=cat-nonfood-008&orientation=squarish',
+    image: nonFoodBanner,
     productCount: 4
   },
   {
     id: 'snacks',
     name: 'Снакс и Чай',
     description: 'Чипсове, чайове и лекки закуски за всеки момент',
-    image: 'https://readdy.ai/api/search-image?query=Korean%20tea%20bags%20and%20snack%20chips%20arranged%20beautifully%20on%20clean%20white%20surface%20professional%20product%20photography%20minimalist%20composition%20authentic%20Korean%20tea%20and%20light%20snacks&width=600&height=600&seq=cat-snackstea-009&orientation=squarish',
+    image: snacksBanner,
     productCount: 10
   },
   {
     id: 'alcohol',
     name: 'Алкохол',
     description: 'Корейско соджу с различни вкусове - само за лица над 18 години',
-    image: 'https://readdy.ai/api/search-image?query=Korean%20soju%20bottles%20with%20fruit%20flavors%20colorful%20packaging%20plum%20lemon%20peach%20grapefruit%20grape%20strawberry%20arranged%20on%20clean%20white%20surface%20professional%20product%20photography%20minimalist%20composition%20authentic%20Korean%20alcoholic%20beverages&width=600&height=600&seq=cat-alcohol-010&orientation=squarish',
+    image: alcoholBanner,
     productCount: 6,
     requiresAge: true
   }
@@ -85,7 +95,7 @@ const categoryData = [
 
 export default function Categories() {
   const navigate = useNavigate();
-  const { data: products, loading, error } = useCustomerRead(loadProducts, []);
+  const { data: counts, loading, error } = useCustomerRead(loadCategoryCounts, {});
   const [showAgeVerification, setShowAgeVerification] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
@@ -165,42 +175,45 @@ export default function Categories() {
       {/* Categories Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {categoryData.map((category) => (
+          {categoryData.map((category, index) => (
             <Link
               key={category.id}
               to={`/category/${category.id}`}
               onClick={(e) => handleCategoryClick(category, e)}
               className="group bg-white rounded-2xl shadow-lg overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 cursor-pointer"
             >
-              <div className="relative h-64 overflow-hidden">
+              <div className="aspect-video bg-brand-blush">
                 <img
                   src={category.image}
                   alt={category.name}
-                  className="w-full h-full object-cover object-top group-hover:scale-110 transition-transform duration-500"
+                  width={1920}
+                  height={1080}
+                  loading={index === 0 ? 'eager' : 'lazy'}
+                  decoding="async"
+                  className="block w-full h-full object-contain"
                 />
-                <div className="brand-category-shade absolute inset-0"></div>
-                {category.requiresAge && (
-                  <div className="absolute top-4 right-4 bg-brand-primary text-white px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1">
-                    <i aria-hidden="true" className="ri-error-warning-line"></i>
-                    18+
-                  </div>
-                )}
-                {category.isNew && (
-                  <div className="absolute top-4 right-4 bg-pink-500 text-white px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1 animate-pulse-slow">
-                    <i aria-hidden="true" className="ri-sparkling-line"></i>
-                    NEW
-                  </div>
-                )}
-                <div className="absolute bottom-4 left-4 right-4">
-                  <h3 className="text-2xl font-bold text-white mb-1">{category.name}</h3>
-                  <p className="text-sm text-white flex items-center gap-2">
-                    <i aria-hidden="true" className="ri-shopping-bag-line"></i>
-                    {loading || error ? 'Разгледай продуктите' : `${products.filter(p => p.category === category.name).length} продукта`}
-                  </p>
-                </div>
               </div>
-              
+
               <div className="p-6">
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <h2 className="min-w-0 text-xl font-bold text-gray-900">{category.name}</h2>
+                  {category.requiresAge && (
+                    <span className="shrink-0 bg-brand-primary text-white px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1">
+                      <i aria-hidden="true" className="ri-error-warning-line"></i>
+                      18+
+                    </span>
+                  )}
+                  {category.isNew && (
+                    <span className="shrink-0 bg-brand-primary text-white px-3 py-1 rounded-full text-sm font-bold flex items-center gap-1">
+                      <i aria-hidden="true" className="ri-sparkling-line"></i>
+                      NEW
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-600 mb-3 flex items-center gap-2">
+                  <i aria-hidden="true" className="ri-shopping-bag-line"></i>
+                  {loading || error ? 'Разгледай продуктите' : `${counts[category.name] || 0} продукта`}
+                </p>
                 <p className="text-gray-600 mb-4 line-clamp-2">{category.description}</p>
                 <div className="flex items-center justify-between">
                   <span className="text-brand-primary font-semibold group-hover:text-brand-hover flex items-center gap-2 whitespace-nowrap">
@@ -230,7 +243,7 @@ export default function Categories() {
                 Всички продукти
               </Link>
               <a
-                href="tel:+359123456789"
+                href="tel:+359899897566"
                 className="bg-white text-brand-primary px-8 py-3 rounded-full font-semibold hover:bg-gray-50 transition-colors border-2 border-brand-primary flex items-center gap-2 whitespace-nowrap cursor-pointer"
               >
                 <i aria-hidden="true" className="ri-phone-line"></i>
