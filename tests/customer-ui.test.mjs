@@ -73,6 +73,7 @@ async function setup(options = {}) {
     }
     if (url.pathname.includes('/rest/v1/')) {
       const table = url.pathname.split('/').at(-1), method = req.method(); requests.push({ table, method, body: req.postDataJSON(), url: url.href });
+      if (options.productReadDelay && table === 'products') await new Promise(resolve => setTimeout(resolve, options.productReadDelay));
       if (options.delay && method !== 'GET') await new Promise(resolve => setTimeout(resolve, options.delay));
       if (readFailure && table === 'products') return reply({ code: '42501', message: 'denied' }, 403);
       if (method !== 'GET') return options.writeFailure ? reply({ code: '42501', message: 'denied' }, 403) : reply(null, 201);
@@ -193,6 +194,24 @@ test('home selection keeps the existing eight highest ratings and id ties withou
     assert.equal(new URL(request.url).searchParams.get('limit'), '8');
     assert.equal(request.method, 'GET');
     assert.equal(qa.requests.filter(row => row.table === 'products').length, 1);
+    assert.deepEqual(qa.errors, []);
+  } finally { await qa.close(); }
+});
+
+test('a delayed home product read does not shift the visible product section when its content becomes ready', async () => {
+  const qa = await setup({ width: 390, productReadDelay: 400 });
+  try {
+    await qa.context.addInitScript(() => {
+      window.__homeShifts = [];
+      new PerformanceObserver(list => {
+        window.__homeShifts.push(...list.getEntries().filter(entry => !entry.hadRecentInput).map(entry => entry.value));
+      }).observe({ type: 'layout-shift', buffered: true });
+    });
+    await ready(qa.page, '/');
+    await qa.page.locator('[data-product-shop] .customer-product-name').first().waitFor();
+    await qa.page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+    assert.ok(await qa.page.evaluate(() => window.__homeShifts.reduce((sum, value) => sum + value, 0)) < 0.1);
+    assert.equal(await qa.page.locator('[data-product-shop] .customer-product-card').count(), products.length);
     assert.deepEqual(qa.errors, []);
   } finally { await qa.close(); }
 });
@@ -621,7 +640,7 @@ async function spaNavigate(page, path) {
   await page.evaluate(path => { window.history.pushState({}, '', path); window.dispatchEvent(new PopStateEvent('popstate')); }, path);
 }
 
-for (const width of [360, 1440]) test(`${width}px category artwork stays complete, readable captions remain outside it and age confirmation is preserved`, async () => {
+for (const width of [320, 360, 1440]) test(`${width}px category artwork stays complete, readable captions remain outside it and age confirmation is preserved`, async () => {
   const qa = await setup({ width });
   const categories = [
     ['cosmetics', 'Корейска козметика'], ['noodles', 'Нудъли и Рамен'], ['cooking', 'Продукти за готвене'],
