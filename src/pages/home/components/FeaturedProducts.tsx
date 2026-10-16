@@ -78,7 +78,7 @@ export default function FeaturedProducts() {
   }
 
   return (
-    <section className="py-10 md:py-16 lg:py-24 bg-white section-below-fold">
+    <section className="py-10 md:py-16 lg:py-24 bg-white">
       <div className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-10 lg:px-16">
         {/* Header */}
         <div className="flex items-end justify-between mb-6 md:mb-10 lg:mb-14">
