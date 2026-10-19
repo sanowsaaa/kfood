@@ -10,3 +10,5 @@ Google Fonts stylesheet source (retrieved 2026-10-19):
 https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap
 
 All language subsets are retained. Identical variable-font files used by multiple weights share one weight-range declaration; browsers download only the subsets and styles actually used. Vite fingerprints these files for safe caching.
+
+Production builds also include all three licenses at `/licenses/fonts.txt`.
