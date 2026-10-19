@@ -33,7 +33,9 @@ async function setup(options = {}) {
     if (options.recent) localStorage.setItem('recently_viewed', options.recent);
     for (const [key, value] of Object.entries(options.session || {})) sessionStorage.setItem(key, value);
     window.__pixelCalls = [];
-    window.fbq = (...args) => window.__pixelCalls.push(args);
+    if (!options.pixelBootstrap) window.fbq = (...args) => window.__pixelCalls.push(args);
+    window.__policyViolations = [];
+    document.addEventListener('securitypolicyviolation', event => window.__policyViolations.push({ directive: event.effectiveDirective, uri: event.blockedURI }));
     if (options.storageFailure) {
       const original = Storage.prototype.setItem;
       Storage.prototype.setItem = function (key, value) {
@@ -57,7 +59,11 @@ async function setup(options = {}) {
     if (url.origin === base) {
       const file = url.pathname.startsWith('/assets/') ? url.pathname.slice(1) : 'index.html';
       if (file.includes('..')) return route.abort();
-      return route.fulfill({ contentType: file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : file.endsWith('.webp') ? 'image/webp' : 'text/html', body: await readFile(new URL(`../dist/${file}`, import.meta.url)) });
+      if (file === 'index.html' && options.hostingScript) {
+        const html = (await readFile(new URL('../dist/index.html', import.meta.url), 'utf8')).replace('</head>', '<script defer src="https://public.readdy.ai/analysis/event-reporting.min.js" data-project-id="offline-project"></script></head>');
+        return route.fulfill({ contentType: 'text/html', body: html });
+      }
+      return route.fulfill({ contentType: file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : file.endsWith('.woff2') ? 'font/woff2' : file.endsWith('.webp') ? 'image/webp' : 'text/html', body: await readFile(new URL(`../dist/${file}`, import.meta.url)) });
     }
     if (url.hostname === 'checkout.stripe.com') return route.fulfill({ contentType: 'text/html', body: '<h1>Offline Stripe destination</h1>' });
     if (url.pathname.includes('/functions/v1/')) {
@@ -114,6 +120,19 @@ async function setup(options = {}) {
     }
     requests.push({ asset: url.href, method: req.method() });
     if (assetMap[url.href]) return route.fulfill({ body: await readFile(assetMap[url.href].path), contentType: assetMap[url.href].type });
+    if (options.hostingScript && url.href === 'https://public.readdy.ai/analysis/event-reporting.min.js') {
+      const library = process.env.CUSTOMER_TEST_HOST_ANALYTICS_JS ? await readFile(process.env.CUSTOMER_TEST_HOST_ANALYTICS_JS, 'utf8') : `if (window.EventReportingConfig?.autoInit !== false) fetch('https://readdy.ai/api/analysis/event/report', { method: 'POST', body: location.href });`;
+      return route.fulfill({ contentType: 'text/javascript', body: library + '\nwindow.__hostingScriptReady = true;' });
+    }
+    if (options.pixelBootstrap && url.href === 'https://connect.facebook.net/en_US/fbevents.js') return route.fulfill({ contentType: 'text/javascript', body: `
+      window.__pixelScriptReady = true;
+      // Exercise the SDK's fetch and form transports with entirely offline events.
+      fetch('https://www.facebook.com/tr/', { method: 'POST', body: 'offline-policy-check' }).then(() => window.__pixelFetchReady = true);
+      const frame = document.createElement('iframe'); frame.name = 'offline-pixel'; frame.hidden = true; document.body.appendChild(frame);
+      const form = document.createElement('form'); form.method = 'POST'; form.action = 'https://www.facebook.com/tr/'; form.target = frame.name; document.body.appendChild(form); form.submit();
+    ` });
+    if (options.pixelBootstrap && url.href === 'https://www.facebook.com/tr/') return route.fulfill({ contentType: 'text/html', body: '<!doctype html><title>Offline transport</title>' });
+
     if (req.resourceType() === 'image' && options.imageSizes?.[url.pathname]) {
       const [width, height] = options.imageSizes[url.pathname];
       return route.fulfill({ contentType: 'image/svg+xml', body: `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"><rect x="2" y="2" width="${width - 4}" height="${height - 4}" rx="10" fill="#ff208a" stroke="#2b0b22" stroke-width="4"/><text x="${width / 2}" y="${height / 2}" text-anchor="middle" fill="#2b0b22" font-size="24">K-FOOD</text></svg>` });
@@ -1161,3 +1180,64 @@ for (const width of [320, 390, 1440]) {
     } finally { await qa.close(); }
   });
 }
+
+
+test('browser policy: hosting script and consented Pixel transports load without CSP violations; fonts and icons stay local', async () => {
+  const qa = await setup({ consent: 'accepted', pixelBootstrap: true, hostingScript: true });
+  const consoleProblems = [];
+  qa.page.on('console', entry => { if (['error', 'warning'].includes(entry.type()) && /Content Security Policy|violates|deprecated/.test(entry.text())) consoleProblems.push(entry.text()); });
+  try {
+    await ready(qa.page, '/');
+    await qa.page.locator('.brand-hero h1').waitFor();
+    await qa.page.waitForFunction(() => window.__hostingScriptReady && window.__pixelScriptReady && window.__pixelFetchReady);
+    await qa.page.waitForFunction(() => [...document.querySelectorAll('iframe')].some(frame => frame.contentWindow && frame.getAttribute('name') === 'offline-pixel'));
+    await qa.page.evaluate(() => document.fonts.ready);
+    assert.equal(qa.requests.filter(row => row.asset === 'https://www.facebook.com/tr/').length, 2);
+    assert.deepEqual(await qa.page.evaluate(() => window.EventReportingConfig), { autoInit: false, enabled: false });
+    assert.equal(qa.requests.some(row => row.asset === 'https://readdy.ai/api/analysis/event/report'), false);
+    assert.equal(await qa.page.evaluate(() => localStorage.getItem('readdy_device_id')), null);
+    assert.deepEqual(await qa.page.evaluate(() => window.__policyViolations), []);
+    assert.deepEqual(consoleProblems, []);
+    assert.equal(qa.requests.some(row => row.asset && /fonts\.googleapis\.com|fonts\.gstatic\.com|cdn\.jsdelivr\.net/.test(row.asset)), false);
+    const fonts = await qa.page.evaluate(() => ({
+      body: document.fonts.check('600 16px Inter', 'България K-FOOD €'),
+      heading: document.fonts.check('400 24px "Playfair Display"', 'Корейска храна'),
+      italic: document.fonts.check('italic 400 24px "Playfair Display"', 'Твоят нов любим вкус'),
+      icon: getComputedStyle(document.querySelector('.ri-arrow-right-line'), '::before').content,
+      iconFont: getComputedStyle(document.querySelector('.ri-arrow-right-line'), '::before').fontFamily,
+    }));
+    assert.ok(fonts.body && fonts.heading && fonts.italic);
+    assert.ok(fonts.icon.includes('\uea6c'));
+    assert.ok(fonts.icon.includes('/ \"\"'));
+    assert.match(fonts.iconFont, /remixicon/);
+    assert.deepEqual(qa.errors, []);
+  } finally { await qa.close(); }
+});
+
+for (const options of [{ consent: null, path: '/' }, { consent: 'declined', path: '/' }, { consent: 'accepted', path: '/?email=buyer%40example.invalid' }, { consent: 'accepted', path: '/?session_id=offline-fixture' }, { consent: 'accepted', path: '/?code=offline-fixture' }]) {
+  test(`browser policy: Pixel bootstrap stays off for ${options.consent} at ${options.path}`, async () => {
+    const qa = await setup({ ...options, pixelBootstrap: true });
+    try {
+      await ready(qa.page, options.path);
+      await qa.page.locator('h1').waitFor();
+      assert.equal(qa.requests.some(row => row.asset && /facebook\.com|facebook\.net/.test(row.asset)), false);
+      assert.equal(await qa.page.evaluate(() => window.__pixelScriptReady), undefined);
+      assert.deepEqual(qa.errors, []);
+    } finally { await qa.close(); }
+  });
+}
+
+test('browser policy: arbitrary scripts remain blocked outside the precise hosting allowlist', async () => {
+  const qa = await setup();
+  try {
+    await ready(qa.page, '/');
+    await qa.page.evaluate(() => {
+      const script = document.createElement('script');
+      script.src = 'https://public.readdy.ai/unapproved-script.js';
+      document.head.appendChild(script);
+    });
+    await qa.page.waitForFunction(() => window.__policyViolations.length > 0);
+    assert.equal(qa.requests.some(row => row.asset === 'https://public.readdy.ai/unapproved-script.js'), false);
+    assert.equal(await qa.page.evaluate(() => window.__policyViolations[0].directive), 'script-src-elem');
+  } finally { await qa.close(); }
+});

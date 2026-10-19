@@ -2,7 +2,7 @@
 <html lang="bg">
   <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://connect.facebook.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; img-src 'self' https://*.supabase.co https://api.qrserver.com https://readdy.ai https://*.readdy.ai https://res.cloudinary.com https://www.facebook.com data: blob:; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; connect-src 'self' https://readdy.ai https://*.supabase.co https://api.stripe.com https://connect.facebook.net; frame-src https://js.stripe.com https://www.facebook.com; media-src 'self' https://readdy.ai https://*.readdy.ai https://res.cloudinary.com; form-action 'self' https://api.stripe.com; base-uri 'self'; frame-ancestors 'self'; upgrade-insecure-requests;" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://connect.facebook.net https://public.readdy.ai/analysis/event-reporting.min.js; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://fonts.googleapis.com; img-src 'self' https://*.supabase.co https://api.qrserver.com https://readdy.ai https://*.readdy.ai https://res.cloudinary.com https://www.facebook.com data: blob:; font-src 'self' https://cdn.jsdelivr.net https://fonts.gstatic.com; connect-src 'self' https://readdy.ai https://*.supabase.co https://api.stripe.com https://connect.facebook.net https://www.facebook.com/tr/; frame-src https://js.stripe.com https://www.facebook.com; media-src 'self' https://readdy.ai https://*.readdy.ai https://res.cloudinary.com; form-action 'self' https://api.stripe.com https://www.facebook.com/tr/; base-uri 'self'; upgrade-insecure-requests;" />
     <link rel="icon" type="image/webp" href="https://static.readdy.ai/image/658b459fcf05a7723f8029c45615de2f/5f528752b53eacb04e7b1d8959de8155.webp" sizes="32x32" />
     <link rel="apple-touch-icon" href="https://static.readdy.ai/image/658b459fcf05a7723f8029c45615de2f/5f528752b53eacb04e7b1d8959de8155.webp" />
     <script>
@@ -20,6 +20,7 @@
     <meta http-equiv="X-Content-Type-Options" content="nosniff" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover" />
     <meta name="format-detection" content="telephone=yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="K-FOOD — Корейска Храна" />
@@ -27,15 +28,14 @@
     <meta name="geo.region" content="BG-04" />
     <meta name="geo.placename" content="Велико Търново" />
     
-    <!-- Performance -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://storage.readdy-site.link" />
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" />
-    <link rel="dns-prefetch" href="//fonts.googleapis.com" />
-    <link rel="dns-prefetch" href="//storage.readdy-site.link" />
-    <link rel="dns-prefetch" href="//readdy.ai" />
-    
+    <!-- Hosting injects an optional analytics library. Keep its automatic full-URL reporting off. -->
+    <script>window.EventReportingConfig = { autoInit: false, enabled: false };</script>
+
+    <!-- The existing fonts are local; connect early only to the hero image host. -->
+    <link rel="preconnect" href="https://static.readdy.ai" />
+    <link rel="preload" href="/src/assets/fonts/inter-normal-cyrillic.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/src/assets/fonts/inter-normal-latin.woff2" as="font" type="font/woff2" crossorigin />
+
     <!-- Keep the hero high priority on home without downloading it on every route. -->
     <script>
       if (window.location.pathname === '/') {
@@ -49,8 +49,6 @@
       }
     </script>
     
-    <!-- Google Fonts with display swap -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet" />
     
     <!-- Critical CSS -->
     <style>
@@ -91,8 +89,6 @@
     <meta name="twitter:description" content="Автентична корейска храна с доставка до цяла България. Рамен, кимчи, токбоки и още!" />
     <meta name="twitter:image" content="https://static.readdy.ai/image/658b459fcf05a7723f8029c45615de2f/5f528752b53eacb04e7b1d8959de8155.webp" />
     
-    <!-- Icons с отложено зареждане -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/remixicon@4.0.0/fonts/remixicon.css" />
     <meta name="google-site-verification" content="_uHykmyPP11xCMsvC4eT5JgmKNHOHLB6a_GYF40EXBw" />
     <meta name="google-site-verification" content="aqRBuNpEufLBBYGoDvFFA8YgRgRPPgOTNzrMpOrdVjw" />
     
@@ -199,9 +195,10 @@
     <!-- Service Worker с агресивно кеширане -->
     <script>
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
-          .then(reg => console.log('SW registered'))
-          .catch(err => console.log('SW failed'));
+        const registerWorker = () => navigator.serviceWorker.register('/service-worker.js', { scope: '/' })
+          .catch(error => console.warn('Service worker registration failed:', error));
+        if (document.readyState === 'complete') registerWorker();
+        else window.addEventListener('load', registerWorker, { once: true });
       }
     </script>
   </body>
