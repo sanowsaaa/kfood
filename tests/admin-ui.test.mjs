@@ -43,7 +43,7 @@ async function setup(options = {}) {
       const isAsset = url.pathname.startsWith('/assets/');
       const file = isAsset ? url.pathname.slice(1) : 'index.html';
       if (file.includes('..')) return route.abort();
-      const contentType = file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : file.endsWith('.svg') ? 'image/svg+xml' : 'text/html';
+      const contentType = file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : file.endsWith('.woff2') ? 'font/woff2' : file.endsWith('.svg') ? 'image/svg+xml' : 'text/html';
       return route.fulfill({ contentType, body: await readFile(new URL(`../dist/${file}`, import.meta.url)) });
     }
     const reply = (data, status = 200) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(data) });

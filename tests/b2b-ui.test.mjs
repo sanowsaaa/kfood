@@ -58,7 +58,7 @@ async function setup(options = {}) {
     if (url.origin === base) {
       const file = url.pathname.startsWith('/assets/') ? url.pathname.slice(1) : 'index.html';
       if (file.includes('..')) return route.abort();
-      return route.fulfill({ contentType: file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : 'text/html', body: await readFile(new URL(`../dist/${file}`, import.meta.url)) });
+      return route.fulfill({ contentType: file.endsWith('.js') ? 'text/javascript' : file.endsWith('.css') ? 'text/css' : file.endsWith('.woff2') ? 'font/woff2' : 'text/html', body: await readFile(new URL(`../dist/${file}`, import.meta.url)) });
     }
     if (url.pathname.includes('/auth/v1/')) return reply(user);
     if (url.pathname.includes('/functions/v1/')) {
