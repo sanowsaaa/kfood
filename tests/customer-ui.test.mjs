@@ -120,7 +120,10 @@ async function setup(options = {}) {
     }
     requests.push({ asset: url.href, method: req.method() });
     if (assetMap[url.href]) return route.fulfill({ body: await readFile(assetMap[url.href].path), contentType: assetMap[url.href].type });
-    if (options.hostingScript && url.href === 'https://public.readdy.ai/analysis/event-reporting.min.js') return route.fulfill({ contentType: 'text/javascript', body: 'window.__hostingScriptReady = true;' });
+    if (options.hostingScript && url.href === 'https://public.readdy.ai/analysis/event-reporting.min.js') {
+      const library = process.env.CUSTOMER_TEST_HOST_ANALYTICS_JS ? await readFile(process.env.CUSTOMER_TEST_HOST_ANALYTICS_JS, 'utf8') : `if (window.EventReportingConfig?.autoInit !== false) fetch('https://readdy.ai/api/analysis/event/report', { method: 'POST', body: location.href });`;
+      return route.fulfill({ contentType: 'text/javascript', body: library + '\nwindow.__hostingScriptReady = true;' });
+    }
     if (options.pixelBootstrap && url.href === 'https://connect.facebook.net/en_US/fbevents.js') return route.fulfill({ contentType: 'text/javascript', body: `
       window.__pixelScriptReady = true;
       // Exercise the SDK's fetch and form transports with entirely offline events.
@@ -1190,6 +1193,9 @@ test('browser policy: hosting script and consented Pixel transports load without
     await qa.page.waitForFunction(() => [...document.querySelectorAll('iframe')].some(frame => frame.contentWindow && frame.getAttribute('name') === 'offline-pixel'));
     await qa.page.evaluate(() => document.fonts.ready);
     assert.equal(qa.requests.filter(row => row.asset === 'https://www.facebook.com/tr/').length, 2);
+    assert.deepEqual(await qa.page.evaluate(() => window.EventReportingConfig), { autoInit: false, enabled: false });
+    assert.equal(qa.requests.some(row => row.asset === 'https://readdy.ai/api/analysis/event/report'), false);
+    assert.equal(await qa.page.evaluate(() => localStorage.getItem('readdy_device_id')), null);
     assert.deepEqual(await qa.page.evaluate(() => window.__policyViolations), []);
     assert.deepEqual(consoleProblems, []);
     assert.equal(qa.requests.some(row => row.asset && /fonts\.googleapis\.com|fonts\.gstatic\.com|cdn\.jsdelivr\.net/.test(row.asset)), false);

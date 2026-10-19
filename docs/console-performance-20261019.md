@@ -12,6 +12,7 @@ PageSpeed report, 2026-10-19: https://pagespeed.web.dev/analysis/https-k-foodvel
 
 ## Changes
 
+- Keep hosting analytics auto-initialization disabled (`EventReportingConfig.autoInit=false`, `enabled=false`). The inspected library automatically sends full URLs and persistent identifiers otherwise; allowing its script must not newly enable that behavior on guest order/auth URLs. Existing Meta consent handling remains.
 - Permit only the injected `https://public.readdy.ai/analysis/event-reporting.min.js` script path, alongside existing script sources. Permit Meta's `https://www.facebook.com/tr/` fetch/form transports without allowing arbitrary Facebook form destinations or arbitrary Readdy scripts.
 - Remove the ineffective `frame-ancestors` meta directive. Browsers support it only as an HTTP response header. Production returned neither a CSP response header nor X-Frame-Options during this audit; embedding protection still requires a supported hosting header configuration. No unsupported `_headers` file is presented as an effective fix.
 - Add `mobile-web-app-capable` and retain the Apple-specific metadata.
