@@ -8,8 +8,8 @@ export default function ShippingPage() {
 
   useSEO({
     title: 'Доставка на Корейска Храна - K-FOOD Велико Търново',
-    description: 'Информация за доставка на корейски продукти в България. Доставка с Econt и Speedy 1-3 работни дни. За Велико Търново - само чрез Takeaway платформа. Минимална поръчка 10 €.',
-    keywords: 'доставка корейска храна, Econt, Speedy, Takeaway, Велико Търново, доставка България',
+    description: 'Доставка с Econt и Speedy за 1-3 работни дни извън Велико Търново. Във Велико Търново пазарувайте само на място. Минимална поръчка 10 €.',
+    keywords: 'доставка корейска храна, Econt, Speedy, Велико Търново, доставка България, пазаруване на място',
     canonical: '/shipping',
     ogType: 'website',
     schema: {
@@ -24,7 +24,7 @@ export default function ShippingPage() {
           '@id': `${siteUrl}/shipping`,
           url: `${siteUrl}/shipping`,
           name: 'Доставка на Корейска Храна - K-FOOD Велико Търново',
-          description: 'Условия и информация за доставка на корейски продукти в цяла България.',
+          description: 'Условия за доставка извън Велико Търново и пазаруване на място в магазина във Велико Търново.',
           inLanguage: 'bg',
           isPartOf: { '@id': `${siteUrl}/#website` },
           breadcrumb: {
@@ -151,22 +151,18 @@ export default function ShippingPage() {
                     <i className="ri-map-pin-fill text-white text-2xl"></i>
                   </div>
                   <div className="flex-1">
-                    <h2 className="text-2xl font-bold text-gray-900 mb-4">Локална Доставка - Велико Търново</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-4">Пазаруване на място във Велико Търново</h2>
                     <div className="space-y-4">
                       <p className="text-lg text-gray-800">
-                        За град <strong>Велико Търново</strong> поръчките се обработват и доставят <strong>САМО</strong> чрез платформата <strong>Takeaway</strong>.
+                        Във <strong>Велико Търново</strong> можете да пазарувате <strong>само на място в магазина ни</strong>. Не предлагаме доставка в града.
                       </p>
                       <div className="bg-white p-4 rounded-lg border border-amber-300">
-                        <h4 className="font-bold text-gray-900 mb-2">Как да поръчате в Велико Търново:</h4>
-                        <ol className="list-decimal list-inside space-y-2 text-gray-700">
-                          <li>Посетете платформата Takeaway</li>
-                          <li>Намерете K-FOOD в списъка с ресторанти</li>
-                          <li>Направете вашата поръчка директно там</li>
-                        </ol>
+                        <h4 className="font-bold text-gray-900 mb-2">Очакваме ви в магазина:</h4>
+                        <p className="text-gray-700">ул. „Велчо Джамджията“ 6, Велико Търново</p>
                       </div>
                       <p className="text-amber-800 font-medium">
                         <i className="ri-alert-line mr-2"></i>
-                        Онлайн поръчки през този сайт НЕ се доставят в Велико Търново
+                        Поръчките през този сайт са за адреси извън Велико Търново. Извиняваме се за неудобството.
                       </p>
                     </div>
                   </div>

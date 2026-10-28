@@ -250,7 +250,6 @@ export default function PrivacyPage() {
                     <ul className="space-y-1 text-gray-600">
                       <li>• Econt - за национални доставки</li>
                       <li>• Speedy - за национални доставки</li>
-                      <li>• Takeaway - за локални доставки</li>
                     </ul>
                   </div>
                   <div>
